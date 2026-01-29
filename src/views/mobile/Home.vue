@@ -70,6 +70,19 @@
             </div>
         </div>
 
+        <div v-if="canAccessLogbook" class="glass-card logbook" @click="navigateTo('/logbook/payment')">
+            <div class="chip">Logbook</div>
+            <div class="card-row">
+                <div class="icon-hex">
+                    <mdicon name="book-open-page-variant" size="24"/>
+                </div>
+                <div>
+                    <h3>Logbook</h3>
+                    <p>Daily notes, milestones, and personal highlights.</p>
+                </div>
+            </div>
+        </div>
+
         <div v-if="isAdmin" class="glass-card admin" @click="navigateTo('/admin/users')">
             <div class="chip">Admin</div>
             <div class="card-row">
@@ -147,12 +160,17 @@ export default {
 
         const userName = computed(() => store.state.userProfile?.fullName || 'there')
         const isAdmin = computed(() => store.state.userProfile?.role === Role.ADMIN || store.state.isUserAdmin)
+        const canAccessLogbook = computed(() => {
+            const role = store.state.userProfile?.role
+            return role === Role.ADMIN || role === Role.FAMILY
+        })
 
         return {
             navigateTo,
             logout,
             userName,
             isAdmin,
+            canAccessLogbook,
             isDark,
             appVersion,
             toggleTheme
@@ -341,6 +359,10 @@ export default {
     background: linear-gradient(135deg, #f97316, #ec4899);
     box-shadow: 0 6px 14px rgba(236, 72, 153, 0.3);
 }
+.glass-card.logbook .chip {
+    background: linear-gradient(135deg, #22c55e, #38bdf8);
+    box-shadow: 0 6px 14px rgba(56, 189, 248, 0.25);
+}
 
 .card-row {
     display: flex;
@@ -361,6 +383,10 @@ export default {
 
 .glass-card.admin .icon-hex {
     background: linear-gradient(135deg, #f97316, #ec4899);
+}
+.glass-card.logbook .icon-hex {
+    background: linear-gradient(135deg, #22c55e, #38bdf8);
+    color: #0b1020;
 }
 
 .glass-card h3 {

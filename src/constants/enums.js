@@ -4,7 +4,8 @@
 export const Role = {
   GUEST: 'GUEST',
   USER: 'USER',
-  ADMIN: 'ADMIN'
+  ADMIN: 'ADMIN',
+  FAMILY: 'FAMILY'
 }
 
 export const RecordType = {

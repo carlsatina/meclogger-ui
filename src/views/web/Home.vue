@@ -58,6 +58,15 @@
             <p class="feature-description">Monitor spending, manage budgets, and track financial goals</p>
         </div>
 
+        <!-- Logbook Feature -->
+        <div v-if="canAccessLogbook" class="feature-card" @click="navigateTo('/logbook/payment')">
+            <div class="feature-icon logbook">
+                <mdicon name="book-open-page-variant" size="64"/>
+            </div>
+            <h3 class="feature-title">Logbook</h3>
+            <p class="feature-description">Capture daily notes, milestones, and personal highlights</p>
+        </div>
+
         <div v-if="isAdmin" class="feature-card admin" @click="navigateTo('/admin/users')">
             <div class="feature-icon admin">
                 <mdicon name="shield-account" size="64"/>
@@ -185,6 +194,10 @@ export default {
 
         const userName = computed(() => store.state.userProfile?.fullName || 'there')
         const isAdmin = computed(() => store.state.userProfile?.role === Role.ADMIN || store.state.isUserAdmin)
+        const canAccessLogbook = computed(() => {
+            const role = store.state.userProfile?.role
+            return role === Role.ADMIN || role === Role.FAMILY
+        })
 
         return {
             navigateTo,
@@ -195,6 +208,7 @@ export default {
             remindersError,
             activeProfileId,
             isAdmin,
+            canAccessLogbook,
             isDark,
             appVersion,
             toggleTheme
@@ -524,6 +538,9 @@ export default {
 
 .feature-icon.expense {
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+.feature-icon.logbook {
+    background: linear-gradient(135deg, #22c55e 0%, #38bdf8 100%);
 }
 .feature-icon.admin {
     background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);

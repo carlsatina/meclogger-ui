@@ -55,6 +55,18 @@ import CarMaintenanceAddScheduleWeb from '@/views/web/CarMaintenance/AddSchedule
 import CarMaintenanceVehicleDetailWeb from '@/views/web/CarMaintenance/VehicleDetail.vue'
 import CarMaintenanceVehicleDetail from '@/views/mobile/CarMaintenance/VehicleDetail.vue'
 import ExpenseTracking from '@/views/LandingPage/ExpenseTracking.vue'
+import Logbook from '@/views/LandingPage/Logbook.vue'
+import LogbookPayment from '@/views/LandingPage/LogbookPayment.vue'
+import LogbookReports from '@/views/LandingPage/LogbookReports.vue'
+import LogbookRenter from '@/views/LandingPage/LogbookRenter.vue'
+import LogbookHistory from '@/views/LandingPage/LogbookHistory.vue'
+import LogbookMore from '@/views/LandingPage/LogbookMore.vue'
+import LogbookRentersList from '@/views/LandingPage/LogbookRentersList.vue'
+import LogbookSavings from '@/views/LandingPage/LogbookSavings.vue'
+import LogbookSavingsHistory from '@/views/LandingPage/LogbookSavingsHistory.vue'
+import LogbookBorrowed from '@/views/LandingPage/LogbookBorrowed.vue'
+import LogbookBorrowedHistory from '@/views/LandingPage/LogbookBorrowedHistory.vue'
+import LogbookImport from '@/views/LandingPage/LogbookImport.vue'
 import ExpenseAccountsMobile from '@/views/mobile/ExpenseTracking/ManageAccounts.vue'
 import PendingApproval from '@/views/LandingPage/PendingApproval.vue'
 import AdminUsers from '@/views/LandingPage/AdminUsers.vue'
@@ -397,6 +409,84 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/logbook',
+    name: 'logbook',
+    component: Logbook,
+    meta: { requiresAuth: true, logbookOnly: true }
+  },
+  {
+    path: '/logbook/payment',
+    name: 'logbook-payment',
+    component: LogbookPayment,
+    meta: { requiresAuth: true, logbookOnly: true }
+  },
+  {
+    path: '/logbook/reports',
+    name: 'logbook-reports',
+    component: LogbookReports,
+    meta: { requiresAuth: true, logbookOnly: true }
+  },
+  {
+    path: '/logbook/renter',
+    name: 'logbook-renter',
+    component: LogbookRenter,
+    meta: { requiresAuth: true, logbookOnly: true }
+  },
+  {
+    path: '/logbook/renter/:id',
+    name: 'logbook-renter-edit',
+    component: LogbookRenter,
+    meta: { requiresAuth: true, logbookOnly: true }
+  },
+  {
+    path: '/logbook/history',
+    name: 'logbook-history',
+    component: LogbookHistory,
+    meta: { requiresAuth: true, logbookOnly: true }
+  },
+  {
+    path: '/logbook/more',
+    name: 'logbook-more',
+    component: LogbookMore,
+    meta: { requiresAuth: true, logbookOnly: true }
+  },
+  {
+    path: '/logbook/renters-list',
+    name: 'logbook-renters-list',
+    component: LogbookRentersList,
+    meta: { requiresAuth: true, logbookOnly: true }
+  },
+  {
+    path: '/logbook/savings',
+    name: 'logbook-savings',
+    component: LogbookSavings,
+    meta: { requiresAuth: true, logbookOnly: true }
+  },
+  {
+    path: '/logbook/savings-history',
+    name: 'logbook-savings-history',
+    component: LogbookSavingsHistory,
+    meta: { requiresAuth: true, logbookOnly: true }
+  },
+  {
+    path: '/logbook/borrowed',
+    name: 'logbook-borrowed',
+    component: LogbookBorrowed,
+    meta: { requiresAuth: true, logbookOnly: true }
+  },
+  {
+    path: '/logbook/borrowed-history',
+    name: 'logbook-borrowed-history',
+    component: LogbookBorrowedHistory,
+    meta: { requiresAuth: true, logbookOnly: true }
+  },
+  {
+    path: '/logbook/import',
+    name: 'logbook-import',
+    component: LogbookImport,
+    meta: { requiresAuth: true, logbookOnly: true }
+  },
+  {
     path: '/expense-tracking/accounts',
     name: 'expense-accounts',
     component: ExpenseAccountsMobile,
@@ -435,6 +525,7 @@ router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   const requiresAuth = Boolean(to.meta.requiresAuth)
   const adminOnly = Boolean((to.meta as any).adminOnly)
+  const logbookOnly = Boolean((to.meta as any).logbookOnly)
 
   if (requiresAuth && !token) {
     next({ name: 'login', query: { redirect: to.fullPath } })
@@ -445,6 +536,7 @@ router.beforeEach((to, from, next) => {
   const role = payload?.role
   const isGuest = role === 'GUEST'
   const isAdmin = role === 'ADMIN'
+  const canAccessLogbook = role === 'ADMIN' || role === 'FAMILY'
 
   if (requiresAuth && isGuest && to.name !== 'pending-approval') {
     next({ name: 'pending-approval' })
@@ -452,6 +544,11 @@ router.beforeEach((to, from, next) => {
   }
 
   if (adminOnly && !isAdmin) {
+    next({ name: 'home' })
+    return
+  }
+
+  if (logbookOnly && !canAccessLogbook) {
     next({ name: 'home' })
     return
   }

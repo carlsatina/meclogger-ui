@@ -59,7 +59,7 @@ const loading = ref(false)
 const error = ref('')
 const saving = ref({})
 const draftRoles = ref({})
-const roleOptions = [Role.GUEST, Role.USER, Role.ADMIN]
+const roleOptions = [Role.GUEST, Role.USER, Role.FAMILY, Role.ADMIN]
 
 const token = localStorage.getItem('token')
 const authHeaders = () => ({
