@@ -17,39 +17,38 @@
                     <input type="date" v-model="editForm.date" />
                 </label>
                 <label class="form-field">
-                    <span>Main category</span>
-                    <input list="main-categories" v-model="editForm.mainCategory" placeholder="Main category" />
-                    <datalist id="main-categories">
-                        <option v-for="cat in mainCategoryOptions" :key="cat" :value="cat"></option>
-                    </datalist>
-                </label>
-                <label class="form-field">
-                    <span>Sub category</span>
-                    <input list="sub-categories" v-model="editForm.subCategory" placeholder="Sub category" />
-                    <datalist id="sub-categories">
-                        <option v-for="sub in subCategoryOptions" :key="sub" :value="sub"></option>
-                    </datalist>
-                </label>
-                <label class="form-field">
                     <span>Amount</span>
                     <input type="number" step="0.01" v-model="editForm.amount" />
                 </label>
+                <div class="modal-row">
+                    <label class="form-field">
+                        <span>Main category</span>
+                        <input list="main-categories" v-model="editForm.mainCategory" placeholder="Main category" />
+                        <datalist id="main-categories">
+                            <option v-for="cat in mainCategoryOptions" :key="cat" :value="cat"></option>
+                        </datalist>
+                    </label>
+                    <label class="form-field">
+                        <span>Sub category</span>
+                        <input list="sub-categories" v-model="editForm.subCategory" placeholder="Sub category" />
+                        <datalist id="sub-categories">
+                            <option v-for="sub in subCategoryOptions" :key="sub" :value="sub"></option>
+                        </datalist>
+                    </label>
+                </div>
                 <label class="form-field span-two">
                     <span>Description</span>
                     <textarea rows="3" v-model="editForm.description"></textarea>
                 </label>
             </div>
             <div v-if="modalError" class="error-text">{{ modalError }}</div>
-            <div class="modal-actions">
+            <div class="modal-actions inline-actions">
                 <button class="glass-btn-ghost danger-btn" type="button" :disabled="modalDeleting" @click="openDeleteConfirm">
                     {{ modalDeleting ? 'Deleting…' : 'Delete' }}
                 </button>
-                <div class="modal-actions-right">
-                    <button class="glass-btn-ghost" type="button" @click="closeEditModal">Cancel</button>
-                    <button class="glass-btn-primary" type="button" :disabled="modalSaving" @click="saveEdit">
-                        {{ modalSaving ? 'Saving…' : 'Save changes' }}
-                    </button>
-                </div>
+                <button class="glass-btn-primary" type="button" :disabled="modalSaving" @click="saveEdit">
+                    {{ modalSaving ? 'Saving…' : 'Save changes' }}
+                </button>
             </div>
         </div>
     </div>
@@ -147,13 +146,17 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="item in pagedGroupA" :key="item.id" class="clickable-row" @click="openEdit(item)">
+                        <tr v-for="item in pagedGroupA" :key="item.id">
                             <td>{{ formatDate(item.paymentDate) }}</td>
                             <td v-if="showMain">{{ item.mainCategory || '—' }}</td>
                             <td v-if="showSub">{{ item.subCategory || '—' }}</td>
                             <td>{{ item.description || '—' }}</td>
                             <td class="number">{{ formatMoney(item.amount) }}</td>
-                            <td class="number">{{ formatMoney(groupARunningMap.get(item.id) || 0) }}</td>
+                            <td class="number">
+                                <button class="balance-btn" type="button" @click="openEdit(item)" aria-label="View payment details">
+                                    {{ formatMoney(groupARunningMap.get(item.id) || 0) }}
+                                </button>
+                            </td>
                         </tr>
                         <tr v-if="!pagedGroupA.length">
                             <td :colspan="columnCount" class="empty-row">No entries yet.</td>
@@ -225,13 +228,17 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="item in pagedGroupB" :key="item.id" class="clickable-row" @click="openEdit(item)">
+                        <tr v-for="item in pagedGroupB" :key="item.id">
                             <td>{{ formatDate(item.paymentDate) }}</td>
                             <td v-if="showMain">{{ item.mainCategory || '—' }}</td>
                             <td v-if="showSub">{{ item.subCategory || '—' }}</td>
                             <td>{{ item.description || '—' }}</td>
                             <td class="number">{{ formatMoney(item.amount) }}</td>
-                            <td class="number">{{ formatMoney(groupBRunningMap.get(item.id) || 0) }}</td>
+                            <td class="number">
+                                <button class="balance-btn" type="button" @click="openEdit(item)" aria-label="View payment details">
+                                    {{ formatMoney(groupBRunningMap.get(item.id) || 0) }}
+                                </button>
+                            </td>
                         </tr>
                         <tr v-if="!pagedGroupB.length">
                             <td :colspan="columnCount" class="empty-row">No entries yet.</td>
