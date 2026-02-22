@@ -54,13 +54,15 @@ export default {
   background: var(--glass-ghost-bg);
   position: fixed;
   bottom: 0;
-  height: 65px;
+  height: calc(65px + var(--safe-bottom));
   width: 100%;
   display: flex;
   justify-content: space-around;
   border-top: 1px solid var(--glass-card-border);
   backdrop-filter: blur(10px);
   z-index: 900;
+  padding-bottom: var(--safe-bottom);
+  box-sizing: border-box;
 }
 
 .bloc-icon {

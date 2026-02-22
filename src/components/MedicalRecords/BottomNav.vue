@@ -62,7 +62,7 @@ export default {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 10px 8px 14px;
+    padding: 10px 8px calc(14px + var(--safe-bottom));
     box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
     z-index: 1000;
     border-top: 1px solid var(--glass-card-border);

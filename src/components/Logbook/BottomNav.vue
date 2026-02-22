@@ -64,11 +64,12 @@ export default {
   position: fixed;
   left: var(--nav-side);
   right: var(--nav-side);
-  bottom: var(--nav-bottom);
+  bottom: calc(var(--nav-bottom) + var(--safe-bottom));
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 6px;
   padding: var(--nav-pad);
+  padding-bottom: calc(10px + var(--safe-bottom));
   border-radius: 18px;
   border: 1px solid var(--glass-card-border);
   background: var(--glass-ghost-bg);
