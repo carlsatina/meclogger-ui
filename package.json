@@ -7,7 +7,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "bump:version": "node scripts/bump-version.js",
-    "server:json": "json-server --watch db.json --port 5000 --id 'uuid'"
+    "server:json": "json-server --watch db.json --port 5000 --id 'uuid'",
+    "build:apk": "bash scripts/build-apk.sh debug",
+    "build:apk:release": "bash scripts/build-apk.sh release"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",
