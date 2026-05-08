@@ -389,20 +389,24 @@ export default {
 
 .content {
     flex: 1;
-    padding: 18px 16px 36px;
+    padding: 18px 0 36px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 0;
     position: relative;
     z-index: 1;
 }
 
 .input-card {
     background: rgba(255,255,255,0.05);
-    border-radius: 16px;
+    border-radius: 0;
     padding: 16px;
-    box-shadow: 0 12px 26px rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: none;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-left: none;
+    border-right: none;
+    margin-bottom: 12px;
 }
 
 .input-label {
@@ -494,8 +498,8 @@ export default {
 }
 
 .primary-btn {
-    width: 100%;
-    margin-top: auto;
+    width: calc(100% - 32px);
+    margin: 8px 16px 0;
     border-radius: 16px;
     padding: 16px;
     font-size: 16px;

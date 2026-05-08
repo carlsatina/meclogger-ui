@@ -77,6 +77,28 @@
         @action="showDisplayPanel = !showDisplayPanel"
     />
 
+    <!-- Tab bar -->
+    <div class="history-tabs">
+        <button
+            class="history-tab"
+            :class="{ active: activeTab === 'mama' }"
+            type="button"
+            @click="activeTab = 'mama'"
+        >
+            <mdicon name="account-outline" size="16" />
+            <span>Mama</span>
+        </button>
+        <button
+            class="history-tab"
+            :class="{ active: activeTab === 'rc' }"
+            type="button"
+            @click="activeTab = 'rc'"
+        >
+            <mdicon name="account-outline" size="16" />
+            <span>RC</span>
+        </button>
+    </div>
+
     <div v-if="showDisplayPanel" class="display-flyout">
         <div class="display-panel glass-card">
             <label class="display-option">
@@ -98,25 +120,13 @@
         </div>
     </div>
 
-    <section class="logbook-section">
-        <div class="section-head">
-            <div class="section-title-row">
-                <h3>Mama / Yellow Fantasy / Parking</h3>
-                <button
-                    class="glass-btn-ghost collapse-toggle"
-                    type="button"
-                    :aria-label="showGroupA ? 'Hide table' : 'Show table'"
-                    :title="showGroupA ? 'Hide table' : 'Show table'"
-                    @click="showGroupA = !showGroupA"
-                >
-                    <mdicon :name="showGroupA ? 'chevron-up' : 'chevron-down'" size="18" />
-                </button>
-            </div>
-        </div>
-        <div v-if="showGroupA" class="table-search">
+    <!-- Mama tab -->
+    <section v-if="activeTab === 'mama'" class="logbook-section">
+        <div class="tab-subtitle">Yellow Fantasy · Parking</div>
+        <div class="table-search">
             <input v-model="searchA" type="text" placeholder="Search entries" />
         </div>
-        <article v-if="showGroupA" class="glass-card table-card">
+        <article class="glass-card table-card">
             <div v-if="loading" class="empty-state">Loading history…</div>
             <div v-else-if="error" class="empty-state error-text">{{ error }}</div>
             <div v-else class="table-wrap">
@@ -169,7 +179,7 @@
                 </table>
             </div>
         </article>
-        <div v-if="showGroupA" class="table-pagination">
+        <div class="table-pagination">
             <button class="glass-btn-ghost" type="button" :disabled="pageA <= 1" @click="pageA -= 1">
                 <mdicon name="chevron-left" size="16" />
             </button>
@@ -180,25 +190,13 @@
         </div>
     </section>
 
-    <section class="logbook-section">
-        <div class="section-head">
-            <div class="section-title-row">
-                <h3>RC / Fuji View</h3>
-                <button
-                    class="glass-btn-ghost collapse-toggle"
-                    type="button"
-                    :aria-label="showGroupB ? 'Hide table' : 'Show table'"
-                    :title="showGroupB ? 'Hide table' : 'Show table'"
-                    @click="showGroupB = !showGroupB"
-                >
-                    <mdicon :name="showGroupB ? 'chevron-up' : 'chevron-down'" size="18" />
-                </button>
-            </div>
-        </div>
-        <div v-if="showGroupB" class="table-search">
+    <!-- RC tab -->
+    <section v-if="activeTab === 'rc'" class="logbook-section">
+        <div class="tab-subtitle">Fuji View</div>
+        <div class="table-search">
             <input v-model="searchB" type="text" placeholder="Search entries" />
         </div>
-        <article v-if="showGroupB" class="glass-card table-card">
+        <article class="glass-card table-card">
             <div v-if="loading" class="empty-state">Loading history…</div>
             <div v-else-if="error" class="empty-state error-text">{{ error }}</div>
             <div v-else class="table-wrap">
@@ -251,7 +249,7 @@
                 </table>
             </div>
         </article>
-        <div v-if="showGroupB" class="table-pagination">
+        <div class="table-pagination">
             <button class="glass-btn-ghost" type="button" :disabled="pageB <= 1" @click="pageB -= 1">
                 <mdicon name="chevron-left" size="16" />
             </button>
@@ -285,8 +283,7 @@ export default {
         const showDisplayPanel = ref(false)
         const showMain = ref(false)
         const showSub = ref(false)
-        const showGroupA = ref(true)
-        const showGroupB = ref(true)
+        const activeTab = ref('mama')
         const searchA = ref('')
         const searchB = ref('')
         const pageA = ref(1)
@@ -350,13 +347,6 @@ export default {
 
         const buildRunningMap = (items) => {
             const map = new Map()
-            const hasServerBalance = items.some(item => item.runningBalance !== null && typeof item.runningBalance !== 'undefined')
-            if (hasServerBalance) {
-                items.forEach((item) => {
-                    map.set(item.id, Number(item.runningBalance || 0))
-                })
-                return map
-            }
             const sorted = [...items].sort((a, b) => {
                 const aDate = new Date(a.paymentDate).getTime() || 0
                 const bDate = new Date(b.paymentDate).getTime() || 0
@@ -389,8 +379,8 @@ export default {
 
         const filteredGroupA = computed(() => groupA.value.filter(item => matchesSearch(item, searchA.value)))
         const filteredGroupB = computed(() => groupB.value.filter(item => matchesSearch(item, searchB.value)))
-        const groupARunningMap = computed(() => buildRunningMap(groupA.value))
-        const groupBRunningMap = computed(() => buildRunningMap(groupB.value))
+        const groupARunningMap = computed(() => buildRunningMap(filteredGroupA.value))
+        const groupBRunningMap = computed(() => buildRunningMap(filteredGroupB.value))
 
         const defaultDirForKey = (key) => (key === 'date' ? 'desc' : 'asc')
 
@@ -670,11 +660,10 @@ export default {
             error,
             groupA,
             groupB,
+            activeTab,
             showDisplayPanel,
             showMain,
             showSub,
-            showGroupA,
-            showGroupB,
             searchA,
             searchB,
             columnCount,
@@ -715,3 +704,49 @@ export default {
 </script>
 
 <style scoped src="@/assets/styles/logbook/subpage-mobile.css"></style>
+
+<style scoped>
+.history-tabs {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 8px;
+    margin: 14px 14px 4px;
+    background: var(--glass-ghost-bg);
+    border: 1px solid var(--glass-card-border);
+    border-radius: 14px;
+    padding: 4px;
+}
+
+.history-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+
+.history-tab.active {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(34, 197, 94, 0.18));
+    color: var(--text-primary);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.tab-subtitle {
+    position: relative;
+    z-index: 1;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+    padding: 0 14px;
+}
+</style>

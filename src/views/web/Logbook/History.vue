@@ -346,13 +346,6 @@ export default {
 
         const buildRunningMap = (items) => {
             const map = new Map()
-            const hasServerBalance = items.some(item => item.runningBalance !== null && typeof item.runningBalance !== 'undefined')
-            if (hasServerBalance) {
-                items.forEach((item) => {
-                    map.set(item.id, Number(item.runningBalance || 0))
-                })
-                return map
-            }
             const sorted = [...items].sort((a, b) => {
                 const aDate = new Date(a.paymentDate).getTime() || 0
                 const bDate = new Date(b.paymentDate).getTime() || 0
@@ -385,8 +378,8 @@ export default {
 
         const filteredGroupA = computed(() => groupA.value.filter(item => matchesSearch(item, searchA.value)))
         const filteredGroupB = computed(() => groupB.value.filter(item => matchesSearch(item, searchB.value)))
-        const groupARunningMap = computed(() => buildRunningMap(groupA.value))
-        const groupBRunningMap = computed(() => buildRunningMap(groupB.value))
+        const groupARunningMap = computed(() => buildRunningMap(filteredGroupA.value))
+        const groupBRunningMap = computed(() => buildRunningMap(filteredGroupB.value))
 
         const defaultDirForKey = (key) => (key === 'date' ? 'desc' : 'asc')
 

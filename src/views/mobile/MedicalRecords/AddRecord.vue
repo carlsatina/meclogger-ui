@@ -585,7 +585,7 @@ export default {
 /* Content */
 .content {
     flex: 1;
-    padding: 18px 16px 32px;
+    padding: 18px 0 32px;
     position: relative;
     z-index: 1;
 }
@@ -614,6 +614,7 @@ export default {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     margin-bottom: 22px;
+    padding: 0 16px;
 }
 
 .image-preview {
@@ -693,10 +694,13 @@ export default {
     gap: 18px;
     margin-bottom: 26px;
     background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 18px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
     padding: 16px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+    box-shadow: none;
 }
 
 .form-group {
@@ -811,8 +815,8 @@ export default {
 
 /* Save Button */
 .save-btn {
-    width: 100%;
-    margin-top: 10px;
+    width: calc(100% - 32px);
+    margin: 10px 16px 0;
 }
 
 .form-error {

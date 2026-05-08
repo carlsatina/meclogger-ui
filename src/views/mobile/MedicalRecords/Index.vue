@@ -3,10 +3,11 @@
     <div class="bg-orb orb-1"></div>
     <div class="bg-orb orb-2"></div>
     <!-- Top Bar -->
-    <TopBar 
+    <TopBar
         :title="getTabTitle()"
         :profile-name="activeProfileName"
         :show-back="false"
+        @profile-click="showProfileSwitcher = true"
     >
         <template #actions>
             <div class="top-bar-actions">
@@ -518,6 +519,40 @@
     </div>
 </div>
 
+<!-- Profile Switcher Sheet -->
+<div v-if="showProfileSwitcher" class="modal-overlay" @click="showProfileSwitcher = false">
+    <div class="modal-content profile-switcher-sheet" @click.stop>
+        <div class="modal-header">
+            <mdicon name="account-circle" :size="24" class="modal-icon"/>
+            <h3 class="modal-title">Switch profile</h3>
+            <button class="icon-btn ghost sheet-close" @click="showProfileSwitcher = false">
+                <mdicon name="close" :size="18"/>
+            </button>
+        </div>
+        <div class="switcher-list">
+            <div
+                v-for="member in profileMembers"
+                :key="member.id"
+                class="switcher-item"
+                :class="{ active: member.id === activeMemberId }"
+                @click="selectProfileMember(member); showProfileSwitcher = false"
+            >
+                <div class="switcher-avatar">
+                    <mdicon :name="member.id === activeMemberId ? 'account' : 'account-outline'" :size="26"/>
+                </div>
+                <span class="switcher-name">{{ member.name }}</span>
+                <mdicon v-if="member.id === activeMemberId" name="check-circle" :size="20" class="switcher-check"/>
+            </div>
+            <div class="switcher-item add-profile" @click="addFamilyMember(); showProfileSwitcher = false">
+                <div class="switcher-avatar add">
+                    <mdicon name="plus" :size="22"/>
+                </div>
+                <span class="switcher-name">Add profile</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div v-if="showToast" class="toast-notification">
     <div class="toast-icon">
         <mdicon name="account-check" :size="22"/>
@@ -563,6 +598,7 @@ export default {
         const notifiedDateKey = ref(new Date().toISOString().slice(0, 10))
         const previousReminderIds = ref(new Set())
         const showNotificationsPanel = ref(false)
+        const showProfileSwitcher = ref(false)
 
         const handleTabChange = (tab) => {
             activeTab.value = tab
@@ -1310,6 +1346,7 @@ export default {
             goAddProfile,
             handleNotificationBell,
             showNotificationsPanel,
+            showProfileSwitcher,
             showToast,
             toastMessage,
             notifyDueReminders,
@@ -1473,7 +1510,7 @@ export default {
 
 .notif-sub {
     margin: 0;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-secondary);
 }
 
@@ -1491,7 +1528,7 @@ export default {
     background: rgba(103,232,249,0.08);
     color: #67e8f9;
     font-weight: 700;
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .notif-slot.overdue {
@@ -1506,7 +1543,7 @@ export default {
 }
 
 .content-wrapper {
-    padding: 18px 16px 24px;
+    padding: 18px 0 24px;
     min-height: calc(100vh - 140px);
     position: relative;
     z-index: 1;
@@ -1549,6 +1586,7 @@ export default {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
     margin-bottom: 26px;
+    padding: 0 16px;
 }
 
 .action-card-large {
@@ -1603,6 +1641,7 @@ export default {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 14px;
+    padding: 0 16px;
 }
 
 .section-title {
@@ -1623,23 +1662,26 @@ export default {
 /* Reminder List */
 .reminder-list {
     background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
-    padding: 6px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+    padding: 6px 0;
     margin-bottom: 28px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+    box-shadow: none;
     animation: slideFadeUp 0.55s ease both;
 }
 
 .reminder-empty {
     text-align: center;
-    padding: 18px;
+    padding: 18px 16px;
     color: var(--text-muted);
     font-size: 13px;
 }
 
 .reminder-item {
-    padding: 12px 10px;
+    padding: 12px 16px;
     border-bottom: 1px solid rgba(148,163,184,0.15);
 }
 
@@ -1661,7 +1703,7 @@ export default {
 }
 
 .reminder-details {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-muted);
     margin: 0;
 }
@@ -1678,7 +1720,7 @@ export default {
     color: var(--accent-1);
     border-radius: 999px;
     padding: 6px 12px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -1700,7 +1742,7 @@ export default {
 .records-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0;
 }
 
 .records-loading {
@@ -1730,12 +1772,15 @@ export default {
 
 .record-item {
     background: rgba(255,255,255,0.05);
-    border-radius: 16px;
-    padding: 14px 12px;
+    border-radius: 0;
+    padding: 14px 16px;
     display: flex;
     align-items: center;
     gap: 12px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-left: none;
+    border-right: none;
     cursor: pointer;
     transition: all 0.25s ease;
     animation: slideFadeUp 0.5s ease both;
@@ -1774,7 +1819,7 @@ export default {
 }
 
 .record-type {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-muted);
     margin: 0;
 }
@@ -1787,7 +1832,7 @@ export default {
 .records-list-view {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0;
     position: relative;
     padding-bottom: 88px;
 }
@@ -1796,7 +1841,11 @@ export default {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 12px;
+    padding: 10px 16px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    box-shadow: none;
 }
 
 .records-search input {
@@ -1820,9 +1869,12 @@ export default {
 
 .record-card {
     background: rgba(255,255,255,0.05);
-    border-radius: 14px;
-    padding: 14px 12px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0;
+    padding: 14px 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-left: none;
+    border-right: none;
     cursor: pointer;
     transition: all 0.25s ease;
     display: flex;
@@ -1831,7 +1883,7 @@ export default {
 }
 
 .record-card:hover {
-    border-color: rgba(103,232,249,0.4);
+    background: rgba(103,232,249,0.06);
 }
 
 .record-icon-large {
@@ -1864,7 +1916,7 @@ export default {
 }
 
 .record-meta {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-muted);
     margin: 0;
     white-space: nowrap;
@@ -1905,17 +1957,20 @@ export default {
 .health-metrics {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 0;
 }
 
 .health-card {
     background: rgba(255,255,255,0.05);
-    border-radius: 16px;
-    padding: 16px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0;
+    padding: 16px 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-left: none;
+    border-right: none;
     cursor: pointer;
     transition: all 0.25s ease;
-    box-shadow: 0 14px 30px rgba(0,0,0,0.3);
+    box-shadow: none;
     animation: slideFadeUp 0.55s ease both;
 }
 
@@ -1943,7 +1998,7 @@ export default {
 }
 
 .health-subtitle {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-muted);
     margin: 0;
 }
@@ -1962,7 +2017,7 @@ export default {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-muted);
     padding: 10px 0;
     min-width: 32px;
@@ -1977,14 +2032,14 @@ export default {
     position: absolute;
     top: 0;
     right: 0;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-muted);
 }
 
 .chart-unit-bottom {
     display: block;
     text-align: right;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-muted);
     margin-top: 8px;
 }
@@ -2034,7 +2089,7 @@ export default {
 }
 
 .chart-label {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-muted);
 }
 
@@ -2050,7 +2105,7 @@ export default {
 }
 
 .chart-x-labels span {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-muted);
 }
 
@@ -2117,7 +2172,7 @@ export default {
     gap: 6px;
     padding: 6px 10px;
     border-radius: 999px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     text-transform: capitalize;
     background: rgba(103,232,249,0.16);
@@ -2160,7 +2215,7 @@ export default {
 }
 
 .illness-date {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-muted);
 }
 
@@ -2169,7 +2224,7 @@ export default {
     color: var(--text-primary);
     border-radius: 999px;
     padding: 6px 10px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     border: 1px solid rgba(255,255,255,0.08);
 }
@@ -2233,6 +2288,7 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 0 16px;
 }
 
 .profile-header h2 {
@@ -2258,7 +2314,7 @@ export default {
     display: flex;
     gap: 14px;
     overflow-x: auto;
-    padding-bottom: 6px;
+    padding: 0 16px 6px;
 }
 
 .profile-switcher.empty {
@@ -2305,10 +2361,13 @@ export default {
 
 .profile-card {
     background: rgba(255,255,255,0.05);
-    border-radius: 16px;
-    box-shadow: 0 12px 28px rgba(0,0,0,0.3);
+    border-radius: 0;
+    box-shadow: none;
     padding: 6px 0;
-    border: 1px solid rgba(255,255,255,0.08);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-left: none;
+    border-right: none;
 }
 
 .profile-row {
@@ -2504,5 +2563,96 @@ export default {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 10px;
+}
+
+/* Profile Switcher Sheet */
+.profile-switcher-sheet .modal-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sheet-close {
+    margin-left: auto;
+    padding: 6px;
+}
+
+.icon-btn.ghost {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.switcher-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.switcher-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 10px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    color: var(--text-primary);
+}
+
+.switcher-item:active {
+    background: rgba(255,255,255,0.06);
+}
+
+.switcher-item.active {
+    background: rgba(103,232,249,0.08);
+}
+
+.switcher-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid var(--glass-card-border);
+    background: var(--glass-ghost-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    flex-shrink: 0;
+}
+
+.switcher-item.active .switcher-avatar {
+    border-color: #67e8f9;
+    color: #67e8f9;
+    background: rgba(103,232,249,0.1);
+}
+
+.switcher-avatar.add {
+    border-style: dashed;
+    color: var(--text-muted);
+}
+
+.switcher-name {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.switcher-item.active .switcher-name {
+    color: #67e8f9;
+}
+
+.switcher-check {
+    color: #67e8f9;
+    flex-shrink: 0;
+}
+
+.add-profile .switcher-name {
+    color: var(--text-muted);
+    font-weight: 500;
 }
 </style>

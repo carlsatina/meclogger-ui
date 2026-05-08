@@ -599,12 +599,14 @@ export default {
 .vehicle-pill {
   margin-top: 12px;
   color: var(--text-primary);
-  border-radius: 16px;
-  padding: 12px;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  box-shadow: none;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: var(--glass-card-shadow);
   cursor: pointer;
 }
 
@@ -680,9 +682,12 @@ export default {
 .vehicle-picker {
   margin-top: 8px;
   color: var(--text-primary);
-  border-radius: 12px;
-  box-shadow: var(--glass-card-shadow);
-  border: 1px solid var(--glass-card-border);
+  border-radius: 0;
+  box-shadow: none;
+  border-top: 1px solid var(--glass-card-border);
+  border-bottom: 1px solid var(--glass-card-border);
+  border-left: none;
+  border-right: none;
   overflow: hidden;
 }
 
@@ -690,7 +695,7 @@ export default {
   width: 100%;
   border: none;
   background: transparent;
-  padding: 10px 12px;
+  padding: 10px 16px;
   text-align: left;
   font-weight: 600;
   color: var(--text-primary);
@@ -714,6 +719,12 @@ export default {
   display: grid;
   gap: 10px;
   cursor: pointer;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  box-shadow: none;
+  padding: 14px 16px;
+  margin-top: -1px;
 }
 
 .schedule-top {

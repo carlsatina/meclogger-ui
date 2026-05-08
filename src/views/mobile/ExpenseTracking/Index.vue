@@ -429,33 +429,70 @@
 
         <section class="section profile-cards stagger-seq">
             <div class="card profile-card slide-up">
-                <div class="row">
+                <div class="cat-card-head" @click="catListOpen = !catListOpen">
                     <div>
                         <p class="label">Expense categories</p>
-                        <h4>{{ categories.length }} categories</h4>
-                        <p class="sub" v-if="categories.length">Tap to add or edit categories</p>
-                        <p class="sub" v-else>No categories yet</p>
+                        <h4>{{ categories.length }} {{ categories.length === 1 ? 'category' : 'categories' }}</h4>
                     </div>
-                    <button class="primary-chip ghost-chip" @click="openAddCategory">
-                        <mdicon name="plus-circle-outline" size="18" />
-                        <span>Add</span>
-                    </button>
+                    <div class="cat-actions" @click.stop>
+                        <button
+                            v-if="!categories.length"
+                            class="primary-chip ghost-chip seed-chip"
+                            :disabled="seedingCategories"
+                            @click="seedDefaultCategories"
+                        >
+                            <mdicon name="star-shooting-outline" size="18" />
+                            <span>{{ seedingCategories ? 'Loading...' : 'Load defaults' }}</span>
+                        </button>
+                        <button class="primary-chip ghost-chip" @click="openAddCategory">
+                            <mdicon name="plus-circle-outline" size="18" />
+                            <span>Add</span>
+                        </button>
+                        <button class="icon-btn ghost cat-chevron" :class="{ open: catListOpen }">
+                            <mdicon name="chevron-down" size="20" />
+                        </button>
+                    </div>
                 </div>
-                <div class="chips">
-                    <span
-                        v-for="cat in categories"
-                        :key="cat.id || cat.name"
-                        class="pill ghost chip-with-icon"
-                        :style="{ borderColor: cat.color || 'var(--text-primary)' }"
-                    >
-                        <mdicon
-                            :name="cat.icon || 'label-outline'"
-                            size="16"
-                            :style="{ color: cat.color || '#475569' }"
-                        />
-                        {{ cat.name }}
-                    </span>
-                </div>
+                <transition name="cat-collapse">
+                    <div v-if="catListOpen" class="cat-collapse-body">
+                        <div class="cat-list" v-if="categories.length">
+                            <div
+                                class="cat-row-item"
+                                v-for="cat in categories"
+                                :key="cat.id || cat.name"
+                            >
+                                <div
+                                    class="icon-circle cat-icon"
+                                    :style="{ background: cat.color || '#475569' }"
+                                >
+                                    <mdicon :name="cat.icon || 'label-outline'" size="18" />
+                                </div>
+                                <span class="cat-row-name">{{ cat.name }}</span>
+                                <div class="cat-row-actions">
+                                    <button
+                                        class="icon-btn ghost small"
+                                        @click="startEditCategory(cat)"
+                                        aria-label="Edit"
+                                    >
+                                        <mdicon name="pencil-outline" size="17" />
+                                    </button>
+                                    <button
+                                        class="icon-btn ghost small danger"
+                                        :disabled="deletingCategoryId === cat.id"
+                                        @click="handleDeleteCategory(cat)"
+                                        aria-label="Delete"
+                                    >
+                                        <mdicon
+                                            :name="deletingCategoryId === cat.id ? 'loading' : 'trash-can-outline'"
+                                            size="17"
+                                        />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <p v-else class="sub" style="margin-top: 8px">No categories yet. Load defaults or add your own.</p>
+                    </div>
+                </transition>
             </div>
 
             <div class="card profile-card slide-up">
@@ -682,12 +719,12 @@
         <div v-if="showAddCategory" class="overlay">
             <div class="sheet" ref="categorySheetRef">
             <div class="sheet-head">
-                <div class="pill ghost">New category</div>
+                <div class="pill ghost">{{ editingCategoryId ? "Edit category" : "New category" }}</div>
                 <button class="icon-btn ghost" @click="closeAddCategory">
                     <mdicon name="close" size="22" />
                 </button>
             </div>
-            <h3 class="sheet-title">Create category</h3>
+            <h3 class="sheet-title">{{ editingCategoryId ? "Edit category" : "Create category" }}</h3>
             <p class="sub">Give it a name, color, and icon so it’s easy to spot in insights.</p>
             <form class="form" @submit.prevent>
                 <label class="field">
@@ -1043,7 +1080,7 @@ export default {
     setup() {
         const router = useRouter()
         const route = useRoute()
-        const { listExpenses, createExpense, deleteExpense, createCategory, listCategories, updateExpense } = useExpenses()
+        const { listExpenses, createExpense, deleteExpense, createCategory, updateCategory, deleteCategory, listCategories, updateExpense } = useExpenses()
         const { listAccounts } = useAccounts()
         const { listCurrencies } = useCurrencies()
         const { listBudgetSummary, listBudgets, createBudget, updateBudget, deleteBudget } = useBudgets()
@@ -1077,6 +1114,8 @@ export default {
             showBudgetSheet.value = false
             showAddCategory.value = true
         }
+        const editingCategoryId = ref(null)
+        const catListOpen = ref(false)
         const categories = ref([])
         const categoriesLoaded = ref(false)
         const accounts = ref([])
@@ -1520,6 +1559,21 @@ export default {
         const deleteError = ref('')
         const deleting = ref(false)
         const showBudgetDeleteConfirm = ref(false)
+        const DEFAULT_CATEGORIES = [
+            { name: 'Food & Dining',    icon: 'food-fork-drink',       color: '#f97316' },
+            { name: 'Groceries',        icon: 'cart-outline',           color: '#22c55e' },
+            { name: 'Transportation',   icon: 'car-wash',               color: '#3b82f6' },
+            { name: 'Housing',          icon: 'home-outline',           color: '#06b6d4' },
+            { name: 'Utilities',        icon: 'lightbulb-on-outline',   color: '#f59e0b' },
+            { name: 'Health & Medical', icon: 'medical-bag',            color: '#ef4444' },
+            { name: 'Entertainment',    icon: 'video-outline',          color: '#8b5cf6' },
+            { name: 'Shopping',         icon: 'bag-personal-outline',   color: '#ec4899' },
+            { name: 'Travel',           icon: 'airplane',               color: '#6366f1' },
+            { name: 'Education',        icon: 'laptop',                 color: '#0ea5e9' },
+            { name: 'Personal Care',    icon: 'dumbbell',               color: '#84cc16' },
+            { name: 'Savings',          icon: 'piggy-bank',             color: '#14b8a6' },
+        ]
+
         const colorPalette = ref([
             '#ef4444', '#f97316', '#f59e0b', '#84cc16',
             '#22c55e', '#14b8a6', '#06b6d4', '#0ea5e9',
@@ -1584,6 +1638,33 @@ export default {
             saveMessage.value = ''
             selectedColor.value = colorPalette.value[9]
             selectedIcon.value = iconOptions.value[0]
+            editingCategoryId.value = null
+        }
+
+        const startEditCategory = (cat) => {
+            editingCategoryId.value = cat.id
+            categoryName.value = cat.name || ''
+            selectedColor.value = cat.color || colorPalette.value[9]
+            selectedIcon.value = cat.icon || iconOptions.value[0]
+            makeDefault.value = cat.isDefault || false
+            saveError.value = ''
+            saveMessage.value = ''
+            showAddCategory.value = true
+        }
+
+        const deletingCategoryId = ref(null)
+        const handleDeleteCategory = async(cat) => {
+            const token = localStorage.getItem('token')
+            if (!token || deletingCategoryId.value) return
+            deletingCategoryId.value = cat.id
+            try {
+                await deleteCategory(token, cat.id)
+                categories.value = categories.value.filter(c => c.id !== cat.id)
+            } catch (err) {
+                console.error(err)
+            } finally {
+                deletingCategoryId.value = null
+            }
         }
 
         const loadCategories = async() => {
@@ -1684,14 +1765,22 @@ export default {
             }
             saving.value = true
             try {
-                const category = await createCategory(token, {
+                const payload = {
                     name: categoryName.value.trim(),
                     color: selectedColor.value,
                     icon: selectedIcon.value,
                     isDefault: makeDefault.value
-                })
-                categories.value = [category, ...categories.value]
-                saveMessage.value = 'Category saved.'
+                }
+                if (editingCategoryId.value) {
+                    const updated = await updateCategory(token, editingCategoryId.value, payload)
+                    const idx = categories.value.findIndex(c => c.id === editingCategoryId.value)
+                    if (idx !== -1) categories.value.splice(idx, 1, updated)
+                    saveMessage.value = 'Category updated.'
+                } else {
+                    const category = await createCategory(token, payload)
+                    categories.value = [category, ...categories.value]
+                    saveMessage.value = 'Category saved.'
+                }
                 setTimeout(() => {
                     closeAddCategory()
                 }, 700)
@@ -1699,6 +1788,29 @@ export default {
                 saveError.value = err?.message || 'Unable to save category.'
             } finally {
                 saving.value = false
+            }
+        }
+
+        const seedingCategories = ref(false)
+        const seedDefaultCategories = async() => {
+            const token = localStorage.getItem('token')
+            if (!token || seedingCategories.value) return
+            seedingCategories.value = true
+            try {
+                const created = []
+                for (const cat of DEFAULT_CATEGORIES) {
+                    try {
+                        const result = await createCategory(token, { ...cat, isDefault: false })
+                        created.push(result)
+                    } catch {
+                        // skip duplicates or errors silently
+                    }
+                }
+                if (created.length) {
+                    categories.value = [...created, ...categories.value]
+                }
+            } finally {
+                seedingCategories.value = false
             }
         }
 
@@ -2313,6 +2425,13 @@ export default {
             saveError,
             saveMessage,
             handleSaveCategory,
+            editingCategoryId,
+            catListOpen,
+            startEditCategory,
+            deletingCategoryId,
+            handleDeleteCategory,
+            seedDefaultCategories,
+            seedingCategories,
             budgets,
             totalBudget,
             currentMonthTotal,

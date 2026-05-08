@@ -103,21 +103,24 @@
 
 .expense-theme .content {
   flex: 1;
-  padding: 6px 14px 80px;
+  padding: 6px 0 80px;
 }
 
 .expense-theme .summary-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
+  gap: 0;
 }
 
 .expense-theme .card {
   background: var(--glass-card-bg);
-  border-radius: 18px;
-  padding: 14px;
-  box-shadow: var(--glass-card-shadow);
-  border: 1px solid var(--glass-card-border);
+  border-radius: 0;
+  padding: 14px 16px;
+  box-shadow: none;
+  border-top: 1px solid var(--glass-card-border);
+  border-bottom: 1px solid var(--glass-card-border);
+  border-left: none;
+  border-right: none;
 }
 
 .expense-theme .card.primary {
@@ -169,7 +172,7 @@
   border-radius: 999px;
   background: linear-gradient(135deg, var(--accent-1), var(--accent-4));
   color: #0b1020;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   box-shadow: 0 8px 18px rgba(79, 70, 229, 0.28);
 }
@@ -187,6 +190,101 @@
   box-shadow: none;
 }
 
+.expense-theme .cat-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.expense-theme .cat-chevron {
+  transition: transform 0.25s ease;
+}
+
+.expense-theme .cat-chevron.open {
+  transform: rotate(180deg);
+}
+
+.expense-theme .cat-collapse-body {
+  overflow: hidden;
+  margin-top: 14px;
+}
+
+.cat-collapse-enter-active,
+.cat-collapse-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.cat-collapse-enter-from,
+.cat-collapse-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.expense-theme .cat-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.expense-theme .seed-chip {
+  background: rgba(103, 232, 249, 0.08);
+  border-color: rgba(103, 232, 249, 0.35);
+  color: #67e8f9;
+}
+
+.expense-theme .seed-chip:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.expense-theme .cat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.expense-theme .cat-row-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-radius: 12px;
+  transition: background 0.15s ease;
+}
+
+.expense-theme .cat-row-item:not(:last-child) {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.expense-theme .cat-icon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  color: #fff;
+}
+
+.expense-theme .cat-row-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expense-theme .cat-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 .expense-theme .section {
   margin-top: 16px;
 }
@@ -196,6 +294,7 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
+  padding: 0 16px;
 }
 
 .expense-theme .section-head h4 {
@@ -214,7 +313,7 @@
 
 .expense-theme .list {
   display: grid;
-  gap: 10px;
+  gap: 0;
 }
 
 .expense-theme .item {
@@ -222,11 +321,15 @@
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 12px;
-  padding: 12px;
+  padding: 12px 16px;
   background: var(--glass-card-bg);
-  border-radius: 14px;
-  box-shadow: var(--glass-card-shadow);
-  border: 1px solid var(--glass-card-border);
+  border-radius: 0;
+  box-shadow: none;
+  border-top: 1px solid var(--glass-card-border);
+  border-bottom: 1px solid var(--glass-card-border);
+  border-left: none;
+  border-right: none;
+  margin-top: -1px;
 }
 
 .expense-theme .item.compact-item {
@@ -258,7 +361,7 @@
 
 .expense-theme .item-sub {
   margin: 2px 0 0;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
 }
 
@@ -276,7 +379,7 @@
 .expense-theme .pill {
   padding: 6px 10px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -382,11 +485,14 @@
   grid-template-columns: 1fr 90px;
   gap: 10px;
   align-items: center;
-  padding: 10px 12px;
-  border: 1px solid var(--glass-card-border);
-  border-radius: 14px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--glass-card-border);
+  border-bottom: 1px solid var(--glass-card-border);
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
   background: var(--glass-card-bg);
-  box-shadow: var(--glass-card-shadow);
+  box-shadow: none;
 }
 
 .expense-theme .budget-pill-progress {
@@ -411,6 +517,7 @@
   margin-bottom: 10px;
   color: var(--text-muted);
   width: 100%;
+  padding: 0 16px;
 }
 
 .expense-theme .months {
@@ -440,10 +547,13 @@
   grid-template-columns: repeat(3, 1fr);
   align-items: center;
   background: var(--glass-card-bg);
-  border: 1px solid var(--glass-card-border);
-  border-radius: 14px;
-  padding: 10px;
-  box-shadow: var(--glass-card-shadow);
+  border-top: 1px solid var(--glass-card-border);
+  border-bottom: 1px solid var(--glass-card-border);
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
+  padding: 10px 16px;
+  box-shadow: none;
   gap: 8px;
 }
 
@@ -505,6 +615,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 14px;
+  padding: 0 16px;
 }
 
 .expense-theme .insight-card {
@@ -534,10 +645,13 @@
 
 .expense-theme .insight-block {
   background: var(--glass-card-bg);
-  border-radius: 16px;
-  border: 1px solid var(--glass-card-border);
-  box-shadow: var(--glass-card-shadow);
-  padding: 14px;
+  border-radius: 0;
+  border-top: 1px solid var(--glass-card-border);
+  border-bottom: 1px solid var(--glass-card-border);
+  border-left: none;
+  border-right: none;
+  box-shadow: none;
+  padding: 14px 16px;
   display: grid;
   gap: 10px;
 }
@@ -548,11 +662,14 @@
       radial-gradient(circle at 80% 0%, rgba(236, 72, 153, 0.18), transparent 50%),
       var(--glass-card-bg);
   color: var(--text-primary);
-  border-radius: 18px;
+  border-radius: 0;
   padding: 16px;
   overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--glass-card-border);
+  box-shadow: none;
+  border-top: 1px solid var(--glass-card-border);
+  border-bottom: 1px solid var(--glass-card-border);
+  border-left: none;
+  border-right: none;
 }
 
 .expense-theme .hero-insights h2 {
@@ -743,14 +860,17 @@
 
 .expense-theme .hero-schedules {
   background: var(--glass-card-bg);
-  border: 1px solid var(--glass-card-border);
-  border-radius: 18px;
-  padding: 14px;
+  border-top: 1px solid var(--glass-card-border);
+  border-bottom: 1px solid var(--glass-card-border);
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  box-shadow: var(--glass-card-shadow);
+  box-shadow: none;
 }
 
 .expense-theme .hero-schedules h2 {
@@ -768,6 +888,7 @@
 .expense-theme .schedule-toggle {
   display: flex;
   gap: 10px;
+  padding: 0 16px;
 }
 
 .expense-theme .schedule-toggle .toggle-pill {
@@ -777,17 +898,21 @@
 
 .expense-theme .schedule-list {
   display: grid;
-  gap: 10px;
+  gap: 0;
 }
 
 .expense-theme .schedule-card {
   background: var(--glass-card-bg);
-  border: 1px solid var(--glass-card-border);
-  border-radius: 14px;
-  padding: 12px;
-  box-shadow: var(--glass-card-shadow);
+  border-top: 1px solid var(--glass-card-border);
+  border-bottom: 1px solid var(--glass-card-border);
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
+  padding: 12px 16px;
+  box-shadow: none;
   display: grid;
   gap: 8px;
+  margin-top: -1px;
 }
 
 .expense-theme .schedule-row {
@@ -808,7 +933,7 @@
   padding: 6px 10px;
   border-radius: 999px;
   font-weight: 800;
-  font-size: 12px;
+  font-size: 13px;
   background: var(--glass-ghost-bg);
   border: 1px solid var(--glass-card-border);
   color: var(--text-primary);
@@ -1062,12 +1187,16 @@
 .expense-theme .hero {
   background: linear-gradient(135deg, #0f172a, #1e293b);
   color: var(--text-primary);
-  border-radius: 18px;
+  border-radius: 0;
   padding: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.35);
+  box-shadow: none;
+  border-top: 1px solid var(--glass-card-border);
+  border-bottom: 1px solid var(--glass-card-border);
+  border-left: none;
+  border-right: none;
 }
 
 .expense-theme .hero h2 {

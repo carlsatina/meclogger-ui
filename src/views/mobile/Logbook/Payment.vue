@@ -21,82 +21,138 @@
     />
 
     <section class="logbook-section">
-        <div class="glass-card balance-card">
-            <div class="balance-item">
-                <span>Mama running balance</span>
-                <strong>{{ formatMoney(balances.mama) }}</strong>
+
+        <!-- Balance summary -->
+        <div class="pmt-balances">
+            <div class="pmt-balance-block">
+                <div class="pmt-balance-icon mama-icon">
+                    <mdicon name="account-outline" size="18" />
+                </div>
+                <span class="pmt-balance-label">Mama</span>
+                <strong class="pmt-balance-amount">{{ formatMoney(balances.mama) }}</strong>
             </div>
-            <div class="balance-item">
-                <span>RC running balance</span>
-                <strong>{{ formatMoney(balances.rc) }}</strong>
+            <div class="pmt-balance-divider"></div>
+            <div class="pmt-balance-block">
+                <div class="pmt-balance-icon rc-icon">
+                    <mdicon name="account-outline" size="18" />
+                </div>
+                <span class="pmt-balance-label">RC</span>
+                <strong class="pmt-balance-amount">{{ formatMoney(balances.rc) }}</strong>
             </div>
-            <div class="balance-item balance-total">
-                <span>Total balance</span>
-                <strong>{{ formatMoney(balances.total) }}</strong>
+            <div class="pmt-balance-divider"></div>
+            <div class="pmt-balance-block total-block">
+                <div class="pmt-balance-icon total-icon">
+                    <mdicon name="sigma" size="18" />
+                </div>
+                <span class="pmt-balance-label">Total</span>
+                <strong class="pmt-balance-amount total-amount">{{ formatMoney(balances.total) }}</strong>
             </div>
         </div>
-        <article class="glass-card logbook-form">
-            <label class="form-field">
-                <span>Date</span>
-                <input type="date" v-model="form.date" />
-            </label>
 
-            <div class="form-row">
-                <label class="form-field">
-                    <span>Main category</span>
-                    <select v-model="form.mainCategory">
-                        <option value="" disabled>Select category</option>
-                        <option v-for="cat in mainCategories" :key="cat" :value="cat">{{ cat }}</option>
-                    </select>
-                </label>
+        <!-- Entry form -->
+        <article class="glass-card pmt-form">
 
-                <label class="form-field">
-                    <span>Sub category</span>
-                    <select v-model="form.subCategory" :disabled="!form.mainCategory">
-                        <option value="" disabled>
-                            {{ form.mainCategory ? 'Select sub category' : 'Select main category first' }}
-                        </option>
-                        <option v-for="sub in subCategories" :key="sub" :value="sub">{{ sub }}</option>
-                    </select>
-                </label>
+            <!-- Amount — prominent -->
+            <div class="pmt-amount-wrap">
+                <span class="pmt-currency">₱</span>
+                <input
+                    class="pmt-amount-input"
+                    type="number"
+                    step="0.01"
+                    v-model="form.amount"
+                    placeholder="0.00"
+                    inputmode="decimal"
+                />
             </div>
 
-            <div v-if="renterVisible" class="form-row">
-                <label class="form-field">
-                    <span>Renter</span>
-                    <select v-model="form.renterId" :disabled="renterLoading">
+            <!-- Date -->
+            <label class="pmt-field">
+                <span class="pmt-label">
+                    <mdicon name="calendar-outline" size="15" />
+                    Date
+                </span>
+                <input class="pmt-input" type="date" v-model="form.date" />
+            </label>
+
+            <!-- Main category chips -->
+            <div class="pmt-field">
+                <span class="pmt-label">
+                    <mdicon name="tag-outline" size="15" />
+                    Category
+                </span>
+                <div class="pmt-chip-row">
+                    <button
+                        v-for="cat in mainCategories"
+                        :key="cat"
+                        type="button"
+                        class="pmt-chip"
+                        :class="{ active: form.mainCategory === cat }"
+                        @click="selectMain(cat)"
+                    >{{ cat }}</button>
+                </div>
+            </div>
+
+            <!-- Sub category chips -->
+            <div v-if="subCategories.length" class="pmt-field">
+                <span class="pmt-label">
+                    <mdicon name="tag-multiple-outline" size="15" />
+                    Sub category
+                </span>
+                <div class="pmt-chip-row">
+                    <button
+                        v-for="sub in subCategories"
+                        :key="sub"
+                        type="button"
+                        class="pmt-chip"
+                        :class="{ active: form.subCategory === sub }"
+                        @click="form.subCategory = sub"
+                    >{{ sub }}</button>
+                </div>
+            </div>
+
+            <!-- Renter + Month (contextual) -->
+            <div v-if="renterVisible" class="pmt-field-row">
+                <label class="pmt-field">
+                    <span class="pmt-label">
+                        <mdicon name="account-outline" size="15" />
+                        Renter
+                    </span>
+                    <select class="pmt-input" v-model="form.renterId" :disabled="renterLoading">
                         <option value="" disabled>
-                            {{ renterLoading ? 'Loading renters…' : 'Select renter' }}
+                            {{ renterLoading ? 'Loading…' : 'Select renter' }}
                         </option>
                         <option v-for="renter in filteredRenters" :key="renter.id" :value="renter.id">
                             {{ renterLabel(renter) }}
                         </option>
                     </select>
                 </label>
-
-                <label class="form-field">
-                    <span>Month paid</span>
-                    <select v-model="form.monthPaid">
+                <label class="pmt-field">
+                    <span class="pmt-label">
+                        <mdicon name="calendar-month-outline" size="15" />
+                        Month paid
+                    </span>
+                    <select class="pmt-input" v-model="form.monthPaid">
                         <option value="" disabled>Select month</option>
                         <option v-for="month in monthOptions" :key="month" :value="month">{{ month }}</option>
                     </select>
                 </label>
             </div>
 
-                <label class="form-field">
-                    <span>Amount</span>
-                    <input type="number" step="0.01" v-model="form.amount" placeholder="0.00" />
-                </label>
-
-            <label class="form-field">
-                <span>Description</span>
-                <textarea rows="3" v-model="form.description" placeholder="Add a note"></textarea>
+            <!-- Description -->
+            <label class="pmt-field">
+                <span class="pmt-label">
+                    <mdicon name="note-text-outline" size="15" />
+                    Description
+                </span>
+                <textarea class="pmt-input pmt-textarea" rows="2" v-model="form.description" placeholder="Add a note"></textarea>
             </label>
-            <div class="form-actions">
-                <button class="glass-btn-primary" type="button" :disabled="saving || !amountValid" @click="savePayment()">
+
+            <div class="pmt-actions">
+                <button class="glass-btn-primary pmt-save-btn" type="button" :disabled="saving || !amountValid" @click="savePayment()">
+                    <mdicon name="content-save-outline" size="18" />
                     {{ saving ? 'Saving…' : 'Save payment' }}
                 </button>
-                <span v-if="saveError" class="error-text">{{ saveError }}</span>
+                <span v-if="saveError" class="error-text pmt-error">{{ saveError }}</span>
             </div>
         </article>
     </section>
@@ -210,20 +266,19 @@ export default {
         }
 
         const subCategories = computed(() => subCategoryMap[form.value.mainCategory] || [])
+
         const monthOptions = [
-            'January',
-            'February',
-            'March',
-            'April',
-            'May',
-            'June',
-            'July',
-            'August',
-            'September',
-            'October',
-            'November',
-            'December'
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
         ]
+
+        const selectMain = (cat) => {
+            if (form.value.mainCategory === cat) {
+                form.value.mainCategory = ''
+                return
+            }
+            form.value.mainCategory = cat
+        }
 
         const renterLabel = (renter) => {
             const first = renter.firstName || ''
@@ -249,15 +304,9 @@ export default {
         const filteredRenters = computed(() => {
             const category = form.value.mainCategory
             if (!renterEnabled.value) return []
-            if (category === 'Fuji View') {
-                return renters.value.filter(renter => isApartmentMatch(renter, 'fuji view'))
-            }
-            if (category === 'Yellow Fantasy') {
-                return renters.value.filter(renter => isApartmentMatch(renter, 'yellow fantasy'))
-            }
-            if (category === 'Parking') {
-                return renters.value.filter(renter => isApartmentMatch(renter, 'parking'))
-            }
+            if (category === 'Fuji View') return renters.value.filter(r => isApartmentMatch(r, 'fuji view'))
+            if (category === 'Yellow Fantasy') return renters.value.filter(r => isApartmentMatch(r, 'yellow fantasy'))
+            if (category === 'Parking') return renters.value.filter(r => isApartmentMatch(r, 'parking'))
             return renters.value
         })
 
@@ -267,7 +316,7 @@ export default {
                 if (!subCategories.value.includes(form.value.subCategory)) {
                     form.value.subCategory = ''
                 }
-                if (!renterVisible.value || !filteredRenters.value.some(renter => renter.id === form.value.renterId)) {
+                if (!renterVisible.value || !filteredRenters.value.some(r => r.id === form.value.renterId)) {
                     form.value.renterId = ''
                 }
             }
@@ -275,22 +324,17 @@ export default {
 
         watch(
             () => renterVisible.value,
-            (visible) => {
-                if (!visible) {
-                    form.value.monthPaid = ''
-                }
-            }
+            (visible) => { if (!visible) form.value.monthPaid = '' }
         )
 
         const amountValid = computed(() => {
             if (form.value.amount === '' || form.value.amount === null || form.value.amount === undefined) return false
-            const amountValue = Number(form.value.amount)
-            return !Number.isNaN(amountValue)
+            return !Number.isNaN(Number(form.value.amount))
         })
 
         const hasContent = computed(() => {
             const textFilled = [form.value.mainCategory, form.value.subCategory, form.value.description]
-                .some(value => String(value || '').trim().length > 0)
+                .some(v => String(v || '').trim().length > 0)
             return amountValid.value || textFilled
         })
 
@@ -332,18 +376,13 @@ export default {
         const isGroupA = (item) => {
             const main = normalize(item.mainCategory)
             const sub = normalize(item.subCategory)
-            const mama = main === 'mama expense' || sub.startsWith('mama')
-            const yellowFantasy = main === 'yellow fantasy'
-            const parking = main === 'parking'
-            return mama || yellowFantasy || parking
+            return main === 'mama expense' || sub.startsWith('mama') || main === 'yellow fantasy' || main === 'parking'
         }
 
         const isGroupB = (item) => {
             const main = normalize(item.mainCategory)
             const sub = normalize(item.subCategory)
-            const rc = main === 'rc expense' || sub.startsWith('rc')
-            const fuji = main === 'fuji' || main === 'fuji view'
-            return rc || fuji
+            return main === 'rc expense' || sub.startsWith('rc') || main === 'fuji' || main === 'fuji view'
         }
 
         const loadBalances = async () => {
@@ -364,7 +403,7 @@ export default {
                 const mama = sum(items.filter(isGroupA))
                 const rc = sum(items.filter(isGroupB))
                 balances.value = { mama, rc, total: mama + rc }
-            } catch (err) {
+            } catch {
                 balances.value = { mama: 0, rc: 0, total: 0 }
             } finally {
                 balanceLoading.value = false
@@ -400,18 +439,14 @@ export default {
                     body: JSON.stringify(payload)
                 })
                 const data = await res.json()
-                if (!res.ok) {
-                    throw new Error(data?.message || 'Unable to save payment')
-                }
+                if (!res.ok) throw new Error(data?.message || 'Unable to save payment')
                 paymentId.value = ''
                 form.value = defaultForm()
                 saveError.value = ''
                 toastMessage.value = 'Payment has been saved.'
                 showToast.value = true
                 if (toastTimer) clearTimeout(toastTimer)
-                toastTimer = setTimeout(() => {
-                    showToast.value = false
-                }, 3000)
+                toastTimer = setTimeout(() => { showToast.value = false }, 3000)
                 loadBalances()
             } catch (err) {
                 saveError.value = err?.message || 'Unable to save payment'
@@ -427,14 +462,12 @@ export default {
         watch(
             () => form.value.amount,
             () => {
-                if (amountValid.value && saveError.value === 'Amount is required.') {
-                    saveError.value = ''
-                }
+                if (amountValid.value && saveError.value === 'Amount is required.') saveError.value = ''
             }
         )
 
         const updateAutoDescription = () => {
-            const renter = renters.value.find(item => item.id === form.value.renterId)
+            const renter = renters.value.find(r => r.id === form.value.renterId)
             const isRental = form.value.subCategory === 'Rental'
             const isParking = form.value.mainCategory === 'Parking'
             if ((isRental || isParking) && renter) {
@@ -448,9 +481,7 @@ export default {
                 lastAutoDescription.value = autoText
                 return
             }
-            if (form.value.description === lastAutoDescription.value) {
-                form.value.description = ''
-            }
+            if (form.value.description === lastAutoDescription.value) form.value.description = ''
             lastAutoDescription.value = ''
         }
 
@@ -484,6 +515,7 @@ export default {
             saving,
             saveError,
             savePayment,
+            selectMain,
             amountValid,
             showToast,
             toastMessage,
@@ -503,3 +535,221 @@ export default {
 </script>
 
 <style scoped src="@/assets/styles/logbook/subpage-mobile.css"></style>
+
+<style scoped>
+/* Balance summary */
+.pmt-balances {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: stretch;
+    background: var(--glass-card-bg);
+    border-top: 1px solid var(--glass-card-border);
+    border-bottom: 1px solid var(--glass-card-border);
+    backdrop-filter: blur(16px);
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.pmt-balance-block {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 14px 10px;
+}
+
+.pmt-balance-divider {
+    width: 1px;
+    background: var(--glass-card-border);
+    margin: 12px 0;
+}
+
+.pmt-balance-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+}
+
+.mama-icon {
+    background: rgba(34, 197, 94, 0.18);
+    color: #16a34a;
+}
+
+.rc-icon {
+    background: rgba(56, 189, 248, 0.18);
+    color: #0284c7;
+}
+
+.total-icon {
+    background: rgba(168, 85, 247, 0.18);
+    color: #9333ea;
+}
+
+.pmt-balance-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+}
+
+.pmt-balance-amount {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.total-block .pmt-balance-amount {
+    font-size: 15px;
+    background: linear-gradient(135deg, #a855f7, #38bdf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Form card */
+.pmt-form {
+    display: grid;
+    gap: 16px;
+    padding: 18px 16px;
+}
+
+/* Amount */
+.pmt-amount-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 0 4px;
+}
+
+.pmt-currency {
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--text-muted);
+    line-height: 1;
+}
+
+.pmt-amount-input {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--glass-card-border);
+    border-radius: 0;
+    padding: 4px 8px;
+    color: var(--text-primary);
+    font-size: 36px;
+    font-weight: 700;
+    width: 100%;
+    max-width: 240px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.18s ease;
+}
+
+.pmt-amount-input:focus {
+    border-bottom-color: #38bdf8;
+}
+
+.pmt-amount-input::placeholder {
+    color: var(--text-muted);
+    font-weight: 300;
+}
+
+/* Fields */
+.pmt-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pmt-field-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.pmt-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.pmt-input {
+    background: var(--glass-ghost-bg);
+    border: 1px solid var(--glass-card-border);
+    border-radius: 12px;
+    padding: 11px 14px;
+    color: var(--text-primary);
+    font-size: 15px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.pmt-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pmt-textarea {
+    resize: none;
+    font-family: inherit;
+}
+
+/* Category chips */
+.pmt-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pmt-chip {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--glass-card-border);
+    background: var(--glass-ghost-bg);
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+}
+
+.pmt-chip.active {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(34, 197, 94, 0.2));
+    border-color: rgba(56, 189, 248, 0.5);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Save button */
+.pmt-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 4px;
+}
+
+.pmt-save-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px 16px;
+    font-size: 15px;
+}
+
+.pmt-error {
+    font-size: 13px;
+    text-align: center;
+}
+</style>

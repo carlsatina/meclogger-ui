@@ -183,7 +183,7 @@ export default {
 .home-shell {
     position: relative;
     min-height: 100vh;
-    padding: 18px 16px 80px;
+    padding: 0 0 80px;
     background: var(--home-bg-mobile);
     color: var(--text-primary);
     overflow: hidden;
@@ -217,7 +217,7 @@ export default {
     z-index: 1;
     display: grid;
     gap: 10px;
-    padding: 14px 12px 6px;
+    padding: 14px 16px 10px;
 }
 
 .hero-top {
@@ -327,19 +327,21 @@ export default {
 
 .glass-card {
     background: var(--glass-card-bg);
-    border: 1px solid var(--glass-card-border);
-    border-radius: 16px;
-    padding: 14px;
-    box-shadow: var(--glass-card-shadow);
+    border-radius: 0;
+    border-top: 1px solid var(--glass-card-border);
+    border-bottom: 1px solid var(--glass-card-border);
+    border-left: none;
+    border-right: none;
+    box-shadow: none;
+    padding: 14px 16px;
     cursor: pointer;
     display: grid;
     gap: 10px;
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    transition: background 0.18s ease;
 }
 
-.glass-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(94, 234, 212, 0.5);
+.glass-card:active {
+    background: var(--glass-ghost-bg);
 }
 
 .glass-card .chip {

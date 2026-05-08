@@ -9,11 +9,12 @@
                 @click="handleBack"
                 class="back-button"
             />
-            <div v-if="profileName" class="profile-chip main">
+            <div v-if="profileName" class="profile-chip main" @click="$emit('profile-click')">
                 <div class="profile-avatar">
                     <mdicon name="account-circle" :size="26"/>
                 </div>
                 <span>{{ profileName }}</span>
+                <mdicon name="chevron-down" :size="14" class="chip-caret"/>
             </div>
             <div v-else class="title-wrapper">
                 <h2 class="title">{{ title }}</h2>
@@ -31,6 +32,7 @@ import { useRouter } from 'vue-router'
 
 export default {
     name: "MedicalRecordsTopBar",
+    emits: ['profile-click'],
     props: {
         title: {
             type: String,
@@ -154,5 +156,17 @@ export default {
 .profile-chip.main {
     padding: 6px 14px;
     font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.profile-chip.main:active {
+    background: rgba(255,255,255,0.12);
+    transform: scale(0.97);
+}
+
+.chip-caret {
+    color: var(--text-muted);
+    margin-left: 2px;
 }
 </style>

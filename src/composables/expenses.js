@@ -95,12 +95,46 @@ export const useExpenses = () => {
         return data.categories || data.data || []
     }
 
+    const updateCategory = async(token, id, payload) => {
+        if (!token) throw new Error('Missing auth token')
+        const res = await fetch(`${API_BASE_URL}/api/v1/expenses/categories/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        })
+        const data = await res.json()
+        if (!res.ok) {
+            throw new Error(data.message || 'Unable to update category')
+        }
+        return data.category
+    }
+
+    const deleteCategory = async(token, id) => {
+        if (!token) throw new Error('Missing auth token')
+        const res = await fetch(`${API_BASE_URL}/api/v1/expenses/categories/${id}`, {
+            method: 'DELETE',
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+        const data = await res.json()
+        if (!res.ok) {
+            throw new Error(data.message || 'Unable to delete category')
+        }
+        return true
+    }
+
     return {
         listExpenses,
         createExpense,
         updateExpense,
         deleteExpense,
         createCategory,
+        updateCategory,
+        deleteCategory,
         listCategories
     }
 }

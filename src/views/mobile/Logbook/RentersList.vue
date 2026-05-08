@@ -11,50 +11,70 @@
     />
 
     <section class="logbook-section">
-        <div class="section-head">
-            <h3>Renters</h3>
-            <p>Active and inactive renters.</p>
+        <div class="rl-toolbar">
+            <div class="rl-count-label">
+                <span v-if="!loading">{{ filteredRenters.length }} renter{{ filteredRenters.length !== 1 ? 's' : '' }}</span>
+            </div>
+            <div class="table-search rl-search">
+                <mdicon name="magnify" size="18" class="rl-search-icon" />
+                <input v-model="search" type="text" placeholder="Search renters" />
+            </div>
         </div>
-        <div class="table-search">
-            <input v-model="search" type="text" placeholder="Search renters" />
-        </div>
+
         <div v-if="loading" class="glass-card empty-state">Loading renters…</div>
         <div v-else-if="error" class="glass-card empty-state error-text">{{ error }}</div>
-        <div v-else class="renter-list">
-            <article v-for="renter in filteredRenters" :key="renter.id" class="glass-card renter-card">
-                <div class="renter-head">
-                    <div>
-                        <h3>{{ renterName(renter) }}</h3>
-                        <p>{{ renter.apartment || '—' }}</p>
+        <div v-else class="rl-list">
+            <article v-for="renter in filteredRenters" :key="renter.id" class="glass-card rl-card">
+
+                <!-- Header row: avatar + name + status + edit -->
+                <div class="rl-card-head">
+                    <div class="rl-avatar" :class="statusClass(renter.status)">
+                        {{ initials(renter) }}
                     </div>
-                    <div class="status-group">
+                    <div class="rl-identity">
+                        <h3 class="rl-name">{{ renterName(renter) }}</h3>
+                        <p class="rl-unit">{{ renter.apartment || 'No unit specified' }}</p>
+                    </div>
+                    <div class="rl-head-right">
                         <span class="status-pill" :class="statusClass(renter.status)">
                             {{ formatStatus(renter.status) }}
                         </span>
-                        <button class="status-edit-btn" type="button" @click="goToEdit(renter)" aria-label="Edit renter">
-                            <mdicon name="pencil-outline" size="14" />
+                        <button class="glass-btn-ghost rl-edit-btn" type="button" @click="goToEdit(renter)">
+                            <mdicon name="pencil-outline" size="16" />
+                            <span>Edit</span>
                         </button>
                     </div>
                 </div>
-                <div class="renter-row">
-                    <span>Contact</span>
-                    <span>{{ renter.contactNo || '—' }}</span>
+
+                <!-- Detail rows with icons -->
+                <div class="rl-details">
+                    <div class="rl-detail-row" v-if="renter.contactNo">
+                        <mdicon name="phone-outline" size="16" class="rl-detail-icon" />
+                        <span>{{ renter.contactNo }}</span>
+                    </div>
+                    <div class="rl-detail-row" v-if="renter.email">
+                        <mdicon name="email-outline" size="16" class="rl-detail-icon" />
+                        <span>{{ renter.email }}</span>
+                    </div>
+                    <div class="rl-detail-row">
+                        <mdicon name="cash-multiple" size="16" class="rl-detail-icon" />
+                        <span class="rl-rental-amount">{{ formatMoney(renter.rentalAmount) }}<span class="rl-per-mo"> / mo</span></span>
+                    </div>
+                    <div class="rl-detail-row" v-if="renter.transferDate">
+                        <mdicon name="calendar-outline" size="16" class="rl-detail-icon" />
+                        <span>Transfer: {{ formatDate(renter.transferDate) }}</span>
+                    </div>
                 </div>
-                <div class="renter-row">
-                    <span>Email</span>
-                    <span>{{ renter.email || '—' }}</span>
-                </div>
-                <div class="renter-row">
-                    <span>Rental</span>
-                    <span>{{ formatMoney(renter.rentalAmount) }}</span>
-                </div>
-                <div class="renter-row">
-                    <span>Transfer</span>
-                    <span>{{ formatDate(renter.transferDate) }}</span>
-                </div>
-                <p class="remarks" v-if="renter.remarks">{{ renter.remarks }}</p>
+
+                <p class="rl-remarks" v-if="renter.remarks">
+                    <mdicon name="note-text-outline" size="14" />
+                    {{ renter.remarks }}
+                </p>
             </article>
-            <div v-if="!filteredRenters.length" class="glass-card empty-state">No renters yet.</div>
+
+            <div v-if="!filteredRenters.length" class="glass-card empty-state">
+                {{ search ? 'No renters match your search.' : 'No renters yet.' }}
+            </div>
         </div>
     </section>
 
@@ -81,6 +101,15 @@ export default {
         const loading = ref(false)
         const error = ref('')
         const search = ref('')
+
+        const initials = (renter) => {
+            const first = (renter.firstName || '').trim()
+            const last = (renter.lastName || '').trim()
+            if (first && last) return (first[0] + last[0]).toUpperCase()
+            if (first) return first.slice(0, 2).toUpperCase()
+            if (last) return last.slice(0, 2).toUpperCase()
+            return '?'
+        }
 
         const renterName = (renter) => {
             const first = renter.firstName || ''
@@ -156,6 +185,7 @@ export default {
             loading,
             error,
             search,
+            initials,
             renterName,
             formatDate,
             formatMoney,

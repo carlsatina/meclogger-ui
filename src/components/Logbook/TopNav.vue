@@ -81,7 +81,8 @@ export default {
 }
 
 .logbook-top-nav.mobile {
-  padding: 14px 16px;
+  padding: 10px 14px;
+  gap: 10px;
 }
 
 .icon-btn {
@@ -96,10 +97,20 @@ export default {
   cursor: pointer;
 }
 
+.logbook-top-nav.mobile .icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+
 .title-group {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.logbook-top-nav.mobile .title-group {
+  gap: 1px;
 }
 
 .eyebrow {
@@ -110,6 +121,10 @@ export default {
   color: var(--text-muted);
 }
 
+.logbook-top-nav.mobile .eyebrow {
+  display: none;
+}
+
 .title {
   margin: 0;
   font-size: 22px;
@@ -117,7 +132,8 @@ export default {
 }
 
 .logbook-top-nav.mobile .title {
-  font-size: 18px;
+  font-size: 16px;
+  letter-spacing: -0.2px;
 }
 
 .sub {
@@ -127,7 +143,7 @@ export default {
 }
 
 .logbook-top-nav.mobile .sub {
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .nav-icon {
@@ -142,8 +158,10 @@ export default {
 }
 
 .logbook-top-nav.mobile .nav-icon {
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  box-shadow: 0 6px 12px rgba(34, 197, 94, 0.2);
 }
 
 .nav-action {
@@ -165,7 +183,8 @@ export default {
 }
 
 .logbook-top-nav.mobile .nav-action-btn {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
 }
 </style>
