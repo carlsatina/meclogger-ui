@@ -3,17 +3,18 @@
     <div class="car-orb one"></div>
     <div class="car-orb two"></div>
     <div class="car-hero">
-        <span class="car-icon-btn ghost"></span>
         <div>
             <h2 class="car-hero-title">Maintenance Schedules</h2>
             <p class="car-hero-sub">Never miss a service</p>
         </div>
-        <button class="car-icon-btn" @click="goBack">
-            <mdicon name="home" :size="22"/>
-        </button>
-        <button class="car-icon-btn" @click="toggleNotifications">
-            <mdicon name="bell-outline" :size="20"/>
-        </button>
+        <div class="car-hero-actions">
+            <button class="car-icon-btn" @click="goBack">
+                <mdicon name="home" :size="22"/>
+            </button>
+            <button class="car-icon-btn" @click="toggleNotifications">
+                <mdicon name="bell-outline" :size="20"/>
+            </button>
+        </div>
     </div>
 
     <div v-if="showNotificationsPanel" class="car-notif-overlay" @click.self="showNotificationsPanel = false">

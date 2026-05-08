@@ -163,10 +163,10 @@ export default {
 .add-record-container {
     min-height: 100vh;
     background: var(--bg-main);
-    padding: 16px;
+    padding: 16px 0;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 0;
     position: relative;
     overflow: hidden;
 }
@@ -198,7 +198,7 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 0;
+    padding: 8px 16px;
     position: relative;
     z-index: 1;
 }
@@ -228,12 +228,16 @@ export default {
 
 .card {
     background: rgba(255,255,255,0.05);
-    border-radius: 18px;
-    padding: 18px;
-    box-shadow: 0 14px 30px rgba(0,0,0,0.35);
-    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0;
+    padding: 18px 16px;
+    box-shadow: none;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-left: none;
+    border-right: none;
     position: relative;
     z-index: 1;
+    margin-top: -1px;
 }
 
 .card-header {
@@ -252,7 +256,7 @@ export default {
 
 .card-subtitle {
     margin: 4px 0 0;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-muted);
 }
 
@@ -270,7 +274,7 @@ export default {
 
 .weight-input label {
     display: block;
-    font-size: 12px;
+    font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: var(--text-muted);
@@ -349,8 +353,13 @@ export default {
     gap: 16px;
 }
 
+.measurement-card {
+    margin-top: 8px !important;
+}
+
 .save-btn {
-    margin-top: auto;
+    width: calc(100% - 32px);
+    margin: 10px 16px 0;
 }
 
 .profile-chip {

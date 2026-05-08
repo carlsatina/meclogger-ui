@@ -3,14 +3,13 @@
     <div class="car-orb one"></div>
     <div class="car-orb two"></div>
     <div class="car-hero">
-        <button class="car-icon-btn" @click="goBack">
-            <mdicon name="chevron-left" :size="22"/>
-        </button>
         <div>
             <h2 class="car-hero-title">Settings</h2>
             <p class="car-hero-sub">Personalize your maintenance</p>
         </div>
-        <span class="car-icon-btn ghost"></span>
+        <button class="car-icon-btn" @click="goHome">
+            <mdicon name="home" :size="22"/>
+        </button>
     </div>
 
     <div class="car-body settings-body">
@@ -146,7 +145,7 @@ export default {
         }
 
         const goBack = () => router.back()
-        const goHome = () => router.push('/car-maintenance')
+        const goHome = () => router.push('/')
         const goSchedules = () => router.push('/car-maintenance/schedules')
         const goVehicles = () => router.push('/car-maintenance/vehicles')
 

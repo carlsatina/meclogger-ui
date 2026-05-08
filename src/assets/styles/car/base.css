@@ -83,6 +83,12 @@
   border-color: transparent;
 }
 
+.car-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .car-body {
   padding: 16px 0;
   display: flex;

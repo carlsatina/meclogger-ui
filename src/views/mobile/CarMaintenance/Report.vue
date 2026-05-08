@@ -3,7 +3,6 @@
     <div class="car-orb one"></div>
     <div class="car-orb two"></div>
     <div class="car-hero">
-        <span class="car-icon-btn ghost"></span>
         <div>
             <h2 class="car-hero-title">Report</h2>
             <p class="car-hero-sub">Service cost breakdown</p>

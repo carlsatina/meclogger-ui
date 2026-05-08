@@ -255,10 +255,10 @@ export default {
 .add-illness-container {
     min-height: 100vh;
     background: var(--bg-main);
-    padding: 16px;
+    padding: 16px 0;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 0;
     position: relative;
     overflow: hidden;
 }
@@ -293,7 +293,7 @@ export default {
     gap: 10px;
     position: relative;
     z-index: 1;
-    padding: 8px 0;
+    padding: 8px 16px;
 }
 
 .back-btn {
@@ -328,10 +328,14 @@ h2 {
     position: relative;
     z-index: 1;
     background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
     padding: 16px;
-    box-shadow: 0 14px 30px rgba(0,0,0,0.35);
+    box-shadow: none;
+    margin-top: 8px;
 }
 
 .field {
@@ -386,8 +390,7 @@ textarea {
 .submit-btn {
     width: 100%;
     padding: 14px;
-    border: none;
-    border-radius: 14px;
+    border-radius: 12px;
     background: linear-gradient(135deg, #22d3ee, #a855f7);
     color: #0b1020;
     font-size: 15px;

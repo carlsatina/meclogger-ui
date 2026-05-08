@@ -3,14 +3,11 @@
     <div class="car-orb one"></div>
     <div class="car-orb two"></div>
     <div class="car-hero">
-        <button class="car-icon-btn" @click="goBack">
-            <mdicon name="arrow-left" :size="22"/>
-        </button>
         <div>
             <h2 class="car-hero-title">Vehicle Logs</h2>
             <p class="car-hero-sub">Maintenance, costs, and history</p>
         </div>
-        <button class="car-icon-btn" @click="goHome">
+        <button class="car-icon-btn" @click="goAppHome">
             <mdicon name="home" :size="24"/>
         </button>
     </div>
@@ -179,6 +176,7 @@ export default {
         }
 
         const goHome = () => router.push('/car-maintenance')
+        const goAppHome = () => router.push('/')
         const goSchedules = () => router.push('/car-maintenance/schedules')
         const goReport = () => router.push('/car-maintenance/report')
         const goVehicles = () => router.push('/car-maintenance/vehicles')
@@ -383,6 +381,7 @@ export default {
             addMaintenance,
             openHistory,
             goHome,
+            goAppHome,
             goSchedules,
             goReport,
             goVehicles,
