@@ -77,6 +77,8 @@ import ExpenseAccountsMobile from '@/views/mobile/ExpenseTracking/ManageAccounts
 import SpendingInsightsMobile from '@/views/mobile/ExpenseTracking/SpendingInsights.vue'
 import SpendingInsightsWeb from '@/views/web/ExpenseTracking/SpendingInsights.vue'
 import ExpenseTrackingWeb from '@/views/web/ExpenseTracking/Index.vue'
+import SettingsMobile from '@/views/mobile/Settings.vue'
+import SettingsWeb from '@/views/web/Settings.vue'
 import PendingApproval from '@/views/LandingPage/PendingApproval.vue'
 import AdminUsers from '@/views/LandingPage/AdminUsers.vue'
 
@@ -553,6 +555,18 @@ const routes: Array<RouteRecordRaw> = [
     path: '/expense-tracking/web/insights',
     name: 'spending-insights-web',
     component: SpendingInsightsWeb,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: SettingsMobile,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/settings/web',
+    name: 'settings-web',
+    component: SettingsWeb,
     meta: { requiresAuth: true }
   },
   {

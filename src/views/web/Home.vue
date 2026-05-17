@@ -20,6 +20,10 @@
                         <mdicon :name="isDark ? 'white-balance-sunny' : 'moon-waning-crescent'" size="18"/>
                         <span>{{ isDark ? 'Dark' : 'Light' }}</span>
                     </button>
+                    <button class="theme-toggle-pill" type="button" @click="navigateTo('/settings/web')" title="Settings">
+                        <mdicon name="cog-outline" size="18"/>
+                        <span>Settings</span>
+                    </button>
                     <button class="logout-btn" @click="logout">
                         <mdicon name="logout" size="20"/>
                         <span>Logout</span>
@@ -76,43 +80,6 @@
         </div>
     </div>
 
-    <!-- AI Settings -->
-    <div class="ai-settings-section">
-        <div class="ai-settings-card glass-card">
-            <div class="ai-settings-header">
-                <mdicon name="brain" size="22"/>
-                <div>
-                    <h3>AI Integration</h3>
-                    <p>Configure your AI provider to enable health insights and more across all modules.</p>
-                </div>
-                <span v-if="aiSaved" class="saved-badge">Saved</span>
-            </div>
-            <div class="ai-fields">
-                <div class="ai-field">
-                    <label>Provider</label>
-                    <select class="ai-select" v-model="aiProvider" @change="persistAiSettings">
-                        <option value="">None</option>
-                        <option value="anthropic">Anthropic (Claude)</option>
-                        <option value="openai">OpenAI (GPT)</option>
-                    </select>
-                </div>
-                <div class="ai-field" v-if="aiProvider">
-                    <label>API Key</label>
-                    <input
-                        class="ai-input"
-                        type="password"
-                        v-model="aiApiKey"
-                        @change="persistAiSettings"
-                        placeholder="Paste your API key here"
-                        autocomplete="off"
-                    />
-                </div>
-            </div>
-            <p v-if="aiProvider" class="ai-hint">
-                Your key is stored in your account and used server-side only to generate insights. It is never shared.
-            </p>
-        </div>
-    </div>
 </div>
 </template>
 
@@ -142,10 +109,6 @@ export default {
         const activeProfileId = ref(localStorage.getItem('selectedProfileId') || null)
         const { isDark, toggleTheme } = useTheme()
         const appVersion = appMeta.version || '1.0.0'
-        const { getPreferences, savePreferences } = useCarMaintenance()
-        const aiProvider = ref('')
-        const aiApiKey = ref('')
-        const aiSaved = ref(false)
 
         const navigateTo = (path) => {
             router.push(path)
@@ -230,37 +193,9 @@ export default {
             await fetchReminders(token, activeProfileId.value, { date: new Date() })
         }
 
-        const loadAiSettings = async () => {
-            try {
-                const token = localStorage.getItem('token')
-                if (!token) return
-                const prefs = await getPreferences(token)
-                if (prefs?.aiProvider) aiProvider.value = prefs.aiProvider
-                if (prefs?.aiApiKey) aiApiKey.value = prefs.aiApiKey
-            } catch (e) { /* ignore */ }
-        }
-
-        const persistAiSettings = async () => {
-            try {
-                const token = localStorage.getItem('token')
-                if (!token) return
-                const prefs = await getPreferences(token)
-                await savePreferences(token, {
-                    distanceUnit: prefs?.distanceUnit || 'km',
-                    currency: prefs?.currency || 'USD',
-                    maintenanceTypes: prefs?.maintenanceTypes || [],
-                    aiProvider: aiProvider.value,
-                    aiApiKey: aiApiKey.value
-                })
-                aiSaved.value = true
-                setTimeout(() => { aiSaved.value = false }, 2000)
-            } catch (e) { /* ignore */ }
-        }
-
         onMounted(() => {
             ensureProfile()
             loadReminders()
-            loadAiSettings()
         })
 
         const userName = computed(() => store.state.userProfile?.fullName || 'there')
@@ -283,10 +218,6 @@ export default {
             isDark,
             appVersion,
             toggleTheme,
-            aiProvider,
-            aiApiKey,
-            aiSaved,
-            persistAiSettings
         }
     }
 }

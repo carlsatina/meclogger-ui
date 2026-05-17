@@ -1,268 +1,212 @@
 <template>
-<div class="add-record-container">
+<div class="add-record-shell">
     <div class="bg-orb orb-1"></div>
     <div class="bg-orb orb-2"></div>
-    <!-- Header -->
-    <div class="header glass-nav">
-        <button class="close-btn" @click="goBack">
-            <mdicon name="close" :size="22"/>
-        </button>
-        <h2 class="page-title">{{ headerTitle }}</h2>
-    </div>
 
-    <!-- Content -->
-    <div class="content">
-        <div v-if="uploading" class="upload-overlay">
-            <div class="upload-modal glass-card">
-                <mdicon name="loading" :size="28" class="spin"/>
-                <p>Optimizing your images...</p>
+    <header class="add-record-nav glass-nav">
+        <button class="back-btn" @click="goBack">
+            <mdicon name="arrow-left" :size="22"/>
+        </button>
+        <div class="nav-title-block">
+            <h2 class="nav-title">{{ isEditing ? 'Edit Record' : 'Add Record' }}</h2>
+            <p class="nav-sub">Medical records</p>
+        </div>
+    </header>
+
+    <div class="add-record-content">
+        <!-- ── SECTION 1: Setup ─────────────────────────────────── -->
+        <div class="form-section">
+            <div class="section-label">
+                <mdicon name="account-outline" :size="13"/>
+                Record setup
+            </div>
+            <div class="fields-card">
+                <!-- Profile -->
+                <div class="field-group">
+                    <label class="field-label">Record for</label>
+                    <div class="select-wrapper">
+                        <select v-model="recordFor" class="field-input field-select">
+                            <option value="">Select profile</option>
+                            <option v-for="member in profileMembers" :key="member.id" :value="member.id">
+                                {{ member.name }}
+                            </option>
+                        </select>
+                        <mdicon name="chevron-down" :size="18" class="select-icon"/>
+                    </div>
+                </div>
+
+                <!-- Record type -->
+                <div class="field-group">
+                    <label class="field-label">Type of record</label>
+                    <div class="type-row">
+                        <button
+                            type="button"
+                            class="type-chip"
+                            v-for="option in recordTypeOptions"
+                            :key="option.id"
+                            :class="{ active: recordType === option.id }"
+                            @click="recordType = option.id"
+                        >
+                            <mdicon :name="option.icon" :size="15"/>
+                            {{ option.label }}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-        <!-- Image Upload Section -->
-        <div class="image-upload-section">
-            <div 
-                class="image-preview existing glass-card" 
-                v-for="file in existingFiles" 
-                :key="`existing-${file.id}`"
-            >
-                <img :src="resolveFileUrl(file.url)" :alt="file.originalName || 'Attachment'"/>
-                <button 
-                    type="button" 
-                    class="remove-image-btn"
-                    @click="removeExistingFile(file.id)"
-                >
-                    <mdicon name="close" :size="16"/>
-                </button>
+
+        <!-- ── SECTION 2: Documents ───────────────────────────────── -->
+        <div class="form-section">
+            <div class="section-label">
+                <mdicon name="paperclip" :size="13"/>
+                Documents
             </div>
-            <div
-                class="image-preview glass-card"
-                v-for="(file, index) in selectedFiles"
-                :key="file.id"
-            >
-                <img v-if="isImageFile(file.file?.type)" :src="file.preview" alt="Uploaded record" />
-                <div v-else class="pdf-thumb">
-                    <mdicon name="file-pdf-box" :size="36" class="pdf-icon"/>
-                    <p class="pdf-name">{{ file.file?.name || 'PDF' }}</p>
+
+            <!-- Upload grid -->
+            <div class="upload-grid">
+                <div class="image-preview" v-for="file in existingFiles" :key="`existing-${file.id}`">
+                    <img :src="resolveFileUrl(file.url)" :alt="file.originalName || 'Attachment'"/>
+                    <button type="button" class="remove-btn" @click="removeExistingFile(file.id)">
+                        <mdicon name="close" :size="14"/>
+                    </button>
+                </div>
+                <div class="image-preview" v-for="(file, index) in selectedFiles" :key="file.id">
+                    <img v-if="isImageFile(file.file?.type)" :src="file.preview" alt="Uploaded record"/>
+                    <div v-else class="pdf-thumb">
+                        <mdicon name="file-pdf-box" :size="32" class="pdf-icon"/>
+                        <p class="pdf-name">{{ file.file?.name || 'PDF' }}</p>
+                    </div>
+                    <button type="button" class="remove-btn" @click="removeSelectedFile(index)">
+                        <mdicon name="close" :size="14"/>
+                    </button>
                 </div>
                 <button
                     type="button"
-                    class="remove-image-btn"
-                    @click="removeSelectedFile(index)"
+                    class="upload-card"
+                    @click="triggerFileUpload('device')"
+                    :disabled="selectedFiles.length >= maxAttachments"
                 >
-                    <mdicon name="close" :size="16"/>
+                    <mdicon name="image-plus" :size="28" class="upload-icon"/>
+                    <p>From device</p>
+                </button>
+                <button
+                    type="button"
+                    class="upload-card"
+                    @click="triggerFileUpload('camera')"
+                    :disabled="selectedFiles.length >= maxAttachments"
+                >
+                    <mdicon name="camera-plus" :size="28" class="upload-icon"/>
+                    <p>Camera</p>
                 </button>
             </div>
-            <button 
-                type="button" 
-                class="add-image-card glass-card" 
-                @click="triggerFileUpload('device')"
-                :disabled="selectedFiles.length >= maxAttachments"
-            >
-                <mdicon name="image-plus" :size="36" class="plus-icon"/>
-                <p>Upload from device</p>
-            </button>
-            <button 
-                type="button" 
-                class="add-image-card glass-card" 
-                @click="triggerFileUpload('camera')"
-                :disabled="selectedFiles.length >= maxAttachments"
-            >
-                <mdicon name="camera-plus" :size="36" class="plus-icon"/>
-                <p>Use camera</p>
-            </button>
-            <input
-                type="file"
-                ref="deviceInput"
-                class="sr-only"
-                accept="image/*,application/pdf"
-                multiple
-                @change="handleFileUpload"
-            />
-            <input
-                type="file"
-                ref="cameraInput"
-                class="sr-only"
-                accept="image/*"
-                capture="environment"
-                @change="handleFileUpload"
-            />
-        </div>
 
-        <!-- AI Extraction (Prescription / Lab Report) -->
-        <div v-if="(recordType === 'PRESCRIPTION' || recordType === 'LAB_RESULT') && selectedFiles.some(f => isImageFile(f.file?.type) || f.file?.type === 'application/pdf')" class="ai-extract-section">
+            <input type="file" ref="deviceInput" class="sr-only" accept="image/*,application/pdf" multiple @change="handleFileUpload"/>
+            <input type="file" ref="cameraInput" class="sr-only" accept="image/*" capture="environment" @change="handleFileUpload"/>
+
+            <!-- AI Extract button — only for relevant types with files -->
             <button
+                v-if="canExtract"
                 type="button"
                 class="ai-extract-btn"
                 @click="recordType === 'PRESCRIPTION' ? runExtraction() : runLabExtraction()"
                 :disabled="extracting"
             >
-                <mdicon v-if="extracting" name="loading" :size="18" class="spin"/>
-                <mdicon v-else name="creation" :size="18"/>
-                {{ extracting ? 'Extracting…' : 'Extract with AI' }}
+                <mdicon v-if="extracting" name="loading" :size="16" class="spin"/>
+                <mdicon v-else name="creation" :size="16"/>
+                {{ extracting ? 'Extracting with AI…' : 'Extract with AI' }}
             </button>
-            <p v-if="extractError" class="extract-error">{{ extractError }}</p>
-        </div>
+            <p v-if="extractError" class="hint-error">{{ extractError }}</p>
 
-        <!-- Extracted Medications (Prescription) -->
-        <div v-if="extractedMeds.length > 0" class="extracted-meds-section">
-            <div class="extracted-meds-header">
-                <mdicon name="pill" :size="18"/>
-                <span>Extracted Medications</span>
-            </div>
-            <p class="extracted-hint">Select which medications to save to your profile</p>
-            <div class="med-item" v-for="(med, i) in extractedMeds" :key="i">
-                <label class="med-checkbox-row">
-                    <input type="checkbox" v-model="med.selected" class="med-checkbox"/>
-                    <div class="med-info">
-                        <span class="med-name">{{ med.name }}</span>
-                        <span v-if="med.dosage" class="med-detail">{{ med.dosage }}</span>
-                        <span v-if="med.instructions" class="med-instructions">{{ med.instructions }}</span>
-                    </div>
-                </label>
-            </div>
-            <button
-                type="button"
-                class="save-meds-btn"
-                @click="saveExtractedMeds"
-                :disabled="savingMeds || medsSaved"
-            >
-                <mdicon v-if="savingMeds" name="loading" :size="16" class="spin"/>
-                <mdicon v-else-if="medsSaved" name="check" :size="16"/>
-                {{ medsSaved ? 'Saved to medications' : (savingMeds ? 'Saving…' : 'Save medications') }}
-            </button>
-        </div>
-
-        <!-- Extracted Lab Results -->
-        <div v-if="extractedLabResults.length > 0" class="extracted-meds-section extracted-lab-section">
-            <div class="extracted-meds-header">
-                <mdicon name="test-tube" :size="18"/>
-                <span>Extracted Lab Results</span>
-            </div>
-            <p class="extracted-hint">Select results to save to this profile</p>
-            <div class="med-item" v-for="(result, i) in extractedLabResults" :key="i">
-                <label class="med-checkbox-row">
-                    <input type="checkbox" v-model="result.selected" class="med-checkbox"/>
-                    <div class="med-info">
-                        <div class="lab-name-row">
-                            <span class="med-name">{{ result.testName }}</span>
-                            <span class="lab-status-badge" :class="`lab-status-${result.status?.toLowerCase()}`">{{ result.status }}</span>
+            <!-- Extracted medications -->
+            <div v-if="extractedMeds.length > 0" class="extracted-card extracted-rx">
+                <div class="extracted-header">
+                    <mdicon name="pill" :size="16"/>
+                    <span>Extracted medications</span>
+                    <span class="extracted-badge">{{ extractedMeds.filter(m => m.selected).length }} selected</span>
+                </div>
+                <p class="extracted-hint">These will be saved to the Medications module when you save the record.</p>
+                <div class="extracted-item" v-for="(med, i) in extractedMeds" :key="i">
+                    <label class="extracted-row">
+                        <input type="checkbox" v-model="med.selected" class="ex-check"/>
+                        <div class="ex-info">
+                            <span class="ex-name">{{ med.name }}</span>
+                            <span v-if="med.dosage" class="ex-detail">{{ med.dosage }}</span>
+                            <span v-if="med.instructions" class="ex-note">{{ med.instructions }}</span>
                         </div>
-                        <span class="med-detail">{{ result.value }}{{ result.unit ? ' ' + result.unit : '' }}</span>
-                        <span v-if="result.referenceRange" class="med-instructions">Ref: {{ result.referenceRange }}</span>
-                    </div>
-                </label>
-            </div>
-            <button
-                type="button"
-                class="save-meds-btn"
-                @click="saveExtractedLabResults"
-                :disabled="savingLab || labSaved"
-            >
-                <mdicon v-if="savingLab" name="loading" :size="16" class="spin"/>
-                <mdicon v-else-if="labSaved" name="check" :size="16"/>
-                {{ labSaved ? 'Saved to lab results' : (savingLab ? 'Saving…' : 'Save lab results') }}
-            </button>
-        </div>
-
-        <!-- Form Fields -->
-        <div class="form-section glass-card">
-            <!-- Record For -->
-            <div class="form-group">
-                <label class="form-label">Record for</label>
-                <div class="select-wrapper">
-                    <select v-model="recordFor" class="form-select glass-select">
-                        <option value="">Select family member</option>
-                        <option 
-                            v-for="member in profileMembers" 
-                            :key="member.id" 
-                            :value="member.id"
-                        >
-                            {{ member.name }}
-                        </option>
-                    </select>
-                    <mdicon name="chevron-down" :size="20" class="select-icon"/>
+                    </label>
                 </div>
             </div>
 
-            <!-- File Name -->
-            <div class="form-group">
-                <label class="form-label">File name</label>
-                <input 
-                    type="text" 
-                    v-model="fileName" 
-                    placeholder="Add file name"
-                    class="form-input glass-input"
-                />
-            </div>
-
-            <!-- Provider Name -->
-            <div class="form-group">
-                <label class="form-label">Provider / Facility</label>
-                <input 
-                    type="text" 
-                    v-model="providerName" 
-                    placeholder="Add hospital or provider name"
-                    class="form-input glass-input"
-                />
-            </div>
-
-            <!-- Record Created On -->
-            <div class="form-group">
-                <label class="form-label">Record created on</label>
-                <input 
-                    type="date" 
-                    v-model="recordDate" 
-                    placeholder="Add record date"
-                    class="form-input glass-input"
-                />
-            </div>
-
-            <!-- Type of Record -->
-            <div class="form-group record-type-group">
-                <label class="form-label">Type of record</label>
-                <div class="record-types">
-                    <div 
-                        class="record-type-card glass-card"
-                        v-for="option in recordTypeOptions"
-                        :key="option.id"
-                        :class="{ active: recordType === option.id }"
-                        @click="recordType = option.id"
-                    >
-                        <mdicon :name="option.icon" :size="32"/>
-                        <span>{{ option.label }}</span>
-                    </div>
+            <!-- Extracted lab results -->
+            <div v-if="extractedLabResults.length > 0" class="extracted-card extracted-lab">
+                <div class="extracted-header">
+                    <mdicon name="test-tube" :size="16"/>
+                    <span>Extracted lab results</span>
+                    <span class="extracted-badge">{{ extractedLabResults.filter(r => r.selected).length }} selected</span>
+                </div>
+                <p class="extracted-hint">These will be saved to the Lab Results module when you save the record.</p>
+                <div class="extracted-item" v-for="(result, i) in extractedLabResults" :key="i">
+                    <label class="extracted-row">
+                        <input type="checkbox" v-model="result.selected" class="ex-check"/>
+                        <div class="ex-info">
+                            <div class="lab-name-row">
+                                <span class="ex-name">{{ result.testName }}</span>
+                                <span class="lab-badge" :class="`lab-${result.status?.toLowerCase()}`">{{ result.status }}</span>
+                            </div>
+                            <span class="ex-detail">{{ result.value }}{{ result.unit ? ' ' + result.unit : '' }}</span>
+                            <span v-if="result.referenceRange" class="ex-note">Ref: {{ result.referenceRange }}</span>
+                        </div>
+                    </label>
                 </div>
             </div>
-
-            <!-- Tags -->
-            <div class="form-group">
-                <label class="form-label">Tags</label>
-                <input 
-                    type="text" 
-                    v-model="tagsInput" 
-                    placeholder="Separate tags with commas (e.g. scan, follow-up)"
-                    class="form-input glass-input"
-                />
-            </div>
-
-            <!-- Notes -->
-            <div class="form-group">
-                <label class="form-label">Notes</label>
-                <textarea
-                    v-model="notes"
-                    rows="4"
-                    class="form-input glass-input"
-                    placeholder="Add any helpful notes about this record"
-                ></textarea>
-            </div>
-
-            <p v-if="formError" class="form-error">{{ formError }}</p>
         </div>
 
-        <!-- Save Button -->
-        <button class="save-btn glass-btn-primary" @click="saveRecord" :disabled="saving">
-            {{ saving ? 'Saving...' : (isEditing ? 'Update record' : 'Save record') }}
+        <!-- ── SECTION 3: Details ─────────────────────────────────── -->
+        <div class="form-section">
+            <div class="section-label">
+                <mdicon name="text-box-outline" :size="13"/>
+                Details
+            </div>
+            <div class="fields-card">
+                <div class="field-group">
+                    <label class="field-label">File name</label>
+                    <input type="text" v-model="fileName" placeholder="e.g. CBC Results – May 2025" class="field-input"/>
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Provider / Facility</label>
+                    <input type="text" v-model="providerName" placeholder="Hospital or clinic name" class="field-input"/>
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Record date</label>
+                    <input type="date" v-model="recordDate" class="field-input"/>
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Tags</label>
+                    <input type="text" v-model="tagsInput" placeholder="scan, follow-up, annual (comma separated)" class="field-input"/>
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Notes</label>
+                    <textarea v-model="notes" rows="3" class="field-input field-textarea" placeholder="Any helpful context about this record"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── FOOTER ─────────────────────────────────────────────── -->
+        <p v-if="formError" class="hint-error footer-error">{{ formError }}</p>
+
+        <button class="save-btn" :disabled="saving" @click="saveRecord">
+            <mdicon v-if="saving" name="loading" :size="18" class="spin"/>
+            <mdicon v-else name="content-save-outline" :size="18"/>
+            <span>{{ saving ? 'Saving…' : (isEditing ? 'Update record' : 'Save record') }}</span>
         </button>
+    </div>
+
+    <!-- Upload progress overlay -->
+    <div v-if="uploading" class="upload-overlay">
+        <div class="upload-modal">
+            <mdicon name="loading" :size="26" class="spin"/>
+            <p>Processing image…</p>
+        </div>
     </div>
 </div>
 </template>
@@ -295,8 +239,10 @@ export default {
         const profileMembers = ref([])
         const filesToRemove = ref([])
         const recordId = ref(typeof route.query.recordId === 'string' ? route.query.recordId : null)
+
         const { fetchProfiles } = useProfiles()
         const { createRecord, fetchRecordById, updateRecord, extractPrescription, saveMedication, extractLabReport, saveLabResult } = useMedicalRecords()
+
         const extracting = ref(false)
         const extractError = ref('')
         const extractedMeds = ref([])
@@ -309,23 +255,26 @@ export default {
         const saving = ref(false)
         const uploading = ref(false)
         const formError = ref('')
+
         const recordTypeOptions = [
-            { id: 'LAB_RESULT', label: 'Lab Report', icon: 'file-document' },
-            { id: 'PRESCRIPTION', label: 'Prescription', icon: 'file-document-edit' },
-            { id: 'OTHER', label: 'Invoice', icon: 'receipt' }
+            { id: 'LAB_RESULT',   label: 'Lab Report',   icon: 'file-document' },
+            { id: 'PRESCRIPTION', label: 'Prescription',  icon: 'file-document-edit' },
+            { id: 'OTHER',        label: 'Invoice',       icon: 'receipt' },
         ]
 
         const isEditing = computed(() => !!recordId.value)
-        const headerTitle = computed(() => (isEditing.value ? 'Edit Record' : 'Add Record'))
         const isImageFile = (mime = '') => (mime || '').startsWith('image/')
 
-        const goBack = () => {
-            router.back()
-        }
+        const canExtract = computed(() => {
+            if (recordType.value !== 'PRESCRIPTION' && recordType.value !== 'LAB_RESULT') return false
+            return selectedFiles.value.some(f => isImageFile(f.file?.type) || f.file?.type === 'application/pdf')
+        })
+
+        const goBack = () => router.back()
 
         const triggerFileUpload = (mode = 'device') => {
             if (selectedFiles.value.length >= maxAttachments) {
-                formError.value = `You can upload up to ${maxAttachments} files.`
+                formError.value = `Maximum ${maxAttachments} files allowed.`
                 return
             }
             formError.value = ''
@@ -340,9 +289,7 @@ export default {
         })
 
         const compressImageIfNeeded = async (file) => {
-            if (!isImageFile(file.type) || file.size <= 2 * 1024 * 1024) {
-                return file
-            }
+            if (!isImageFile(file.type) || file.size <= 2 * 1024 * 1024) return file
             return new Promise((resolve) => {
                 const img = new Image()
                 img.onload = () => {
@@ -352,16 +299,10 @@ export default {
                     canvas.width = Math.max(1, Math.floor(img.width * ratio))
                     canvas.height = Math.max(1, Math.floor(img.height * ratio))
                     const ctx = canvas.getContext('2d')
-                    if (!ctx) {
-                        resolve(file)
-                        return
-                    }
+                    if (!ctx) { resolve(file); return }
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
                     canvas.toBlob((blob) => {
-                        if (!blob) {
-                            resolve(file)
-                            return
-                        }
+                        if (!blob) { resolve(file); return }
                         const compressed = new File([blob], file.name, { type: file.type || blob.type })
                         resolve(compressed.size < file.size ? compressed : file)
                     }, file.type || 'image/jpeg', 0.8)
@@ -381,51 +322,38 @@ export default {
             }
         }
 
-        const handleFileUpload = async(event) => {
+        const handleFileUpload = async (event) => {
             const files = Array.from(event.target.files || [])
             if (!files.length) return
             const availableSlots = maxAttachments - selectedFiles.value.length
             if (availableSlots <= 0) {
-                formError.value = `You can upload up to ${maxAttachments} files.`
+                formError.value = `Maximum ${maxAttachments} files allowed.`
                 event.target.value = ''
                 return
             }
             uploading.value = true
-            const supportedFiles = files.filter(file => isImageFile(file.type) || file.type === 'application/pdf')
-            const rejected = files.length - supportedFiles.length
-            if (rejected > 0) {
-                formError.value = 'Only image files (PNG/JPG) or PDFs are allowed.'
-            }
-            const filesToUse = supportedFiles.slice(0, availableSlots)
+            const supported = files.filter(f => isImageFile(f.type) || f.type === 'application/pdf')
+            if (supported.length < files.length) formError.value = 'Only images (PNG/JPG) and PDFs are supported.'
             try {
-                const previews = await Promise.all(filesToUse.map(toPreviewEntry))
+                const previews = await Promise.all(supported.slice(0, availableSlots).map(toPreviewEntry))
                 selectedFiles.value = [...selectedFiles.value, ...previews]
-                if (rejected === 0) {
-                    formError.value = ''
-                }
+                if (supported.length === files.length) formError.value = ''
             } finally {
                 uploading.value = false
             }
             event.target.value = ''
         }
 
-        const removeSelectedFile = (index) => {
-            selectedFiles.value.splice(index, 1)
-        }
+        const removeSelectedFile = (index) => selectedFiles.value.splice(index, 1)
 
         const resolveFileUrl = (url) => {
             if (!url) return ''
-            if (url.startsWith('http')) {
-                return url
-            }
-            return `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`
+            return url.startsWith('http') ? url : `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`
         }
 
         const removeExistingFile = (fileId) => {
-            existingFiles.value = existingFiles.value.filter(file => file.id !== fileId)
-            if (!filesToRemove.value.includes(fileId)) {
-                filesToRemove.value.push(fileId)
-            }
+            existingFiles.value = existingFiles.value.filter(f => f.id !== fileId)
+            if (!filesToRemove.value.includes(fileId)) filesToRemove.value.push(fileId)
         }
 
         const loadRecordDetails = async () => {
@@ -434,39 +362,38 @@ export default {
             if (!token) return
             try {
                 const record = await fetchRecordById(token, recordId.value)
-                recordFor.value = record.profileId
-                fileName.value = record.title
-                providerName.value = record.providerName || ''
-                recordDate.value = new Date(record.recordDate).toISOString().split('T')[0]
-                recordType.value = record.recordType || 'OTHER'
-                notes.value = record.notes || ''
-                tagsInput.value = Array.isArray(record.tags) ? record.tags.join(', ') : ''
-                existingFiles.value = (record.files || []).filter(file => (file.mimeType || '').startsWith('image/')).map(file => ({
-                    id: file.id,
-                    url: file.url,
-                    mimeType: file.mimeType,
-                    originalName: file.originalName
-                }))
+                recordFor.value     = record.profileId
+                fileName.value      = record.title
+                providerName.value  = record.providerName || ''
+                recordDate.value    = new Date(record.recordDate).toISOString().split('T')[0]
+                recordType.value    = record.recordType || 'OTHER'
+                notes.value         = record.notes || ''
+                tagsInput.value     = Array.isArray(record.tags) ? record.tags.join(', ') : ''
+                existingFiles.value = (record.files || [])
+                    .filter(f => (f.mimeType || '').startsWith('image/'))
+                    .map(f => ({ id: f.id, url: f.url, mimeType: f.mimeType, originalName: f.originalName }))
                 filesToRemove.value = []
                 selectedFiles.value = []
             } catch (err) {
-                formError.value = err.message || 'Unable to load record details.'
+                formError.value = err.message || 'Unable to load record.'
             }
         }
 
         const resetForm = () => {
-            recordFor.value = getDefaultProfileId()
-            fileName.value = ''
-            providerName.value = ''
-            recordDate.value = new Date().toISOString().split('T')[0]
-            recordType.value = 'LAB_RESULT'
-            tagsInput.value = ''
-            notes.value = ''
+            recordFor.value     = getDefaultProfileId()
+            fileName.value      = ''
+            providerName.value  = ''
+            recordDate.value    = new Date().toISOString().split('T')[0]
+            recordType.value    = 'LAB_RESULT'
+            tagsInput.value     = ''
+            notes.value         = ''
             selectedFiles.value = []
             existingFiles.value = []
             filesToRemove.value = []
-            formError.value = ''
-            uploading.value = false
+            formError.value     = ''
+            uploading.value     = false
+            extractedMeds.value = []
+            extractedLabResults.value = []
         }
 
         const runExtraction = async () => {
@@ -483,38 +410,14 @@ export default {
                 const mimeType = header.match(/:(.*?);/)?.[1] || 'image/jpeg'
                 const result = await extractPrescription(token, base64, mimeType)
                 if (result.providerName) providerName.value = result.providerName
-                if (result.recordDate) recordDate.value = result.recordDate
-                if (result.notes) notes.value = result.notes
-                if (!fileName.value && result.providerName) {
-                    fileName.value = `Prescription - ${result.providerName}`
-                }
+                if (result.recordDate)   recordDate.value   = result.recordDate
+                if (result.notes)        notes.value        = result.notes
+                if (!fileName.value && result.providerName) fileName.value = `Prescription - ${result.providerName}`
                 extractedMeds.value = (result.medications || []).map(m => ({ ...m, selected: true }))
             } catch (err) {
                 extractError.value = err.message || 'Extraction failed. Make sure your AI provider is configured in Settings.'
             } finally {
                 extracting.value = false
-            }
-        }
-
-        const saveExtractedMeds = async () => {
-            if (!recordFor.value || !extractedMeds.value.length) return
-            const token = localStorage.getItem('token')
-            if (!token) return
-            savingMeds.value = true
-            try {
-                const toSave = extractedMeds.value.filter(m => m.selected)
-                await Promise.all(toSave.map(m => saveMedication(token, {
-                    profileId: recordFor.value,
-                    name: m.name,
-                    dosage: m.dosage || '',
-                    instructions: m.instructions || '',
-                    startDate: recordDate.value || null
-                })))
-                medsSaved.value = true
-            } catch (err) {
-                extractError.value = err.message || 'Unable to save medications'
-            } finally {
-                savingMeds.value = false
             }
         }
 
@@ -531,12 +434,10 @@ export default {
                 const [header, base64] = dataUrl.split(',')
                 const mimeType = header.match(/:(.*?);/)?.[1] || 'image/jpeg'
                 const result = await extractLabReport(token, base64, mimeType)
-                if (result.labName) providerName.value = result.labName
-                if (result.collectedAt) recordDate.value = result.collectedAt
-                if (result.notes) notes.value = result.notes
-                if (!fileName.value && result.labName) {
-                    fileName.value = `Lab Report - ${result.labName}`
-                }
+                if (result.labName)     providerName.value = result.labName
+                if (result.collectedAt) recordDate.value   = result.collectedAt
+                if (result.notes)       notes.value        = result.notes
+                if (!fileName.value && result.labName) fileName.value = `Lab Report - ${result.labName}`
                 extractedLabResults.value = (result.results || []).map(r => ({ ...r, selected: true }))
             } catch (err) {
                 extractError.value = err.message || 'Extraction failed. Make sure your AI provider is configured in Settings.'
@@ -545,81 +446,67 @@ export default {
             }
         }
 
-        const saveExtractedLabResults = async () => {
-            if (!recordFor.value || !extractedLabResults.value.length) return
-            const token = localStorage.getItem('token')
-            if (!token) return
-            savingLab.value = true
-            try {
-                const toSave = extractedLabResults.value.filter(r => r.selected)
-                await Promise.all(toSave.map(r => saveLabResult(token, {
-                    profileId: recordFor.value,
-                    testName: r.testName,
-                    value: r.value,
-                    unit: r.unit || null,
-                    referenceRange: r.referenceRange || null,
-                    status: r.status || 'UNKNOWN',
-                    collectedAt: recordDate.value || null,
-                    labName: providerName.value || null
-                })))
-                labSaved.value = true
-            } catch (err) {
-                extractError.value = err.message || 'Unable to save lab results'
-            } finally {
-                savingLab.value = false
-            }
-        }
-
-        const saveRecord = async() => {
+        const saveRecord = async () => {
             formError.value = ''
-            if (!recordFor.value) {
-                formError.value = 'Please select a profile for this record.'
-                return
-            }
-            if (!fileName.value.trim()) {
-                formError.value = 'Please enter a file name.'
-                return
-            }
-            if (!recordDate.value) {
-                formError.value = 'Please select a record date.'
-                return
-            }
+            if (!recordFor.value)        { formError.value = 'Please select a profile.'; return }
+            if (!fileName.value.trim())  { formError.value = 'Please enter a file name.'; return }
+            if (!recordDate.value)       { formError.value = 'Please select a record date.'; return }
             const token = localStorage.getItem('token')
-            if (!token) {
-                formError.value = 'Please log in again to continue.'
-                router.push('/login')
-                return
-            }
+            if (!token) { formError.value = 'Please log in again.'; router.push('/login'); return }
 
             const formData = new FormData()
-            formData.append('profileId', recordFor.value)
-            formData.append('title', fileName.value.trim())
-            formData.append('recordType', recordType.value)
-            formData.append('recordDate', recordDate.value)
-            selectedFiles.value.forEach(fileEntry => {
-                formData.append('files', fileEntry.file)
-            })
-            if (providerName.value.trim()) {
-                formData.append('providerName', providerName.value.trim())
-            }
-            if (notes.value.trim()) {
-                formData.append('notes', notes.value.trim())
-            }
+            formData.append('profileId',   recordFor.value)
+            formData.append('title',       fileName.value.trim())
+            formData.append('recordType',  recordType.value)
+            formData.append('recordDate',  recordDate.value)
+            selectedFiles.value.forEach(fe => formData.append('files', fe.file))
+            if (providerName.value.trim()) formData.append('providerName', providerName.value.trim())
+            if (notes.value.trim())        formData.append('notes', notes.value.trim())
             const tagsArray = tagsInput.value
-                ? tagsInput.value.split(',').map(tag => tag.trim()).filter(Boolean)
+                ? tagsInput.value.split(',').map(t => t.trim()).filter(Boolean)
                 : []
             formData.append('tags', JSON.stringify(tagsArray))
-            if (isEditing.value) {
-                formData.append('filesToRemove', JSON.stringify(filesToRemove.value))
-            }
+            if (isEditing.value) formData.append('filesToRemove', JSON.stringify(filesToRemove.value))
 
+            saving.value = true
             try {
-                saving.value = true
                 if (isEditing.value && recordId.value) {
                     await updateRecord(token, recordId.value, formData)
-                    router.replace({ path: `/medical-records/records/${recordId.value}` })
                 } else {
                     await createRecord(token, formData)
+                }
+
+                // Save any selected extracted items alongside the record
+                const medsToSave = extractedMeds.value.filter(m => m.selected)
+                if (medsToSave.length && !medsSaved.value) {
+                    await Promise.all(medsToSave.map(m => saveMedication(token, {
+                        profileId:    recordFor.value,
+                        name:         m.name,
+                        dosage:       m.dosage || '',
+                        instructions: m.instructions || '',
+                        startDate:    recordDate.value || null,
+                    })))
+                    medsSaved.value = true
+                }
+
+                const labsToSave = extractedLabResults.value.filter(r => r.selected)
+                if (labsToSave.length && !labSaved.value) {
+                    await Promise.all(labsToSave.map(r => saveLabResult(token, {
+                        profileId:      recordFor.value,
+                        testName:       r.testName,
+                        value:          r.value,
+                        unit:           r.unit || null,
+                        referenceRange: r.referenceRange || null,
+                        status:         r.status || 'UNKNOWN',
+                        collectedAt:    recordDate.value || null,
+                        labName:        providerName.value || null,
+                    })))
+                    labSaved.value = true
+                }
+
+                if (isEditing.value && recordId.value) {
+                    router.replace({ path: `/medical-records/records/${recordId.value}` })
+                } else {
                     router.replace({ path: '/medical-records', query: { tab: 'records' } })
                 }
             } catch (err) {
@@ -634,85 +521,41 @@ export default {
             if (!token) return
             const { response, error } = await fetchProfiles(token)
             if (error.value === null && response.value?.profiles) {
-                profileMembers.value = response.value.profiles.map(profile => ({
-                    id: profile.id,
-                    name: profile.displayName || 'Profile'
-                }))
+                profileMembers.value = response.value.profiles.map(p => ({ id: p.id, name: p.displayName || 'Profile' }))
                 const savedId = localStorage.getItem('selectedProfileId')
-                const hasSavedProfile = profileMembers.value.find(member => member.id === savedId)
-                if (hasSavedProfile) {
-                    recordFor.value = hasSavedProfile.id
-                } else if (profileMembers.value.length) {
-                    recordFor.value = profileMembers.value[0].id
-                }
+                const hasSaved = profileMembers.value.find(m => m.id === savedId)
+                if (hasSaved) recordFor.value = hasSaved.id
+                else if (profileMembers.value.length) recordFor.value = profileMembers.value[0].id
             }
         }
 
-        onMounted(() => {
-            loadProfiles().then(() => {
-                loadRecordDetails()
-            })
-        })
+        onMounted(() => loadProfiles().then(() => loadRecordDetails()))
 
         watch(
             () => route.query.recordId,
             (val) => {
                 recordId.value = typeof val === 'string' ? val : null
-                if (recordId.value) {
-                    loadRecordDetails()
-                } else {
-                    resetForm()
-                }
+                if (recordId.value) loadRecordDetails()
+                else resetForm()
             }
         )
 
         return {
-            deviceInput,
-            cameraInput,
-            selectedFiles,
-            existingFiles,
-            maxAttachments,
-            recordFor,
-            fileName,
-            recordDate,
-            recordType,
-            providerName,
-            tagsInput,
-            notes,
-            recordTypeOptions,
-            isEditing,
-            headerTitle,
-            goBack,
-            triggerFileUpload,
-            handleFileUpload,
-            removeSelectedFile,
-            removeExistingFile,
-            saveRecord,
-            profileMembers,
-            saving,
-            uploading,
-            formError,
-            resolveFileUrl,
-            isImageFile,
-            extracting,
-            extractError,
-            extractedMeds,
-            savingMeds,
-            medsSaved,
-            runExtraction,
-            saveExtractedMeds,
-            extractedLabResults,
-            savingLab,
-            labSaved,
-            runLabExtraction,
-            saveExtractedLabResults
+            deviceInput, cameraInput, selectedFiles, existingFiles, maxAttachments,
+            recordFor, fileName, recordDate, recordType, providerName, tagsInput, notes,
+            recordTypeOptions, isEditing, canExtract, goBack, triggerFileUpload,
+            handleFileUpload, removeSelectedFile, removeExistingFile, resolveFileUrl, isImageFile,
+            extracting, extractError, extractedMeds, runExtraction,
+            extractedLabResults, runLabExtraction,
+            saving, uploading, formError, saveRecord, profileMembers,
+            medsSaved, labSaved,
         }
     }
 }
 </script>
 
 <style scoped>
-.add-record-container {
+.add-record-shell {
     min-height: 100vh;
     background: var(--bg-main);
     display: flex;
@@ -721,173 +564,146 @@ export default {
     overflow: hidden;
 }
 
-.bg-orb {
-    position: absolute;
-    filter: blur(60px);
-    opacity: 0.28;
-    z-index: 0;
-}
-.orb-1 {
-    width: 320px;
-    height: 320px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #22d3ee, #a855f7);
-    top: -140px;
-    left: -110px;
-}
-.orb-2 {
-    width: 260px;
-    height: 260px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #22c55e, #06b6d4);
-    bottom: -120px;
-    right: -90px;
-}
+.bg-orb { position: absolute; filter: blur(60px); opacity: 0.18; z-index: 0; border-radius: 50%; pointer-events: none; }
+.orb-1 { width: 300px; height: 300px; background: linear-gradient(135deg, #a78bfa, #38bdf8); top: -120px; left: -80px; }
+.orb-2 { width: 240px; height: 240px; background: linear-gradient(135deg, #22c55e, #06b6d4); bottom: -80px; right: -60px; }
 
-/* Header */
-.header {
-    background: var(--glass-ghost-bg);
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+/* Nav */
+.add-record-nav {
     position: sticky;
     top: 0;
     z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--glass-ghost-bg);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--glass-card-border);
 }
-
-.close-btn {
+.back-btn {
     background: var(--glass-ghost-bg);
     border: 1px solid var(--glass-card-border);
+    border-radius: 12px;
     padding: 8px;
-    cursor: pointer;
     color: var(--text-primary);
     display: flex;
     align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    transition: all 0.2s ease;
+    cursor: pointer;
+    flex-shrink: 0;
 }
-
-.close-btn:active {
-    transform: scale(0.92);
-    background: rgba(255,255,255,0.12);
-}
-
-.page-title {
-    font-size: 19px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0;
-}
+.nav-title-block { flex: 1; }
+.nav-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.nav-sub   { font-size: 12px; color: var(--text-muted); margin: 0; }
 
 /* Content */
-.content {
+.add-record-content {
     flex: 1;
-    padding: 18px 0 32px;
+    padding: 16px 16px 48px;
     position: relative;
     z-index: 1;
-}
-.upload-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 5;
-    border-radius: 20px;
-}
-
-.upload-modal {
-    padding: 14px 16px;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--text-primary);
-}
-
-/* Image Upload Section */
-.image-upload-section {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    margin-bottom: 22px;
-    padding: 0 16px;
-}
-
-.image-preview {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px;
-    overflow: hidden;
-    aspect-ratio: 1;
-    position: relative;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.35);
-}
-
-.image-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.remove-image-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    border: none;
-    border-radius: 999px;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(11,16,32,0.8);
-    color: var(--text-primary);
-    cursor: pointer;
-    border: 1px solid rgba(255,255,255,0.08);
-}
-
-.add-image-card {
-    border: 1px dashed rgba(103,232,249,0.45);
-    background: rgba(255,255,255,0.04);
-    border-radius: 16px;
-    aspect-ratio: 1;
     display: flex;
     flex-direction: column;
+    gap: 6px;
+}
+
+/* Section */
+.form-section { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.section-label {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    color: var(--text-primary);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
-}
-
-.add-image-card:active {
-    transform: scale(0.98);
-    border-color: rgba(168,85,247,0.8);
-}
-
-.add-image-card:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.plus-icon {
+    gap: 6px;
+    padding: 0 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     color: var(--text-muted);
 }
 
-.add-image-card p {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin: 0;
-    font-weight: 600;
+/* Fields card */
+.fields-card {
+    background: var(--glass-ghost-bg);
+    border: 1px solid var(--glass-card-border);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
 
+.field-group { display: flex; flex-direction: column; gap: 5px; }
+.field-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+.field-input {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--glass-card-border);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+    font-size: 14px;
+    width: 100%;
+    outline: none;
+}
+.field-input:focus { border-color: rgba(167,139,250,0.45); }
+.field-textarea { resize: none; font-family: inherit; line-height: 1.5; }
+
+/* Select */
+.select-wrapper { position: relative; }
+.field-select { appearance: none; padding-right: 36px; cursor: pointer; }
+.select-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+
+/* Record type chips */
+.type-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.type-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--glass-card-border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.type-chip.active {
+    background: rgba(167,139,250,0.2);
+    border-color: rgba(167,139,250,0.5);
+    color: #a78bfa;
+}
+
+/* Upload grid */
+.upload-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+.image-preview {
+    background: var(--glass-ghost-bg);
+    border: 1px solid var(--glass-card-border);
+    border-radius: 14px;
+    aspect-ratio: 1;
+    position: relative;
+    overflow: hidden;
+}
+.image-preview img { width: 100%; height: 100%; object-fit: cover; }
+.remove-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(11,16,32,0.75);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
 .pdf-thumb {
     width: 100%;
     height: 100%;
@@ -898,336 +714,166 @@ export default {
     gap: 6px;
     padding: 8px;
 }
-
 .pdf-icon { color: #f87171; }
-
 .pdf-name {
     font-size: 11px;
     color: var(--text-secondary);
     margin: 0;
     text-align: center;
     word-break: break-all;
-    overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+    overflow: hidden;
 }
-
-/* Form Section */
-.form-section {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    margin-bottom: 26px;
-    background: rgba(255,255,255,0.04);
-    border-top: 1px solid rgba(255,255,255,0.08);
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    border-left: none;
-    border-right: none;
-    border-radius: 0;
-    padding: 16px;
-    box-shadow: none;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.form-label {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.form-input,
-.glass-input {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 12px;
-    padding: 12px 14px;
-    font-size: 14px;
-    color: var(--text-primary);
-    transition: all 0.2s ease;
-}
-
-.form-input::placeholder,
-.glass-input::placeholder {
-    color: var(--text-muted);
-}
-
-.form-input:focus,
-.glass-input:focus {
-    outline: none;
-    border-color: rgba(103,232,249,0.6);
-    box-shadow: 0 0 0 2px rgba(103,232,249,0.25);
-}
-
-/* Select Wrapper */
-.select-wrapper {
-    position: relative;
-}
-
-.form-select {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 12px;
-    padding: 12px 38px 12px 14px;
-    font-size: 14px;
-    color: var(--text-primary);
-    width: 100%;
-    appearance: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.form-select option:first-child {
-    color: var(--text-muted);
-}
-
-.form-select:focus {
-    outline: none;
-    border-color: rgba(103,232,249,0.6);
-    box-shadow: 0 0 0 2px rgba(103,232,249,0.25);
-}
-
-.select-icon {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    pointer-events: none;
-}
-
-/* Record Types */
-.record-types {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-}
-
-.record-type-card {
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.05);
+.upload-card {
+    border: 1px dashed rgba(167,139,250,0.35);
+    background: rgba(167,139,250,0.05);
     border-radius: 14px;
-    padding: 16px 10px;
+    aspect-ratio: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 6px;
     cursor: pointer;
-    transition: all 0.25s ease;
     color: var(--text-secondary);
+    transition: all 0.15s;
 }
+.upload-card:active { border-color: rgba(167,139,250,0.7); background: rgba(167,139,250,0.1); }
+.upload-card:disabled { opacity: 0.45; cursor: not-allowed; }
+.upload-card p { font-size: 12px; font-weight: 600; margin: 0; }
+.upload-icon { color: var(--text-muted); }
 
-.record-type-card:active {
-    transform: scale(0.97);
-}
-
-.record-type-card.active {
-    border-color: rgba(103,232,249,0.5);
-    background: linear-gradient(135deg, rgba(34,211,238,0.22), rgba(168,85,247,0.2));
-    color: #0b1020;
-    box-shadow: 0 12px 24px rgba(168,85,247,0.25);
-}
-
-.record-type-card span {
-    font-size: 12px;
-    font-weight: 700;
-    text-align: center;
-}
-
-/* Save Button */
-.save-btn {
-    width: calc(100% - 32px);
-    margin: 10px 16px 0;
-}
-
-.form-error {
-    color: #f87171;
-    font-size: 13px;
-    margin: 4px 0 0 0;
-}
-
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-}
-
-/* AI Extract */
-.ai-extract-section {
-    padding: 0 16px;
-    margin-bottom: 16px;
-}
-
+/* AI extract */
 .ai-extract-btn {
-    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    background: linear-gradient(135deg, rgba(168,85,247,0.28), rgba(34,211,238,0.18));
-    border: 1px solid rgba(168,85,247,0.45);
+    gap: 7px;
+    width: 100%;
+    padding: 11px 16px;
     border-radius: 12px;
-    padding: 12px 16px;
+    border: 1px solid rgba(167,139,250,0.4);
+    background: rgba(167,139,250,0.1);
+    color: #a78bfa;
     font-size: 14px;
     font-weight: 700;
-    color: var(--text-primary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s;
 }
+.ai-extract-btn:active { background: rgba(167,139,250,0.18); }
+.ai-extract-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-.ai-extract-btn:active {
-    transform: scale(0.98);
-    border-color: rgba(168,85,247,0.7);
-}
-
-.ai-extract-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.extract-error {
-    color: #f87171;
-    font-size: 13px;
-    margin: 8px 0 0;
-}
-
-/* Extracted Medications */
-.extracted-meds-section {
-    margin: 0 16px 20px;
-    background: rgba(168,85,247,0.07);
-    border: 1px solid rgba(168,85,247,0.22);
-    border-radius: 16px;
-    padding: 16px;
+/* Extracted cards */
+.extracted-card {
+    border-radius: 14px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
+.extracted-rx  { background: rgba(167,139,250,0.07); border: 1px solid rgba(167,139,250,0.22); }
+.extracted-lab { background: rgba(34,211,238,0.06);  border: 1px solid rgba(34,211,238,0.22); }
 
-.extracted-meds-header {
+.extracted-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.extracted-hint {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin: 0;
-}
-
-.med-item {
-    border-top: 1px solid rgba(255,255,255,0.06);
-    padding-top: 10px;
-}
-
-.med-checkbox-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    cursor: pointer;
-}
-
-.med-checkbox {
-    width: 18px;
-    height: 18px;
-    margin-top: 2px;
-    accent-color: #a855f7;
-    flex-shrink: 0;
-}
-
-.med-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.med-name {
+    gap: 7px;
     font-size: 14px;
     font-weight: 700;
     color: var(--text-primary);
 }
-
-.med-detail {
-    font-size: 13px;
-    color: var(--text-secondary);
-}
-
-.med-instructions {
-    font-size: 12px;
-    color: var(--text-muted);
-    font-style: italic;
-}
-
-.save-meds-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    background: linear-gradient(135deg, rgba(168,85,247,0.32), rgba(34,211,238,0.22));
-    border: 1px solid rgba(168,85,247,0.4);
-    border-radius: 10px;
-    padding: 10px 16px;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    width: 100%;
-    margin-top: 4px;
-}
-
-.save-meds-btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-}
-
-.extracted-lab-section {
-    border-color: rgba(34,211,238,0.22);
-    background: rgba(34,211,238,0.06);
-}
-
-.lab-name-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.lab-status-badge {
+.extracted-badge {
+    margin-left: auto;
     font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(167,139,250,0.15);
+    color: #a78bfa;
+}
+.extracted-hint { font-size: 12px; color: var(--text-muted); margin: 0; line-height: 1.4; }
+
+.extracted-item { border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; }
+.extracted-row { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+.ex-check { width: 17px; height: 17px; margin-top: 2px; accent-color: #a78bfa; flex-shrink: 0; }
+.ex-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.ex-name   { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.ex-detail { font-size: 13px; color: var(--text-secondary); }
+.ex-note   { font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+.lab-name-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.lab-badge {
+    font-size: 10px;
     font-weight: 700;
     padding: 2px 7px;
     border-radius: 999px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
+.lab-normal   { background: rgba(34,197,94,0.18);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+.lab-high     { background: rgba(251,146,60,0.18); color: #fb923c; border: 1px solid rgba(251,146,60,0.3); }
+.lab-low      { background: rgba(96,165,250,0.18); color: #60a5fa; border: 1px solid rgba(96,165,250,0.3); }
+.lab-critical { background: rgba(248,113,113,0.18);color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+.lab-unknown  { background: rgba(148,163,184,0.12);color: var(--text-muted); border: 1px solid rgba(148,163,184,0.2); }
 
-.lab-status-normal   { background: rgba(34,197,94,0.2);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
-.lab-status-high     { background: rgba(251,146,60,0.2); color: #fb923c; border: 1px solid rgba(251,146,60,0.3); }
-.lab-status-low      { background: rgba(96,165,250,0.2); color: #60a5fa; border: 1px solid rgba(96,165,250,0.3); }
-.lab-status-critical { background: rgba(248,113,113,0.2);color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
-.lab-status-unknown  { background: rgba(148,163,184,0.15);color: var(--text-muted); border: 1px solid rgba(148,163,184,0.2); }
+/* Footer */
+.hint-error  { font-size: 13px; color: #fca5a5; margin: 0; }
+.footer-error { margin-top: 6px; text-align: center; }
 
-.spin {
-    animation: spin 1s linear infinite;
+.save-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, #a78bfa, #38bdf8);
+    color: #0b1020;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.save-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Upload overlay */
+.upload-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+}
+.upload-modal {
+    background: var(--glass-card-bg);
+    border: 1px solid var(--glass-card-border);
+    border-radius: 16px;
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
 }
 
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
 }
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>

@@ -20,11 +20,13 @@
                     <mdicon :name="isDark ? 'white-balance-sunny' : 'moon-waning-crescent'" size="18" />
                     <span>{{ isDark ? 'Dark' : 'Light' }}</span>
                 </button>
+                <button class="icon-action-btn" @click="navigateTo('/settings')" title="Settings">
+                    <mdicon name="cog-outline" size="20" />
+                </button>
                 <button class="ghost-btn" @click="logout">
                     <mdicon name="logout" size="18" />
                     <span>Logout</span>
                 </button>
-                <span class="version-pill">v{{ appVersion }}</span>
             </div>
         </div>
         <p class="hero-sub">Health, maintenance, and finances—unified in a sleek console.</p>
@@ -96,36 +98,6 @@
             </div>
         </div>
 
-        <!-- AI Settings -->
-        <div class="glass-card ai-card" @click.stop>
-            <div class="chip ai-chip">AI</div>
-            <div class="card-row ai-header-row">
-                <div class="icon-hex ai-hex">
-                    <mdicon name="brain" size="24"/>
-                </div>
-                <div>
-                    <h3>AI Integration</h3>
-                    <p>Enable health insights and analysis across all modules.</p>
-                </div>
-                <span v-if="aiSaved" class="saved-badge">Saved</span>
-            </div>
-            <div class="ai-fields">
-                <select class="ai-select" v-model="aiProvider" @change="persistAiSettings">
-                    <option value="">No AI provider</option>
-                    <option value="anthropic">Anthropic (Claude)</option>
-                    <option value="openai">OpenAI (GPT)</option>
-                </select>
-                <input
-                    v-if="aiProvider"
-                    class="ai-input"
-                    type="password"
-                    v-model="aiApiKey"
-                    @change="persistAiSettings"
-                    placeholder="Paste your API key"
-                    autocomplete="off"
-                />
-            </div>
-        </div>
     </section>
 </div>
 </template>
@@ -155,9 +127,6 @@ export default {
         const { isDark, toggleTheme } = useTheme()
         const appVersion = appMeta.version || '1.0.0'
         const { getPreferences, savePreferences } = useCarMaintenance()
-        const aiProvider = ref('')
-        const aiApiKey = ref('')
-        const aiSaved = ref(false)
 
         const navigateTo = (path) => {
             router.push(path)
@@ -200,22 +169,6 @@ export default {
             } catch (e) { /* ignore */ }
         }
 
-        const persistAiSettings = async () => {
-            try {
-                const token = localStorage.getItem('token')
-                if (!token) return
-                const prefs = await getPreferences(token)
-                await savePreferences(token, {
-                    distanceUnit: prefs?.distanceUnit || 'km',
-                    currency: prefs?.currency || 'USD',
-                    maintenanceTypes: prefs?.maintenanceTypes || [],
-                    aiProvider: aiProvider.value,
-                    aiApiKey: aiApiKey.value
-                })
-                aiSaved.value = true
-                setTimeout(() => { aiSaved.value = false }, 2000)
-            } catch (e) { /* ignore */ }
-        }
 
         onMounted(() => {
             ensureProfile()
@@ -238,10 +191,6 @@ export default {
             isDark,
             appVersion,
             toggleTheme,
-            aiProvider,
-            aiApiKey,
-            aiSaved,
-            persistAiSettings
         }
     }
 }
@@ -371,6 +320,18 @@ export default {
     font-size: 12px;
 }
 
+.icon-action-btn {
+    border: 1px solid var(--glass-ghost-border);
+    background: var(--glass-ghost-bg);
+    color: var(--text-primary);
+    border-radius: 12px;
+    padding: 10px;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+}
+
 .ghost-btn {
     border: 1px solid var(--glass-ghost-border);
     background: var(--glass-ghost-bg);
@@ -473,48 +434,71 @@ export default {
     line-height: 1.4;
 }
 
+.settings-section-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+}
+
 .ai-card {
     cursor: default;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
+.ai-card:active { background: var(--glass-card-bg); }
 
-.ai-card:active {
-    background: var(--glass-card-bg);
+.ai-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .ai-chip {
     background: linear-gradient(135deg, #a78bfa, #38bdf8) !important;
     box-shadow: 0 6px 14px rgba(167, 139, 250, 0.3) !important;
 }
-
 .ai-hex {
     background: linear-gradient(135deg, #a78bfa, #38bdf8) !important;
 }
+.ai-header-row { align-items: flex-start; }
 
-.ai-header-row {
-    align-items: flex-start;
-}
-
-.saved-badge {
-    margin-left: auto;
+.ai-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     font-size: 11px;
     font-weight: 700;
-    color: #22c55e;
-    background: rgba(34,197,94,0.12);
-    padding: 3px 8px;
+    padding: 4px 10px;
     border-radius: 999px;
-    white-space: nowrap;
-    flex-shrink: 0;
+}
+.ai-status-badge.status-on  { background: rgba(34,197,94,0.12);  color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+.ai-status-badge.status-off { background: rgba(148,163,184,0.1); color: var(--text-muted); border: 1px solid rgba(148,163,184,0.2); }
+.status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
 }
 
 .ai-fields {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
 }
-
+.ai-field-group { display: flex; flex-direction: column; gap: 5px; }
+.ai-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
 .ai-select,
 .ai-input {
     padding: 10px 12px;
@@ -524,7 +508,60 @@ export default {
     color: var(--text-primary);
     font-size: 14px;
     width: 100%;
+    outline: none;
 }
+.ai-select:focus, .ai-input:focus { border-color: rgba(167,139,250,0.5); }
+
+.ai-key-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.ai-key-row .ai-input { flex: 1; width: auto; }
+.key-eye-btn {
+    background: var(--glass-ghost-bg);
+    border: 1px solid var(--glass-card-border);
+    border-radius: 10px;
+    padding: 9px 10px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.key-eye-btn:hover { color: var(--text-primary); }
+
+.ai-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: 2px 0 0;
+    line-height: 1.4;
+}
+.ai-error {
+    font-size: 12px;
+    color: #fca5a5;
+    margin: 0;
+}
+.ai-save-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    padding: 11px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #a78bfa, #38bdf8);
+    color: #0b1020;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.ai-save-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 @media (max-width: 375px) {
     .hero h1 {
