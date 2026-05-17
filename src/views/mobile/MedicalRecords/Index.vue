@@ -82,6 +82,36 @@
                     <h4>Add medicine reminder</h4>
                 </div>
             </div>
+            <div class="action-card-ai glass-card" @click="router.push('/medical-records/insights')">
+                <div class="action-icon-wrapper ai-icon-wrapper">
+                    <mdicon name="brain" :size="28"/>
+                </div>
+                <div>
+                    <h4>AI Health Insights</h4>
+                    <p>Analyze vitals, medications &amp; illness trends</p>
+                </div>
+                <mdicon name="chevron-right" :size="20" class="ai-chevron"/>
+            </div>
+            <div class="action-card-wide glass-card" @click="router.push({ path: '/medical-records/medications', query: { profileId: activeMemberId, profileName: activeProfileName } })">
+                <div class="action-icon-wrapper wide-icon-wrapper pill-icon">
+                    <mdicon name="pill" :size="24"/>
+                </div>
+                <div>
+                    <h4>Medications</h4>
+                    <p>View saved medications</p>
+                </div>
+                <mdicon name="chevron-right" :size="20" class="ai-chevron"/>
+            </div>
+            <div class="action-card-wide glass-card" @click="router.push({ path: '/medical-records/lab-results', query: { profileId: activeMemberId, profileName: activeProfileName } })">
+                <div class="action-icon-wrapper wide-icon-wrapper lab-icon">
+                    <mdicon name="test-tube" :size="24"/>
+                </div>
+                <div>
+                    <h4>Lab Results</h4>
+                    <p>View extracted test results</p>
+                </div>
+                <mdicon name="chevron-right" :size="20" class="ai-chevron"/>
+            </div>
 
             <!-- Today's Reminder Section -->
             <div class="section-header">
@@ -1608,6 +1638,102 @@ export default {
 
 .action-cards-grid .action-card-large:nth-child(2) {
     animation-delay: 0.08s;
+}
+
+.action-card-ai {
+    margin: 0 16px 24px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    background: linear-gradient(135deg, rgba(167,139,250,0.12), rgba(56,189,248,0.12));
+    border: 1px solid rgba(167,139,250,0.25);
+    box-shadow: 0 8px 24px rgba(167,139,250,0.15);
+    animation: slideFadeUp 0.6s ease both;
+    animation-delay: 0.12s;
+}
+
+.action-card-ai:active {
+    transform: scale(0.98);
+}
+
+.action-card-ai h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 2px;
+}
+
+.action-card-ai p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.action-card-ai > div {
+    flex: 1;
+}
+
+.ai-icon-wrapper {
+    width: 46px !important;
+    height: 46px !important;
+    background: linear-gradient(135deg, #a78bfa, #38bdf8) !important;
+    border-radius: 14px !important;
+    flex-shrink: 0;
+    box-shadow: 0 8px 18px rgba(167,139,250,0.3) !important;
+}
+
+.ai-chevron {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.action-card-wide {
+    margin: 0 16px 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.09);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+}
+
+.action-card-wide:active { transform: scale(0.98); }
+
+.action-card-wide h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 2px;
+}
+
+.action-card-wide p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.action-card-wide > div { flex: 1; }
+
+.wide-icon-wrapper {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 14px !important;
+    flex-shrink: 0;
+}
+
+.pill-icon {
+    background: linear-gradient(135deg, #a855f7, #7c3aed) !important;
+    box-shadow: 0 6px 16px rgba(168,85,247,0.3) !important;
+}
+
+.lab-icon {
+    background: linear-gradient(135deg, #22d3ee, #0891b2) !important;
+    box-shadow: 0 6px 16px rgba(34,211,238,0.3) !important;
 }
 
 .action-card-large:hover {

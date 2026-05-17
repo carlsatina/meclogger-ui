@@ -67,12 +67,82 @@
                                 type="file" 
                                 ref="fileInput" 
                                 @change="handleFileUpload" 
-                                accept="image/*"
+                                accept="image/*,application/pdf"
                                 multiple
                                 style="display: none"
                             />
                         </div>
                     </div>
+
+                    <!-- AI Extract button -->
+                    <div v-if="(recordType === 'PRESCRIPTION' || recordType === 'LAB_RESULT') && selectedFiles.some(f => isImageFile(f.mimeType) || isPdfFile(f.mimeType))" class="ai-extract-row">
+                        <button
+                            type="button"
+                            class="ai-extract-btn"
+                            @click="recordType === 'PRESCRIPTION' ? runExtraction() : runLabExtraction()"
+                            :disabled="extracting"
+                        >
+                            <mdicon v-if="extracting" name="loading" :size="18" class="spin"/>
+                            <mdicon v-else name="creation" :size="18"/>
+                            {{ extracting ? 'Extracting…' : 'Extract with AI' }}
+                        </button>
+                        <p v-if="extractError" class="extract-error">{{ extractError }}</p>
+                    </div>
+                </section>
+
+                <!-- Extracted Medications -->
+                <section v-if="extractedMeds.length > 0" class="card-section extracted-section">
+                    <div class="section-header">
+                        <div>
+                            <p class="section-label">AI Extraction</p>
+                            <h3 class="section-title">Extracted Medications</h3>
+                        </div>
+                        <span class="section-hint">Select which items to save to this profile</span>
+                    </div>
+                    <div class="extracted-grid">
+                        <label v-for="(med, i) in extractedMeds" :key="i" class="extracted-item">
+                            <input type="checkbox" v-model="med.selected" class="extr-check"/>
+                            <div class="extr-body">
+                                <span class="extr-name">{{ med.name }}</span>
+                                <span v-if="med.dosage" class="extr-detail">{{ med.dosage }}</span>
+                                <span v-if="med.instructions" class="extr-sub">{{ med.instructions }}</span>
+                            </div>
+                        </label>
+                    </div>
+                    <button type="button" class="save-extracted-btn" @click="saveExtractedMeds" :disabled="savingMeds || medsSaved">
+                        <mdicon v-if="savingMeds" name="loading" :size="16" class="spin"/>
+                        <mdicon v-else-if="medsSaved" name="check" :size="16"/>
+                        {{ medsSaved ? 'Saved to medications' : (savingMeds ? 'Saving…' : 'Save medications') }}
+                    </button>
+                </section>
+
+                <!-- Extracted Lab Results -->
+                <section v-if="extractedLabResults.length > 0" class="card-section extracted-section extracted-lab-section">
+                    <div class="section-header">
+                        <div>
+                            <p class="section-label">AI Extraction</p>
+                            <h3 class="section-title">Extracted Lab Results</h3>
+                        </div>
+                        <span class="section-hint">Select which results to save to this profile</span>
+                    </div>
+                    <div class="extracted-grid">
+                        <label v-for="(result, i) in extractedLabResults" :key="i" class="extracted-item">
+                            <input type="checkbox" v-model="result.selected" class="extr-check"/>
+                            <div class="extr-body">
+                                <div class="extr-name-row">
+                                    <span class="extr-name">{{ result.testName }}</span>
+                                    <span class="lab-badge" :class="`lab-${result.status?.toLowerCase()}`">{{ result.status }}</span>
+                                </div>
+                                <span class="extr-detail">{{ result.value }}{{ result.unit ? ' ' + result.unit : '' }}</span>
+                                <span v-if="result.referenceRange" class="extr-sub">Ref: {{ result.referenceRange }}</span>
+                            </div>
+                        </label>
+                    </div>
+                    <button type="button" class="save-extracted-btn" @click="saveExtractedLabResults" :disabled="savingLab || labSaved">
+                        <mdicon v-if="savingLab" name="loading" :size="16" class="spin"/>
+                        <mdicon v-else-if="labSaved" name="check" :size="16"/>
+                        {{ labSaved ? 'Saved to lab results' : (savingLab ? 'Saving…' : 'Save lab results') }}
+                    </button>
                 </section>
 
                 <!-- Details -->
@@ -237,7 +307,15 @@ export default {
         const uploading = ref(false)
         const formError = ref('')
         const { fetchProfiles } = useProfiles()
-        const { createRecord, fetchRecordById, updateRecord } = useMedicalRecords()
+        const { createRecord, fetchRecordById, updateRecord, extractPrescription, saveMedication, extractLabReport, saveLabResult } = useMedicalRecords()
+        const extracting = ref(false)
+        const extractError = ref('')
+        const extractedMeds = ref([])
+        const savingMeds = ref(false)
+        const medsSaved = ref(false)
+        const extractedLabResults = ref([])
+        const savingLab = ref(false)
+        const labSaved = ref(false)
         const recordTypeOptions = [
             { id: 'LAB_RESULT', label: 'Lab Report', icon: 'file-document' },
             { id: 'PRESCRIPTION', label: 'Prescription', icon: 'file-document-edit' },
@@ -297,9 +375,13 @@ export default {
             })
         }
 
+        const isPdfFile = (mime = '') => mime === 'application/pdf'
+
         const toPreviewEntry = async (file) => {
             const processed = await compressImageIfNeeded(file)
-            const preview = isImageFile(processed.type) ? await readAsDataURL(processed) : ''
+            const preview = (isImageFile(processed.type) || isPdfFile(processed.type))
+                ? await readAsDataURL(processed)
+                : ''
             return {
                 id: `${processed.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
                 file: processed,
@@ -315,12 +397,12 @@ export default {
                 return
             }
             uploading.value = true
-            const imageFiles = files.filter(file => isImageFile(file.type))
-            const rejected = files.length - imageFiles.length
+            const supportedFiles = files.filter(file => isImageFile(file.type) || isPdfFile(file.type))
+            const rejected = files.length - supportedFiles.length
             if (rejected > 0) {
-                formError.value = 'Only image files (PNG/JPG) are allowed.'
+                formError.value = 'Only image files (PNG/JPG) or PDFs are allowed.'
             }
-            const filesToUse = imageFiles.slice(0, availableSlots)
+            const filesToUse = supportedFiles.slice(0, availableSlots)
             try {
                 const previews = await Promise.all(filesToUse.map(toPreviewEntry))
                 selectedFiles.value = [...selectedFiles.value, ...previews]
@@ -425,6 +507,103 @@ export default {
                 selectedFiles.value = []
             } catch (err) {
                 formError.value = err.message || 'Unable to load record details.'
+            }
+        }
+
+        const runExtraction = async () => {
+            const imageEntry = selectedFiles.value.find(f => isImageFile(f.mimeType) || isPdfFile(f.mimeType))
+            if (!imageEntry) return
+            const token = localStorage.getItem('token')
+            if (!token) return
+            extractError.value = ''
+            extractedMeds.value = []
+            medsSaved.value = false
+            extracting.value = true
+            try {
+                const [header, base64] = imageEntry.preview.split(',')
+                const mimeType = header.match(/:(.*?);/)?.[1] || 'image/jpeg'
+                const result = await extractPrescription(token, base64, mimeType)
+                if (result.providerName) providerName.value = result.providerName
+                if (result.recordDate) recordDate.value = result.recordDate
+                if (result.notes) notes.value = result.notes
+                if (!fileName.value && result.providerName) fileName.value = `Prescription - ${result.providerName}`
+                extractedMeds.value = (result.medications || []).map(m => ({ ...m, selected: true }))
+            } catch (err) {
+                extractError.value = err.message || 'Extraction failed. Make sure your AI provider is configured in Settings.'
+            } finally {
+                extracting.value = false
+            }
+        }
+
+        const saveExtractedMeds = async () => {
+            if (!recordFor.value || !extractedMeds.value.length) return
+            const token = localStorage.getItem('token')
+            if (!token) return
+            savingMeds.value = true
+            try {
+                const toSave = extractedMeds.value.filter(m => m.selected)
+                await Promise.all(toSave.map(m => saveMedication(token, {
+                    profileId: recordFor.value,
+                    name: m.name,
+                    dosage: m.dosage || '',
+                    instructions: m.instructions || '',
+                    startDate: recordDate.value || null
+                })))
+                medsSaved.value = true
+            } catch (err) {
+                extractError.value = err.message || 'Unable to save medications'
+            } finally {
+                savingMeds.value = false
+            }
+        }
+
+        const runLabExtraction = async () => {
+            const imageEntry = selectedFiles.value.find(f => isImageFile(f.mimeType) || isPdfFile(f.mimeType))
+            if (!imageEntry) return
+            const token = localStorage.getItem('token')
+            if (!token) return
+            extractError.value = ''
+            extractedLabResults.value = []
+            labSaved.value = false
+            extracting.value = true
+            try {
+                const [header, base64] = imageEntry.preview.split(',')
+                const mimeType = header.match(/:(.*?);/)?.[1] || 'image/jpeg'
+                const result = await extractLabReport(token, base64, mimeType)
+                if (result.labName) providerName.value = result.labName
+                if (result.collectedAt) recordDate.value = result.collectedAt
+                if (result.notes) notes.value = result.notes
+                if (!fileName.value && result.labName) fileName.value = `Lab Report - ${result.labName}`
+                extractedLabResults.value = (result.results || []).map(r => ({ ...r, selected: true }))
+            } catch (err) {
+                extractError.value = err.message || 'Extraction failed. Make sure your AI provider is configured in Settings.'
+            } finally {
+                extracting.value = false
+            }
+        }
+
+        const saveExtractedLabResults = async () => {
+            if (!recordFor.value || !extractedLabResults.value.length) return
+            const token = localStorage.getItem('token')
+            if (!token) return
+            savingLab.value = true
+            try {
+                const toSave = extractedLabResults.value.filter(r => r.selected)
+                await Promise.all(toSave.map(r => saveLabResult(token, {
+                    profileId: recordFor.value,
+                    testName: r.testName,
+                    value: r.value,
+                    unit: r.unit || null,
+                    referenceRange: r.referenceRange || null,
+                    status: r.status || 'UNKNOWN',
+                    collectedAt: recordDate.value || null,
+                    labName: providerName.value || null
+                })))
+                labSaved.value = true
+            } catch (err) {
+                extractError.value = err.message || 'Unable to save lab results'
+            } finally {
+                savingLab.value = false
             }
         }
 
@@ -533,7 +712,20 @@ export default {
             addTagFromInput,
             removeTag,
             saveRecord,
-            isImageFile
+            isImageFile,
+            isPdfFile,
+            extracting,
+            extractError,
+            extractedMeds,
+            savingMeds,
+            medsSaved,
+            runExtraction,
+            saveExtractedMeds,
+            extractedLabResults,
+            savingLab,
+            labSaved,
+            runLabExtraction,
+            saveExtractedLabResults
         }
     }
 }
@@ -632,5 +824,161 @@ export default {
     display: inline-flex;
     align-items: center;
     gap: 10px;
+}
+
+/* AI Extract */
+.ai-extract-row {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ai-extract-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(168,85,247,0.25), rgba(34,211,238,0.15));
+    border: 1px solid rgba(168,85,247,0.4);
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ai-extract-btn:hover {
+    border-color: rgba(168,85,247,0.65);
+    background: linear-gradient(135deg, rgba(168,85,247,0.32), rgba(34,211,238,0.2));
+}
+
+.ai-extract-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.extract-error {
+    color: #f87171;
+    font-size: 13px;
+    margin: 0;
+}
+
+/* Extracted Results Section */
+.extracted-section {
+    border-color: rgba(168,85,247,0.22);
+    background: rgba(168,85,247,0.05);
+}
+
+.extracted-lab-section {
+    border-color: rgba(34,211,238,0.22);
+    background: rgba(34,211,238,0.04);
+}
+
+.extracted-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.extracted-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.extracted-item:hover {
+    border-color: rgba(168,85,247,0.35);
+}
+
+.extr-check {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    accent-color: #a855f7;
+    flex-shrink: 0;
+}
+
+.extr-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.extr-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.extr-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.extr-detail {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.extr-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.save-extracted-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(168,85,247,0.3), rgba(34,211,238,0.2));
+    border: 1px solid rgba(168,85,247,0.4);
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.save-extracted-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Lab status badges */
+.lab-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.lab-normal   { background: rgba(34,197,94,0.15);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+.lab-high     { background: rgba(251,146,60,0.15); color: #fb923c; border: 1px solid rgba(251,146,60,0.3); }
+.lab-low      { background: rgba(96,165,250,0.15); color: #60a5fa; border: 1px solid rgba(96,165,250,0.3); }
+.lab-critical { background: rgba(248,113,113,0.15);color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+.lab-unknown  { background: rgba(148,163,184,0.12);color: var(--text-muted); border: 1px solid rgba(148,163,184,0.2); }
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 </style>

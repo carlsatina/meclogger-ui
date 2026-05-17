@@ -133,6 +133,8 @@ export default {
         const maintenanceTypes = ref([...defaultMaintenanceTypes])
         const newMaintenanceType = ref('')
         const loadingOverlay = ref(false)
+        const aiProvider = ref('')
+        const aiApiKey = ref('')
         const staggerReady = useStaggerReady()
 
         const withOverlay = async(fn) => {
@@ -157,7 +159,9 @@ export default {
                     await savePreferences(token, {
                         distanceUnit: distanceUnit.value,
                         currency: currency.value,
-                        maintenanceTypes: maintenanceTypes.value
+                        maintenanceTypes: maintenanceTypes.value,
+                        aiProvider: aiProvider.value,
+                        aiApiKey: aiApiKey.value
                     })
                 } catch (err) {
                     // fallback to local storage
@@ -198,6 +202,8 @@ export default {
                         } else {
                             maintenanceTypes.value = [...defaultMaintenanceTypes]
                         }
+                        if (prefs?.aiProvider) aiProvider.value = prefs.aiProvider
+                        if (prefs?.aiApiKey) aiApiKey.value = prefs.aiApiKey
                     }
                 } catch (err) {
                     maintenanceTypes.value = [...defaultMaintenanceTypes]
@@ -220,7 +226,9 @@ export default {
             removeType,
             persistPreferences,
             loadingOverlay,
-            staggerReady
+            staggerReady,
+            aiProvider,
+            aiApiKey
         }
     }
 }

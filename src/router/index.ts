@@ -32,6 +32,12 @@ import BloodSugarWeb from '@/views/web/MedicalRecords/BloodSugarDetail.vue'
 import BodyWeightWeb from '@/views/web/MedicalRecords/BodyWeightDetail.vue'
 import IllnessWeb from '@/views/web/MedicalRecords/IllnessDetail.vue'
 import IllnessFormWeb from '@/views/web/MedicalRecords/IllnessForm.vue'
+import HealthInsightsWeb from '@/views/web/MedicalRecords/HealthInsights.vue'
+import HealthInsightsMobile from '@/views/mobile/MedicalRecords/HealthInsights.vue'
+import MedicationsMobile from '@/views/mobile/MedicalRecords/Medications.vue'
+import LabResultsMobile from '@/views/mobile/MedicalRecords/LabResults.vue'
+import MedicationsWeb from '@/views/web/MedicalRecords/MedicationsDetail.vue'
+import LabResultsWeb from '@/views/web/MedicalRecords/LabResultsDetail.vue'
 // Mobile Car Maintenance
 import CarMaintenance from '@/views/LandingPage/CarMaintenance.vue'
 import CarMaintenanceSchedules from '@/views/mobile/CarMaintenance/Schedules.vue'
@@ -159,6 +165,42 @@ const routes: Array<RouteRecordRaw> = [
     path: '/medical-records/web/illness/:id',
     name: 'illness-web-entry',
     component: IllnessFormWeb,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/medical-records/web/insights',
+    name: 'health-insights-web',
+    component: HealthInsightsWeb,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/medical-records/insights',
+    name: 'health-insights',
+    component: HealthInsightsMobile,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/medical-records/medications',
+    name: 'medications',
+    component: MedicationsMobile,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/medical-records/lab-results',
+    name: 'lab-results',
+    component: LabResultsMobile,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/medical-records/web/medications',
+    name: 'medications-web',
+    component: MedicationsWeb,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/medical-records/web/lab-results',
+    name: 'lab-results-web',
+    component: LabResultsWeb,
     meta: { requiresAuth: true }
   },
   {

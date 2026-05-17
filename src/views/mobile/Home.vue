@@ -95,12 +95,43 @@
                 </div>
             </div>
         </div>
+
+        <!-- AI Settings -->
+        <div class="glass-card ai-card" @click.stop>
+            <div class="chip ai-chip">AI</div>
+            <div class="card-row ai-header-row">
+                <div class="icon-hex ai-hex">
+                    <mdicon name="brain" size="24"/>
+                </div>
+                <div>
+                    <h3>AI Integration</h3>
+                    <p>Enable health insights and analysis across all modules.</p>
+                </div>
+                <span v-if="aiSaved" class="saved-badge">Saved</span>
+            </div>
+            <div class="ai-fields">
+                <select class="ai-select" v-model="aiProvider" @change="persistAiSettings">
+                    <option value="">No AI provider</option>
+                    <option value="anthropic">Anthropic (Claude)</option>
+                    <option value="openai">OpenAI (GPT)</option>
+                </select>
+                <input
+                    v-if="aiProvider"
+                    class="ai-input"
+                    type="password"
+                    v-model="aiApiKey"
+                    @change="persistAiSettings"
+                    placeholder="Paste your API key"
+                    autocomplete="off"
+                />
+            </div>
+        </div>
     </section>
 </div>
 </template>
 
 <script>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Modal from '@/components/Modal.vue'
 import Loading from '@/components/Loading.vue'
@@ -110,6 +141,7 @@ import getProfile from '@/composables/getProfile'
 import { Role } from '@/constants/enums'
 import { useTheme } from '@/composables/theme'
 import appMeta from '../../../package.json'
+import { useCarMaintenance } from '@/composables/carMaintenance'
 
 export default {
     name: "HomeMobile",
@@ -122,6 +154,10 @@ export default {
         const router = useRouter()
         const { isDark, toggleTheme } = useTheme()
         const appVersion = appMeta.version || '1.0.0'
+        const { getPreferences, savePreferences } = useCarMaintenance()
+        const aiProvider = ref('')
+        const aiApiKey = ref('')
+        const aiSaved = ref(false)
 
         const navigateTo = (path) => {
             router.push(path)
@@ -154,8 +190,36 @@ export default {
             }
         }
 
+        const loadAiSettings = async () => {
+            try {
+                const token = localStorage.getItem('token')
+                if (!token) return
+                const prefs = await getPreferences(token)
+                if (prefs?.aiProvider) aiProvider.value = prefs.aiProvider
+                if (prefs?.aiApiKey) aiApiKey.value = prefs.aiApiKey
+            } catch (e) { /* ignore */ }
+        }
+
+        const persistAiSettings = async () => {
+            try {
+                const token = localStorage.getItem('token')
+                if (!token) return
+                const prefs = await getPreferences(token)
+                await savePreferences(token, {
+                    distanceUnit: prefs?.distanceUnit || 'km',
+                    currency: prefs?.currency || 'USD',
+                    maintenanceTypes: prefs?.maintenanceTypes || [],
+                    aiProvider: aiProvider.value,
+                    aiApiKey: aiApiKey.value
+                })
+                aiSaved.value = true
+                setTimeout(() => { aiSaved.value = false }, 2000)
+            } catch (e) { /* ignore */ }
+        }
+
         onMounted(() => {
             ensureProfile()
+            loadAiSettings()
         })
 
         const userName = computed(() => store.state.userProfile?.fullName || 'there')
@@ -173,7 +237,11 @@ export default {
             canAccessLogbook,
             isDark,
             appVersion,
-            toggleTheme
+            toggleTheme,
+            aiProvider,
+            aiApiKey,
+            aiSaved,
+            persistAiSettings
         }
     }
 }
@@ -403,6 +471,59 @@ export default {
     font-size: 13px;
     color: var(--text-secondary);
     line-height: 1.4;
+}
+
+.ai-card {
+    cursor: default;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ai-card:active {
+    background: var(--glass-card-bg);
+}
+
+.ai-chip {
+    background: linear-gradient(135deg, #a78bfa, #38bdf8) !important;
+    box-shadow: 0 6px 14px rgba(167, 139, 250, 0.3) !important;
+}
+
+.ai-hex {
+    background: linear-gradient(135deg, #a78bfa, #38bdf8) !important;
+}
+
+.ai-header-row {
+    align-items: flex-start;
+}
+
+.saved-badge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 700;
+    color: #22c55e;
+    background: rgba(34,197,94,0.12);
+    padding: 3px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ai-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ai-select,
+.ai-input {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--glass-card-border);
+    background: var(--glass-ghost-bg);
+    color: var(--text-primary);
+    font-size: 14px;
+    width: 100%;
 }
 
 @media (max-width: 375px) {

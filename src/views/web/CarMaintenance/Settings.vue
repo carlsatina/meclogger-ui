@@ -106,6 +106,8 @@ export default {
         const maintenanceTypes = ref([...defaultTypes])
         const newMaintenanceType = ref('')
         const visibleTypes = computed(() => maintenanceTypes.value?.length ? maintenanceTypes.value : defaultTypes)
+        const aiProvider = ref('')
+        const aiApiKey = ref('')
 
         const goHome = () => router.push('/')
         const goSchedules = () => router.push('/car-maintenance/schedules')
@@ -119,7 +121,9 @@ export default {
                 await savePreferences(token, {
                     distanceUnit: distanceUnit.value,
                     currency: currency.value,
-                    maintenanceTypes: maintenanceTypes.value
+                    maintenanceTypes: maintenanceTypes.value,
+                    aiProvider: aiProvider.value,
+                    aiApiKey: aiApiKey.value
                 })
             } catch (err) {
                 // ignore persistence errors for now
@@ -168,6 +172,8 @@ export default {
                 if (Array.isArray(prefs?.maintenanceTypes) && prefs.maintenanceTypes.length) {
                     maintenanceTypes.value = prefs.maintenanceTypes
                 }
+                if (prefs?.aiProvider) aiProvider.value = prefs.aiProvider
+                if (prefs?.aiApiKey) aiApiKey.value = prefs.aiApiKey
             } catch (err) {
                 // ignore
             }
@@ -193,7 +199,9 @@ export default {
             newMaintenanceType,
             addType,
             removeType,
-            persistPreferences
+            persistPreferences,
+            aiProvider,
+            aiApiKey
         }
     }
 }

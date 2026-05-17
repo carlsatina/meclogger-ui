@@ -102,6 +102,62 @@ export const useMedicalRecords = () => {
         return data.record
     }
 
+    const extractPrescription = async (token, imageBase64, mimeType) => {
+        const res = await fetch(`${API_BASE_URL}/api/v1/insights/extract-prescription`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ imageBase64, mimeType })
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.message || 'Unable to extract prescription')
+        return data.extract
+    }
+
+    const saveMedication = async (token, payload) => {
+        const res = await fetch(`${API_BASE_URL}/api/v1/medications`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.message || 'Unable to save medication')
+        return data.medication
+    }
+
+    const extractLabReport = async (token, imageBase64, mimeType) => {
+        const res = await fetch(`${API_BASE_URL}/api/v1/insights/extract-lab-report`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ imageBase64, mimeType })
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.message || 'Unable to extract lab report')
+        return data.extract
+    }
+
+    const saveLabResult = async (token, payload) => {
+        const res = await fetch(`${API_BASE_URL}/api/v1/lab-results`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.message || 'Unable to save lab result')
+        return data.labResult
+    }
+
     return {
         records,
         loading,
@@ -110,6 +166,10 @@ export const useMedicalRecords = () => {
         createRecord,
         updateRecord,
         deleteRecord,
-        fetchRecordById
+        fetchRecordById,
+        extractPrescription,
+        saveMedication,
+        extractLabReport,
+        saveLabResult
     }
 }

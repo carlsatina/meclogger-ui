@@ -212,6 +212,17 @@ export default {
         }
 
         const loadReminder = async () => {
+            if (route.query.prefillName) {
+                medicineName.value = route.query.prefillName
+                if (route.query.prefillDosage) {
+                    const parts = String(route.query.prefillDosage).split(/\s+/)
+                    const num = parseFloat(parts[0])
+                    if (!isNaN(num)) dosage.value = num
+                    if (parts[1]) unit.value = parts[1]
+                }
+                updateCalculatedDosage()
+                return
+            }
             if (!isEditing.value) return
             const token = localStorage.getItem('token')
             if (!token || !reminderId.value) return

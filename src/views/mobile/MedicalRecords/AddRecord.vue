@@ -34,14 +34,18 @@
                     <mdicon name="close" :size="16"/>
                 </button>
             </div>
-            <div 
-                class="image-preview glass-card" 
-                v-for="(file, index) in selectedFiles" 
+            <div
+                class="image-preview glass-card"
+                v-for="(file, index) in selectedFiles"
                 :key="file.id"
             >
-                <img :src="file.preview" alt="Uploaded record" />
-                <button 
-                    type="button" 
+                <img v-if="isImageFile(file.file?.type)" :src="file.preview" alt="Uploaded record" />
+                <div v-else class="pdf-thumb">
+                    <mdicon name="file-pdf-box" :size="36" class="pdf-icon"/>
+                    <p class="pdf-name">{{ file.file?.name || 'PDF' }}</p>
+                </div>
+                <button
+                    type="button"
                     class="remove-image-btn"
                     @click="removeSelectedFile(index)"
                 >
@@ -66,22 +70,98 @@
                 <mdicon name="camera-plus" :size="36" class="plus-icon"/>
                 <p>Use camera</p>
             </button>
-            <input 
-                type="file" 
-                ref="deviceInput" 
+            <input
+                type="file"
+                ref="deviceInput"
                 class="sr-only"
-                accept="image/*"
+                accept="image/*,application/pdf"
                 multiple
                 @change="handleFileUpload"
             />
-            <input 
-                type="file" 
-                ref="cameraInput" 
+            <input
+                type="file"
+                ref="cameraInput"
                 class="sr-only"
                 accept="image/*"
                 capture="environment"
                 @change="handleFileUpload"
             />
+        </div>
+
+        <!-- AI Extraction (Prescription / Lab Report) -->
+        <div v-if="(recordType === 'PRESCRIPTION' || recordType === 'LAB_RESULT') && selectedFiles.some(f => isImageFile(f.file?.type) || f.file?.type === 'application/pdf')" class="ai-extract-section">
+            <button
+                type="button"
+                class="ai-extract-btn"
+                @click="recordType === 'PRESCRIPTION' ? runExtraction() : runLabExtraction()"
+                :disabled="extracting"
+            >
+                <mdicon v-if="extracting" name="loading" :size="18" class="spin"/>
+                <mdicon v-else name="creation" :size="18"/>
+                {{ extracting ? 'Extracting…' : 'Extract with AI' }}
+            </button>
+            <p v-if="extractError" class="extract-error">{{ extractError }}</p>
+        </div>
+
+        <!-- Extracted Medications (Prescription) -->
+        <div v-if="extractedMeds.length > 0" class="extracted-meds-section">
+            <div class="extracted-meds-header">
+                <mdicon name="pill" :size="18"/>
+                <span>Extracted Medications</span>
+            </div>
+            <p class="extracted-hint">Select which medications to save to your profile</p>
+            <div class="med-item" v-for="(med, i) in extractedMeds" :key="i">
+                <label class="med-checkbox-row">
+                    <input type="checkbox" v-model="med.selected" class="med-checkbox"/>
+                    <div class="med-info">
+                        <span class="med-name">{{ med.name }}</span>
+                        <span v-if="med.dosage" class="med-detail">{{ med.dosage }}</span>
+                        <span v-if="med.instructions" class="med-instructions">{{ med.instructions }}</span>
+                    </div>
+                </label>
+            </div>
+            <button
+                type="button"
+                class="save-meds-btn"
+                @click="saveExtractedMeds"
+                :disabled="savingMeds || medsSaved"
+            >
+                <mdicon v-if="savingMeds" name="loading" :size="16" class="spin"/>
+                <mdicon v-else-if="medsSaved" name="check" :size="16"/>
+                {{ medsSaved ? 'Saved to medications' : (savingMeds ? 'Saving…' : 'Save medications') }}
+            </button>
+        </div>
+
+        <!-- Extracted Lab Results -->
+        <div v-if="extractedLabResults.length > 0" class="extracted-meds-section extracted-lab-section">
+            <div class="extracted-meds-header">
+                <mdicon name="test-tube" :size="18"/>
+                <span>Extracted Lab Results</span>
+            </div>
+            <p class="extracted-hint">Select results to save to this profile</p>
+            <div class="med-item" v-for="(result, i) in extractedLabResults" :key="i">
+                <label class="med-checkbox-row">
+                    <input type="checkbox" v-model="result.selected" class="med-checkbox"/>
+                    <div class="med-info">
+                        <div class="lab-name-row">
+                            <span class="med-name">{{ result.testName }}</span>
+                            <span class="lab-status-badge" :class="`lab-status-${result.status?.toLowerCase()}`">{{ result.status }}</span>
+                        </div>
+                        <span class="med-detail">{{ result.value }}{{ result.unit ? ' ' + result.unit : '' }}</span>
+                        <span v-if="result.referenceRange" class="med-instructions">Ref: {{ result.referenceRange }}</span>
+                    </div>
+                </label>
+            </div>
+            <button
+                type="button"
+                class="save-meds-btn"
+                @click="saveExtractedLabResults"
+                :disabled="savingLab || labSaved"
+            >
+                <mdicon v-if="savingLab" name="loading" :size="16" class="spin"/>
+                <mdicon v-else-if="labSaved" name="check" :size="16"/>
+                {{ labSaved ? 'Saved to lab results' : (savingLab ? 'Saving…' : 'Save lab results') }}
+            </button>
         </div>
 
         <!-- Form Fields -->
@@ -216,7 +296,15 @@ export default {
         const filesToRemove = ref([])
         const recordId = ref(typeof route.query.recordId === 'string' ? route.query.recordId : null)
         const { fetchProfiles } = useProfiles()
-        const { createRecord, fetchRecordById, updateRecord } = useMedicalRecords()
+        const { createRecord, fetchRecordById, updateRecord, extractPrescription, saveMedication, extractLabReport, saveLabResult } = useMedicalRecords()
+        const extracting = ref(false)
+        const extractError = ref('')
+        const extractedMeds = ref([])
+        const savingMeds = ref(false)
+        const medsSaved = ref(false)
+        const extractedLabResults = ref([])
+        const savingLab = ref(false)
+        const labSaved = ref(false)
         const maxAttachments = 5
         const saving = ref(false)
         const uploading = ref(false)
@@ -303,12 +391,12 @@ export default {
                 return
             }
             uploading.value = true
-            const imageFiles = files.filter(file => isImageFile(file.type))
-            const rejected = files.length - imageFiles.length
+            const supportedFiles = files.filter(file => isImageFile(file.type) || file.type === 'application/pdf')
+            const rejected = files.length - supportedFiles.length
             if (rejected > 0) {
-                formError.value = 'Only image files (PNG/JPG) are allowed.'
+                formError.value = 'Only image files (PNG/JPG) or PDFs are allowed.'
             }
-            const filesToUse = imageFiles.slice(0, availableSlots)
+            const filesToUse = supportedFiles.slice(0, availableSlots)
             try {
                 const previews = await Promise.all(filesToUse.map(toPreviewEntry))
                 selectedFiles.value = [...selectedFiles.value, ...previews]
@@ -379,6 +467,107 @@ export default {
             filesToRemove.value = []
             formError.value = ''
             uploading.value = false
+        }
+
+        const runExtraction = async () => {
+            if (!selectedFiles.value.length) return
+            const token = localStorage.getItem('token')
+            if (!token) return
+            extractError.value = ''
+            extractedMeds.value = []
+            medsSaved.value = false
+            extracting.value = true
+            try {
+                const dataUrl = selectedFiles.value[0].preview
+                const [header, base64] = dataUrl.split(',')
+                const mimeType = header.match(/:(.*?);/)?.[1] || 'image/jpeg'
+                const result = await extractPrescription(token, base64, mimeType)
+                if (result.providerName) providerName.value = result.providerName
+                if (result.recordDate) recordDate.value = result.recordDate
+                if (result.notes) notes.value = result.notes
+                if (!fileName.value && result.providerName) {
+                    fileName.value = `Prescription - ${result.providerName}`
+                }
+                extractedMeds.value = (result.medications || []).map(m => ({ ...m, selected: true }))
+            } catch (err) {
+                extractError.value = err.message || 'Extraction failed. Make sure your AI provider is configured in Settings.'
+            } finally {
+                extracting.value = false
+            }
+        }
+
+        const saveExtractedMeds = async () => {
+            if (!recordFor.value || !extractedMeds.value.length) return
+            const token = localStorage.getItem('token')
+            if (!token) return
+            savingMeds.value = true
+            try {
+                const toSave = extractedMeds.value.filter(m => m.selected)
+                await Promise.all(toSave.map(m => saveMedication(token, {
+                    profileId: recordFor.value,
+                    name: m.name,
+                    dosage: m.dosage || '',
+                    instructions: m.instructions || '',
+                    startDate: recordDate.value || null
+                })))
+                medsSaved.value = true
+            } catch (err) {
+                extractError.value = err.message || 'Unable to save medications'
+            } finally {
+                savingMeds.value = false
+            }
+        }
+
+        const runLabExtraction = async () => {
+            if (!selectedFiles.value.length) return
+            const token = localStorage.getItem('token')
+            if (!token) return
+            extractError.value = ''
+            extractedLabResults.value = []
+            labSaved.value = false
+            extracting.value = true
+            try {
+                const dataUrl = selectedFiles.value[0].preview
+                const [header, base64] = dataUrl.split(',')
+                const mimeType = header.match(/:(.*?);/)?.[1] || 'image/jpeg'
+                const result = await extractLabReport(token, base64, mimeType)
+                if (result.labName) providerName.value = result.labName
+                if (result.collectedAt) recordDate.value = result.collectedAt
+                if (result.notes) notes.value = result.notes
+                if (!fileName.value && result.labName) {
+                    fileName.value = `Lab Report - ${result.labName}`
+                }
+                extractedLabResults.value = (result.results || []).map(r => ({ ...r, selected: true }))
+            } catch (err) {
+                extractError.value = err.message || 'Extraction failed. Make sure your AI provider is configured in Settings.'
+            } finally {
+                extracting.value = false
+            }
+        }
+
+        const saveExtractedLabResults = async () => {
+            if (!recordFor.value || !extractedLabResults.value.length) return
+            const token = localStorage.getItem('token')
+            if (!token) return
+            savingLab.value = true
+            try {
+                const toSave = extractedLabResults.value.filter(r => r.selected)
+                await Promise.all(toSave.map(r => saveLabResult(token, {
+                    profileId: recordFor.value,
+                    testName: r.testName,
+                    value: r.value,
+                    unit: r.unit || null,
+                    referenceRange: r.referenceRange || null,
+                    status: r.status || 'UNKNOWN',
+                    collectedAt: recordDate.value || null,
+                    labName: providerName.value || null
+                })))
+                labSaved.value = true
+            } catch (err) {
+                extractError.value = err.message || 'Unable to save lab results'
+            } finally {
+                savingLab.value = false
+            }
         }
 
         const saveRecord = async() => {
@@ -504,7 +693,19 @@ export default {
             uploading,
             formError,
             resolveFileUrl,
-            isImageFile
+            isImageFile,
+            extracting,
+            extractError,
+            extractedMeds,
+            savingMeds,
+            medsSaved,
+            runExtraction,
+            saveExtractedMeds,
+            extractedLabResults,
+            savingLab,
+            labSaved,
+            runLabExtraction,
+            saveExtractedLabResults
         }
     }
 }
@@ -687,6 +888,31 @@ export default {
     font-weight: 600;
 }
 
+.pdf-thumb {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px;
+}
+
+.pdf-icon { color: #f87171; }
+
+.pdf-name {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin: 0;
+    text-align: center;
+    word-break: break-all;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
 /* Form Section */
 .form-section {
     display: flex;
@@ -835,5 +1061,173 @@ export default {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+}
+
+/* AI Extract */
+.ai-extract-section {
+    padding: 0 16px;
+    margin-bottom: 16px;
+}
+
+.ai-extract-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(168,85,247,0.28), rgba(34,211,238,0.18));
+    border: 1px solid rgba(168,85,247,0.45);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ai-extract-btn:active {
+    transform: scale(0.98);
+    border-color: rgba(168,85,247,0.7);
+}
+
+.ai-extract-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.extract-error {
+    color: #f87171;
+    font-size: 13px;
+    margin: 8px 0 0;
+}
+
+/* Extracted Medications */
+.extracted-meds-section {
+    margin: 0 16px 20px;
+    background: rgba(168,85,247,0.07);
+    border: 1px solid rgba(168,85,247,0.22);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.extracted-meds-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.extracted-hint {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.med-item {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 10px;
+}
+
+.med-checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.med-checkbox {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: #a855f7;
+    flex-shrink: 0;
+}
+
+.med-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.med-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.med-detail {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.med-instructions {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.save-meds-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(168,85,247,0.32), rgba(34,211,238,0.22));
+    border: 1px solid rgba(168,85,247,0.4);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.save-meds-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.extracted-lab-section {
+    border-color: rgba(34,211,238,0.22);
+    background: rgba(34,211,238,0.06);
+}
+
+.lab-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.lab-status-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.lab-status-normal   { background: rgba(34,197,94,0.2);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+.lab-status-high     { background: rgba(251,146,60,0.2); color: #fb923c; border: 1px solid rgba(251,146,60,0.3); }
+.lab-status-low      { background: rgba(96,165,250,0.2); color: #60a5fa; border: 1px solid rgba(96,165,250,0.3); }
+.lab-status-critical { background: rgba(248,113,113,0.2);color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+.lab-status-unknown  { background: rgba(148,163,184,0.15);color: var(--text-muted); border: 1px solid rgba(148,163,184,0.2); }
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 </style>

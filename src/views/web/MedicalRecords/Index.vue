@@ -66,6 +66,24 @@
                     </div>
                 </div>
 
+                <div class="home-quick-links">
+                    <div class="quick-link-card" @click="router.push({ path: '/medical-records/web/insights' })">
+                        <mdicon name="brain" :size="22" class="ql-icon ai-ql"/>
+                        <span>AI Insights</span>
+                        <mdicon name="chevron-right" :size="16" class="ql-arrow"/>
+                    </div>
+                    <div class="quick-link-card" @click="router.push({ path: '/medical-records/web/medications', query: { profileId: activeProfileId, profileName: profileChipName } })">
+                        <mdicon name="pill" :size="22" class="ql-icon pill-ql"/>
+                        <span>Medications</span>
+                        <mdicon name="chevron-right" :size="16" class="ql-arrow"/>
+                    </div>
+                    <div class="quick-link-card" @click="router.push({ path: '/medical-records/web/lab-results', query: { profileId: activeProfileId, profileName: profileChipName } })">
+                        <mdicon name="test-tube" :size="22" class="ql-icon lab-ql"/>
+                        <span>Lab Results</span>
+                        <mdicon name="chevron-right" :size="16" class="ql-arrow"/>
+                    </div>
+                </div>
+
                 <section class="home-section">
                     <div class="home-section-header">
                         <h3>Today's Reminders</h3>
@@ -868,3 +886,41 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+.home-quick-links {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+}
+
+.quick-link-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    flex: 1;
+    min-width: 140px;
+}
+
+.quick-link-card:hover {
+    background: rgba(255,255,255,0.09);
+    transform: translateY(-1px);
+}
+
+.ql-icon { flex-shrink: 0; }
+.ai-ql   { color: #a78bfa; }
+.pill-ql { color: #c084fc; }
+.lab-ql  { color: #67e8f9; }
+
+.ql-arrow { color: var(--text-muted); margin-left: auto; }
+</style>

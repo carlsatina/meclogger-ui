@@ -75,6 +75,44 @@
             <p class="feature-description admin-desc">Review pending registrations and update roles</p>
         </div>
     </div>
+
+    <!-- AI Settings -->
+    <div class="ai-settings-section">
+        <div class="ai-settings-card glass-card">
+            <div class="ai-settings-header">
+                <mdicon name="brain" size="22"/>
+                <div>
+                    <h3>AI Integration</h3>
+                    <p>Configure your AI provider to enable health insights and more across all modules.</p>
+                </div>
+                <span v-if="aiSaved" class="saved-badge">Saved</span>
+            </div>
+            <div class="ai-fields">
+                <div class="ai-field">
+                    <label>Provider</label>
+                    <select class="ai-select" v-model="aiProvider" @change="persistAiSettings">
+                        <option value="">None</option>
+                        <option value="anthropic">Anthropic (Claude)</option>
+                        <option value="openai">OpenAI (GPT)</option>
+                    </select>
+                </div>
+                <div class="ai-field" v-if="aiProvider">
+                    <label>API Key</label>
+                    <input
+                        class="ai-input"
+                        type="password"
+                        v-model="aiApiKey"
+                        @change="persistAiSettings"
+                        placeholder="Paste your API key here"
+                        autocomplete="off"
+                    />
+                </div>
+            </div>
+            <p v-if="aiProvider" class="ai-hint">
+                Your key is stored in your account and used server-side only to generate insights. It is never shared.
+            </p>
+        </div>
+    </div>
 </div>
 </template>
 
@@ -90,6 +128,7 @@ import { useMedicineReminders } from '@/composables/medicineReminders'
 import { Role } from '@/constants/enums'
 import { useTheme } from '@/composables/theme'
 import appMeta from '../../../package.json'
+import { useCarMaintenance } from '@/composables/carMaintenance'
 
 export default {
     name: "HomeWeb",
@@ -103,6 +142,10 @@ export default {
         const activeProfileId = ref(localStorage.getItem('selectedProfileId') || null)
         const { isDark, toggleTheme } = useTheme()
         const appVersion = appMeta.version || '1.0.0'
+        const { getPreferences, savePreferences } = useCarMaintenance()
+        const aiProvider = ref('')
+        const aiApiKey = ref('')
+        const aiSaved = ref(false)
 
         const navigateTo = (path) => {
             router.push(path)
@@ -187,9 +230,37 @@ export default {
             await fetchReminders(token, activeProfileId.value, { date: new Date() })
         }
 
+        const loadAiSettings = async () => {
+            try {
+                const token = localStorage.getItem('token')
+                if (!token) return
+                const prefs = await getPreferences(token)
+                if (prefs?.aiProvider) aiProvider.value = prefs.aiProvider
+                if (prefs?.aiApiKey) aiApiKey.value = prefs.aiApiKey
+            } catch (e) { /* ignore */ }
+        }
+
+        const persistAiSettings = async () => {
+            try {
+                const token = localStorage.getItem('token')
+                if (!token) return
+                const prefs = await getPreferences(token)
+                await savePreferences(token, {
+                    distanceUnit: prefs?.distanceUnit || 'km',
+                    currency: prefs?.currency || 'USD',
+                    maintenanceTypes: prefs?.maintenanceTypes || [],
+                    aiProvider: aiProvider.value,
+                    aiApiKey: aiApiKey.value
+                })
+                aiSaved.value = true
+                setTimeout(() => { aiSaved.value = false }, 2000)
+            } catch (e) { /* ignore */ }
+        }
+
         onMounted(() => {
             ensureProfile()
             loadReminders()
+            loadAiSettings()
         })
 
         const userName = computed(() => store.state.userProfile?.fullName || 'there')
@@ -211,7 +282,11 @@ export default {
             canAccessLogbook,
             isDark,
             appVersion,
-            toggleTheme
+            toggleTheme,
+            aiProvider,
+            aiApiKey,
+            aiSaved,
+            persistAiSettings
         }
     }
 }
@@ -565,6 +640,92 @@ export default {
 }
 .admin-desc {
     color: var(--text-secondary);
+}
+
+.ai-settings-section {
+    max-width: 1200px;
+    margin: 20px auto 0;
+    padding: 0 12px;
+}
+
+.ai-settings-card {
+    padding: 20px 24px;
+    cursor: default;
+}
+
+.ai-settings-card:hover {
+    transform: none;
+    box-shadow: var(--glass-card-shadow);
+}
+
+.ai-settings-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.ai-settings-header h3 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.ai-settings-header p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.saved-badge {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 700;
+    color: #22c55e;
+    background: rgba(34,197,94,0.12);
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.ai-fields {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.ai-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 200px;
+}
+
+.ai-field label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+.ai-select,
+.ai-input {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--glass-card-border);
+    background: var(--glass-ghost-bg);
+    color: var(--text-primary);
+    font-size: 14px;
+    width: 100%;
+}
+
+.ai-hint {
+    margin: 12px 0 0;
+    font-size: 12px;
+    color: var(--text-muted);
 }
 
 
