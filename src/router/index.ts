@@ -74,6 +74,8 @@ import LogbookBorrowed from '@/views/LandingPage/LogbookBorrowed.vue'
 import LogbookBorrowedHistory from '@/views/LandingPage/LogbookBorrowedHistory.vue'
 import LogbookImport from '@/views/LandingPage/LogbookImport.vue'
 import ExpenseAccountsMobile from '@/views/mobile/ExpenseTracking/ManageAccounts.vue'
+import SpendingInsightsMobile from '@/views/mobile/ExpenseTracking/SpendingInsights.vue'
+import SpendingInsightsWeb from '@/views/web/ExpenseTracking/SpendingInsights.vue'
 import PendingApproval from '@/views/LandingPage/PendingApproval.vue'
 import AdminUsers from '@/views/LandingPage/AdminUsers.vue'
 
@@ -532,6 +534,18 @@ const routes: Array<RouteRecordRaw> = [
     path: '/expense-tracking/accounts',
     name: 'expense-accounts',
     component: ExpenseAccountsMobile,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/expense-tracking/insights',
+    name: 'spending-insights',
+    component: SpendingInsightsMobile,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/expense-tracking/web/insights',
+    name: 'spending-insights-web',
+    component: SpendingInsightsWeb,
     meta: { requiresAuth: true }
   },
   {

@@ -131,16 +131,21 @@
             </div>
             <p v-else class="sub">No expenses yet.</p>
 
-            <div class="insights-cta">
-                <div>
-                    <p class="label">Insights</p>
-                    <h4>See trends & tips</h4>
-                    <p class="sub">Spending pulse, categories, and smart alerts.</p>
+            <div class="quick-actions-grid">
+                <div class="quick-action-card" @click="setTab('insights')">
+                    <div class="qa-icon qa-icon-indigo">
+                        <mdicon name="chart-bar" :size="20" />
+                    </div>
+                    <p class="qa-title">Insights</p>
+                    <p class="qa-sub">Trends & categories</p>
                 </div>
-                <button class="inline-pill" @click="setTab('insights')">
-                    <mdicon name="chart-line" size="18" />
-                    <span>View insights</span>
-                </button>
+                <div class="quick-action-card qa-ai" @click="router.push('/expense-tracking/insights')">
+                    <div class="qa-icon qa-icon-green">
+                        <mdicon name="robot-outline" :size="20" />
+                    </div>
+                    <p class="qa-title">AI Analysis</p>
+                    <p class="qa-sub">Smart recommendations</p>
+                </div>
             </div>
         </section>
     </main>
@@ -410,6 +415,17 @@
                 </div>
             </div>
         </section>
+
+        <div class="ai-insights-cta slide-up" @click="router.push('/expense-tracking/insights')">
+            <div class="ai-insights-icon">
+                <mdicon name="robot-outline" :size="22" />
+            </div>
+            <div class="ai-insights-text">
+                <p class="ai-insights-title">AI Spending Insights</p>
+                <p class="ai-insights-sub">Deep analysis · Budget alerts · Recommendations</p>
+            </div>
+            <mdicon name="chevron-right" :size="20" class="ai-insights-arrow" />
+        </div>
     </main>
 
     <main class="content" v-else-if="activeTab === 'profile'">

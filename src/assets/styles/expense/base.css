@@ -1218,3 +1218,79 @@
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+.expense-theme .ai-insights-cta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 4px 0 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(34,197,94,0.08));
+  border: 1px solid rgba(99,102,241,0.25);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.expense-theme .ai-insights-cta:active { background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(34,197,94,0.14)); }
+.expense-theme .ai-insights-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(99,102,241,0.18);
+  color: #818cf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.expense-theme .ai-insights-text { flex: 1; }
+.expense-theme .ai-insights-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.expense-theme .ai-insights-sub   { font-size: 12px; color: var(--text-muted); margin: 2px 0 0; }
+.expense-theme .ai-insights-arrow { color: var(--text-muted); flex-shrink: 0; }
+
+/* Quick action cards on home tab */
+.expense-theme .quick-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 0 2px;
+}
+
+.expense-theme .quick-action-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: var(--glass-ghost-bg);
+  border: 1px solid var(--glass-card-border);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.expense-theme .quick-action-card:active {
+  background: rgba(255,255,255,0.08);
+  transform: scale(0.97);
+}
+.expense-theme .quick-action-card.qa-ai {
+  background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(34,197,94,0.07));
+  border-color: rgba(99,102,241,0.22);
+}
+.expense-theme .quick-action-card.qa-ai:active {
+  background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(34,197,94,0.12));
+}
+
+.expense-theme .qa-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.expense-theme .qa-icon-indigo { background: rgba(79,70,229,0.18); color: #818cf8; }
+.expense-theme .qa-icon-green  { background: rgba(34,197,94,0.18); color: #4ade80; }
+
+.expense-theme .qa-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.expense-theme .qa-sub   { font-size: 11px; color: var(--text-muted); margin: 0; line-height: 1.4; }
