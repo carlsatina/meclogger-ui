@@ -127,6 +127,21 @@ export const useExpenses = () => {
         return true
     }
 
+    const quickAddExpense = async (token, text) => {
+        if (!token) throw new Error('Missing auth token')
+        const res = await fetch(`${API_BASE_URL}/api/v1/expenses/quick-add`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ text })
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.message || 'Quick add failed')
+        return data.expense
+    }
+
     return {
         listExpenses,
         createExpense,
@@ -135,6 +150,7 @@ export const useExpenses = () => {
         createCategory,
         updateCategory,
         deleteCategory,
-        listCategories
+        listCategories,
+        quickAddExpense
     }
 }

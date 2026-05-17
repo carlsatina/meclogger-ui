@@ -66,124 +66,134 @@
     <!-- Content Area -->
     <div class="content-wrapper">
         <!-- Home Tab -->
-        <div v-if="activeTab === 'home'" class="tab-content">
-            <!-- Quick Action Cards -->
-            <div class="action-cards-grid">
-                <div class="action-card-large glass-card" @click="navigateToAddRecord">
-                    <div class="action-icon-wrapper">
-                        <mdicon name="clipboard-plus" :size="48"/>
-                    </div>
-                    <h4>Add medical record</h4>
+        <div v-if="activeTab === 'home'" class="tab-content home-tab">
+
+            <!-- Active illness alert -->
+            <div class="home-alert" v-if="activeIllness" @click="navigateToIllness">
+                <mdicon name="alert-circle-outline" :size="18" class="home-alert-icon"/>
+                <div class="home-alert-body">
+                    <p class="home-alert-title">{{ activeIllness.diagnosis }}</p>
+                    <p class="home-alert-sub">{{ activeIllness.status }} · {{ activeIllness.severity || 'Mild' }}</p>
                 </div>
-                <div class="action-card-large glass-card" @click="navigateToMedicineReminder">
-                    <div class="action-icon-wrapper">
-                        <mdicon name="pill" :size="48"/>
-                    </div>
-                    <h4>Add medicine reminder</h4>
-                </div>
-            </div>
-            <div class="action-card-ai glass-card" @click="router.push('/medical-records/insights')">
-                <div class="action-icon-wrapper ai-icon-wrapper">
-                    <mdicon name="brain" :size="28"/>
-                </div>
-                <div>
-                    <h4>AI Health Insights</h4>
-                    <p>Analyze vitals, medications &amp; illness trends</p>
-                </div>
-                <mdicon name="chevron-right" :size="20" class="ai-chevron"/>
-            </div>
-            <div class="action-card-wide glass-card" @click="router.push({ path: '/medical-records/medications', query: { profileId: activeMemberId, profileName: activeProfileName } })">
-                <div class="action-icon-wrapper wide-icon-wrapper pill-icon">
-                    <mdicon name="pill" :size="24"/>
-                </div>
-                <div>
-                    <h4>Medications</h4>
-                    <p>View saved medications</p>
-                </div>
-                <mdicon name="chevron-right" :size="20" class="ai-chevron"/>
-            </div>
-            <div class="action-card-wide glass-card" @click="router.push({ path: '/medical-records/lab-results', query: { profileId: activeMemberId, profileName: activeProfileName } })">
-                <div class="action-icon-wrapper wide-icon-wrapper lab-icon">
-                    <mdicon name="test-tube" :size="24"/>
-                </div>
-                <div>
-                    <h4>Lab Results</h4>
-                    <p>View extracted test results</p>
-                </div>
-                <mdicon name="chevron-right" :size="20" class="ai-chevron"/>
+                <mdicon name="chevron-right" :size="16" class="home-alert-arrow"/>
             </div>
 
-            <!-- Today's Reminder Section -->
-            <div class="section-header">
-                <h3 class="section-title">Today's Reminder</h3>
-                <a 
-                    href="#" 
-                    class="see-all-link" 
-                    @click.prevent="router.push('/medical-records/medicine-reminders/history')"
-                >
-                    See all
-                </a>
-            </div>
-            <div class="reminder-list glass-card">
-                <div v-if="!hasActiveProfile" class="reminder-empty">
-                    Select or add a profile to see reminders here.
-                </div>
-                <div v-else-if="remindersLoading" class="reminder-empty">
-                    Loading reminders...
-                </div>
-                <template v-else>
-                    <div 
-                        class="reminder-item"
-                        v-for="reminder in todaysReminders"
-                        :key="reminder.id"
-                    >
-                        <div class="reminder-content">
-                            <h4 class="reminder-name">{{ reminder.medicineName }}</h4>
-                            <p class="reminder-details">
-                                {{ formatFrequency(reminder) }} · {{ reminder.intakeMethod || 'Anytime' }}
+            <!-- Today's Medications -->
+            <div class="home-meds-card glass-card">
+                <div class="home-meds-header">
+                    <div class="hmc-left">
+                        <div class="hmc-icon"><mdicon name="pill" :size="18"/></div>
+                        <div>
+                            <p class="hmc-title">Today's Medications</p>
+                            <p class="hmc-sub" v-if="todaysReminders.length">
+                                {{ todayMedsTaken }} of {{ todayMedsTotal }} doses taken
                             </p>
-                            <div class="reminder-slot-list">
-                                <button 
-                                    class="reminder-slot-pill"
-                                    v-for="slot in reminder.slots"
-                                    :key="slot.id"
-                                    :class="{ checked: slot.status === 'taken' }"
-                                    @click.stop="toggleHomeReminder(reminder, slot)"
-                                >
-                                    <span>{{ slot.label }}</span>
-                                    <span class="slot-icon" v-if="slot.status">
-                                        {{ slot.status === 'taken' ? '☑︎' : '✖︎' }}
-                                    </span>
-                                </button>
+                            <p class="hmc-sub" v-else>No reminders set for today</p>
+                        </div>
+                    </div>
+                    <div class="hmc-pct-block" v-if="todayMedsTotal">
+                        <p class="hmc-pct">{{ Math.round((todayMedsTaken / todayMedsTotal) * 100) }}%</p>
+                        <div class="hmc-bar-track">
+                            <div class="hmc-bar-fill"
+                                :style="{ width: `${Math.round((todayMedsTaken / todayMedsTotal) * 100)}%` }">
                             </div>
                         </div>
                     </div>
-                    <div 
-                        v-if="!todaysReminders.length" 
-                        class="reminder-empty"
+                </div>
+                <template v-if="hasActiveProfile && !remindersLoading">
+                    <div class="home-reminder-item"
+                        v-for="reminder in todaysReminders"
+                        :key="reminder.id"
                     >
-                        No reminders yet. Tap "Add medicine reminder".
+                        <div class="hri-left">
+                            <p class="hri-name">{{ reminder.medicineName }}</p>
+                            <p class="hri-detail">{{ formatFrequency(reminder) }} · {{ reminder.intakeMethod || 'Anytime' }}</p>
+                        </div>
+                        <div class="hri-slots">
+                            <button
+                                class="hri-slot-pill"
+                                v-for="slot in reminder.slots" :key="slot.id"
+                                :class="{ taken: slot.status === 'taken', missed: slot.status === 'missed' }"
+                                @click.stop="toggleHomeReminder(reminder, slot)"
+                            >
+                                {{ slot.label }}
+                                <span class="hri-icon" v-if="slot.status === 'taken'">✓</span>
+                                <span class="hri-icon" v-else-if="slot.status === 'missed'">✕</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="home-meds-empty" v-if="!todaysReminders.length">
+                        <p>No reminders yet.</p>
+                        <button class="hme-btn" @click="navigateToMedicineReminder">+ Add reminder</button>
                     </div>
                 </template>
+                <div class="home-meds-loading" v-else-if="remindersLoading">Loading reminders…</div>
+                <div class="home-meds-loading" v-else-if="!hasActiveProfile">Select a profile to see reminders.</div>
             </div>
 
-            <!-- Recent Records Section -->
-            <div class="section-header">
-                <h3 class="section-title">Recent records</h3>
+            <!-- Vitals snapshot strip -->
+            <div class="vitals-strip" v-if="bpLatest || bsLatest || bodyWeightLatest">
+                <div class="vital-chip" @click="navigateToBloodPressure" v-if="bpLatest">
+                    <div class="vchip-top">
+                        <div class="vchip-icon vci-red"><mdicon name="heart-pulse" :size="13"/></div>
+                        <span class="vchip-label">Blood Pressure</span>
+                    </div>
+                    <p class="vchip-val">{{ bpLatest.systolic }}/{{ bpLatest.diastolic }}</p>
+                    <span class="vchip-badge" :class="`vb-${bpLatest.status?.toLowerCase()}`">{{ bpLatest.status }}</span>
+                </div>
+                <div class="vital-chip" @click="navigateToBloodSugar" v-if="bsLatest">
+                    <div class="vchip-top">
+                        <div class="vchip-icon vci-amber"><mdicon name="water-outline" :size="13"/></div>
+                        <span class="vchip-label">Blood Sugar</span>
+                    </div>
+                    <p class="vchip-val">{{ bsLatest.value }}<span class="vchip-unit"> mg/dL</span></p>
+                    <span class="vchip-badge" :class="`vb-${bsStatusLabel?.toLowerCase()}`">{{ bsStatusLabel }}</span>
+                </div>
+                <div class="vital-chip" @click="navigateToBodyWeight" v-if="bodyWeightLatest">
+                    <div class="vchip-top">
+                        <div class="vchip-icon vci-blue"><mdicon name="scale-bathroom" :size="13"/></div>
+                        <span class="vchip-label">Body Weight</span>
+                    </div>
+                    <p class="vchip-val">{{ bodyWeightLatest.weight }}<span class="vchip-unit"> kg</span></p>
+                    <span class="vchip-badge"
+                        :class="bodyWeightLatest.change > 0.05 ? 'vb-up' : bodyWeightLatest.change < -0.05 ? 'vb-down' : 'vb-stable'">
+                        {{ bodyWeightLatest.change > 0.05 ? `+${bodyWeightLatest.change}` : bodyWeightLatest.change < -0.05 ? `${bodyWeightLatest.change}` : 'Stable' }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Quick actions row -->
+            <div class="quick-row">
+                <button class="quick-btn" @click="navigateToAddRecord">
+                    <div class="qb-icon qb-record"><mdicon name="clipboard-plus" :size="20"/></div>
+                    <span>Add Record</span>
+                </button>
+                <button class="quick-btn" @click="navigateToMedicineReminder">
+                    <div class="qb-icon qb-reminder"><mdicon name="bell-plus-outline" :size="20"/></div>
+                    <span>Reminder</span>
+                </button>
+                <button class="quick-btn" @click="router.push('/medical-records/insights')">
+                    <div class="qb-icon qb-ai"><mdicon name="brain" :size="20"/></div>
+                    <span>AI Insights</span>
+                </button>
+            </div>
+
+            <!-- Recent Records -->
+            <div class="home-section-header">
+                <h3 class="home-section-title">Recent records</h3>
+                <a href="#" class="see-all-link" @click.prevent="handleTabChange('records')">See all</a>
             </div>
             <div class="records-list">
-                <div v-if="medicalRecordsLoading" class="records-loading">
-                    Loading records...
-                </div>
+                <div v-if="medicalRecordsLoading" class="records-loading">Loading records…</div>
                 <template v-else>
-                    <div 
-                        class="record-item glass-card"
+                    <div
+                        class="record-item"
                         v-for="record in recentMedicalRecords"
                         :key="record.id"
                         @click="openRecordDetail(record)"
                     >
                         <div class="record-icon">
-                            <mdicon :name="getRecordIcon(record.recordType)" :size="24"/>
+                            <mdicon :name="getRecordIcon(record.recordType)" :size="22"/>
                         </div>
                         <div class="record-content">
                             <h4 class="record-name">{{ record.title }}</h4>
@@ -191,7 +201,7 @@
                                 {{ getRecordTypeLabel(record.recordType) }} · {{ formatRecordDate(record.recordDate) }}
                             </p>
                         </div>
-                        <mdicon name="chevron-right" :size="20" class="record-arrow"/>
+                        <mdicon name="chevron-right" :size="18" class="record-arrow"/>
                     </div>
                     <div v-if="recentMedicalRecords.length === 0" class="empty-state small">
                         <p class="empty-title">No records yet</p>
@@ -204,51 +214,96 @@
         <!-- Records Tab -->
         <div v-if="activeTab === 'records'" class="tab-content">
             <div class="records-list-view">
+
+                <!-- Search bar -->
                 <div class="records-search glass-card">
                     <mdicon name="magnify" :size="20" />
                     <input
                         v-model="recordSearch"
                         type="text"
-                        placeholder="Search records by title or type"
+                        placeholder="Search records…"
                         aria-label="Search records"
                     />
-                    <button 
-                        v-if="recordSearch" 
-                        class="clear-btn" 
-                        type="button" 
+                    <button
+                        v-if="recordSearch"
+                        class="clear-btn"
+                        type="button"
                         @click="recordSearch = ''"
                     >
                         <mdicon name="close-circle" :size="18"/>
                     </button>
                 </div>
 
+                <!-- Type filter chips -->
+                <div class="type-filter-scroll" v-if="availableTypeFilters.length > 1">
+                    <div class="type-filter-row">
+                        <button
+                            v-for="f in availableTypeFilters"
+                            :key="f.key"
+                            class="type-filter-chip"
+                            :class="{ active: recordTypeFilter === f.key }"
+                            @click="recordTypeFilter = f.key"
+                        >
+                            {{ f.label }}
+                            <span class="tfc-count">{{ f.count }}</span>
+                        </button>
+                    </div>
+                </div>
+
                 <div v-if="medicalRecordsLoading" class="records-loading large">
                     Loading medical records...
                 </div>
+
                 <template v-else>
-                    <div 
-                        class="record-card glass-card" 
-                        v-for="record in filteredMedicalRecords" 
-                        :key="record.id"
-                        @click="openRecordDetail(record)"
-                    >
-                        <div class="record-icon-large">
-                            <mdicon :name="getRecordIcon(record.recordType)" :size="24"/>
+                    <template v-for="group in groupedRecords" :key="group.label">
+                        <!-- Month header -->
+                        <div class="rec-group-header">
+                            <span class="rec-group-label">{{ group.label }}</span>
+                            <span class="rec-group-count">{{ group.records.length }}</span>
                         </div>
-                        <div class="record-info">
-                            <h4 class="record-title">{{ record.title }}</h4>
-                            <p class="record-meta">
-                                {{ getRecordTypeLabel(record.recordType) }} | {{ formatRecordDate(record.recordDate) }}
-                            </p>
+
+                        <!-- Record rows -->
+                        <div
+                            class="record-card"
+                            v-for="record in group.records"
+                            :key="record.id"
+                            @click="openRecordDetail(record)"
+                        >
+                            <div
+                                class="record-icon-large"
+                                :style="{
+                                    background: getRecordTypeColor(record.recordType).bg,
+                                    borderColor: getRecordTypeColor(record.recordType).border,
+                                    color: getRecordTypeColor(record.recordType).icon
+                                }"
+                            >
+                                <mdicon :name="getRecordIcon(record.recordType)" :size="22"/>
+                            </div>
+                            <div class="record-info">
+                                <div class="record-title-row">
+                                    <h4 class="record-title">{{ record.title }}</h4>
+                                    <span v-if="record.files?.length" class="rec-attach-badge">
+                                        <mdicon name="paperclip" :size="11"/>
+                                        {{ record.files.length }}
+                                    </span>
+                                </div>
+                                <p class="record-meta">
+                                    {{ getRecordTypeLabel(record.recordType) }} · {{ formatRecordDate(record.recordDate) }}
+                                </p>
+                                <div class="rec-tags" v-if="record.tags?.length">
+                                    <span class="rec-tag" v-for="tag in record.tags.slice(0, 2)" :key="tag">{{ tag }}</span>
+                                    <span class="rec-tag rec-tag-more" v-if="record.tags.length > 2">+{{ record.tags.length - 2 }}</span>
+                                </div>
+                            </div>
+                            <mdicon name="chevron-right" :size="18" class="record-chevron"/>
                         </div>
-                        <mdicon name="chevron-right" :size="20" class="record-chevron"/>
-                    </div>
+                    </template>
 
                     <div v-if="filteredMedicalRecords.length === 0" class="empty-state">
                         <mdicon name="file-document-multiple" :size="64" class="empty-icon"/>
-                        <p class="empty-title">{{ recordSearch ? 'No results' : 'No Records Yet' }}</p>
+                        <p class="empty-title">{{ recordSearch || recordTypeFilter !== 'all' ? 'No results' : 'No Records Yet' }}</p>
                         <p class="empty-text">
-                            {{ recordSearch ? 'Try another search term.' : 'Start adding medical records to track your health history' }}
+                            {{ recordSearch || recordTypeFilter !== 'all' ? 'Try adjusting your search or filter.' : 'Start adding medical records to track your health history' }}
                         </p>
                     </div>
 
@@ -265,171 +320,141 @@
         </div>
 
         <!-- My Health Tab -->
-        <div v-if="activeTab === 'health'" class="tab-content">
-            <div class="health-metrics">
-                <!-- Blood Pressure Card -->
-                <div class="health-card glass-card" @click="navigateToBloodPressure">
-                    <div class="health-card-header">
-                        <div>
-                            <h4 class="health-title">Blood Pressure</h4>
-                            <p class="health-subtitle">Last 7 records</p>
-                        </div>
-                        <mdicon name="chevron-right" :size="20" class="health-chevron"/>
-                    </div>
-                    <div v-if="bpLatest" class="health-reading">
-                        <span class="reading-value">{{ bpLatest.systolic }}/{{ bpLatest.diastolic }}</span>
-                        <span class="reading-status">{{ bpLatest.status }}</span>
-                    </div>
-                    <div v-if="bpChartData.length" class="health-chart">
-                        <div class="chart-y-axis">
-                            <span>145</span>
-                            <span>110</span>
-                            <span>75</span>
-                        </div>
-                        <div class="chart-area">
-                            <div class="chart-bars">
-                                <div class="chart-bar-group" v-for="record in bpChartData" :key="record.id">
-                                    <div class="bp-bar">
-                                        <div class="bp-range" :style="{ height: record.rangeHeight, top: record.topOffset }">
-                                            <span class="bp-dot-top"></span>
-                                            <span class="bp-dot-bottom"></span>
-                                        </div>
-                                    </div>
-                                    <span class="chart-label">{{ record.label }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <span class="chart-unit">mmHg</span>
-                    </div>
-                    <div v-else class="health-chart-placeholder">
-                        <p class="placeholder-text">No data available</p>
+        <div v-if="activeTab === 'health'" class="tab-content health-tab">
+
+            <!-- Today's Medication Progress -->
+            <div class="health-meds-row" v-if="todaysReminders.length" @click="setTab('home')">
+                <div class="hm-left">
+                    <div class="hm-icon"><mdicon name="pill" :size="18"/></div>
+                    <div>
+                        <p class="hm-label">Today's medications</p>
+                        <p class="hm-sub">{{ todayMedsTaken }} of {{ todayMedsTotal }} doses taken</p>
                     </div>
                 </div>
-
-                <!-- Blood Sugar Card -->
-                <div class="health-card glass-card" @click="navigateToBloodSugar">
-                    <div class="health-card-header">
-                        <div>
-                            <h4 class="health-title">Blood Sugar</h4>
-                            <p class="health-subtitle">Last 7 records</p>
-                        </div>
-                        <mdicon name="chevron-right" :size="20" class="health-chevron"/>
+                <div class="hm-right">
+                    <div class="hm-bar-track">
+                        <div class="hm-bar-fill" :style="{ width: todayMedsTotal ? `${Math.round((todayMedsTaken / todayMedsTotal) * 100)}%` : '0%' }"></div>
                     </div>
-                    <div v-if="bsLatest" class="health-reading">
-                        <span class="reading-value">{{ bsLatest.value }} mg/dL</span>
-                        <span class="reading-status">{{ bsStatusLabel || bsLatest.type }}</span>
-                    </div>
-                    <div class="health-chart">
-                        <div class="chart-y-axis">
-                            <span>110</span>
-                            <span>100</span>
-                            <span>90</span>
-                            <span>80</span>
-                            <span>70</span>
-                        </div>
-                        <div class="chart-area">
-                            <svg class="line-chart" viewBox="0 0 280 120" preserveAspectRatio="none">
-                                <defs>
-                                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                        <stop offset="0%" style="stop-color:#667eea;stop-opacity:0.3" />
-                                        <stop offset="100%" style="stop-color:#667eea;stop-opacity:0.05" />
-                                    </linearGradient>
-                                </defs>
-                                <path 
-                                    v-if="bsChartPath"
-                                    :d="bsChartPath"
-                                    fill="url(#lineGradient)"
-                                    stroke="none"
-                                />
-                                <path 
-                                    v-if="bsChartPath"
-                                    :d="bsChartPath"
-                                    fill="none"
-                                    stroke="#667eea"
-                                    stroke-width="2"
-                                />
-                                <circle 
-                                    v-for="(point, index) in bsChartPoints"
-                                    :key="index"
-                                    :cx="point.x"
-                                    :cy="point.y"
-                                    r="3"
-                                    fill="#667eea"
-                                />
-                            </svg>
-                            <div class="chart-x-labels">
-                                <span v-for="(point, index) in bsChartPoints" :key="'bs-label-' + index">{{ point.label }}</span>
-                            </div>
-                        </div>
-                        <span class="chart-unit">mg/dL</span>
-                    </div>
-                </div>
-
-                <!-- Body Weight Card -->
-                <div class="health-card glass-card" @click="navigateToBodyWeight">
-                    <div class="health-card-header">
-                        <div>
-                            <h4 class="health-title">Body Weight</h4>
-                            <p class="health-subtitle">Latest measurement</p>
-                        </div>
-                        <mdicon name="chevron-right" :size="20" class="health-chevron"/>
-                    </div>
-                    <div v-if="bodyWeightLatest" class="health-reading">
-                        <span class="reading-value">{{ bodyWeightLatest.weight }} kg</span>
-                        <span class="reading-status" :class="{ increase: bodyWeightLatest.change > 0, decrease: bodyWeightLatest.change < 0 }">
-                            <template v-if="bodyWeightLatest.change > 0">+{{ bodyWeightLatest.change }} kg</template>
-                            <template v-else-if="bodyWeightLatest.change < 0">{{ bodyWeightLatest.change }} kg</template>
-                            <template v-else>Stable</template>
-                        </span>
-                    </div>
-                    <div class="health-chart-placeholder" v-else>
-                        <p class="placeholder-text">No data available</p>
-                    </div>
-                    <span class="chart-unit-bottom">kg</span>
-                </div>
-
-                <!-- Illness Card -->
-                <div class="health-card illness-card glass-card" @click="navigateToIllness">
-                    <div class="health-card-header">
-                        <div>
-                            <h4 class="health-title">Illness</h4>
-                            <p class="health-subtitle">Latest entry</p>
-                        </div>
-                        <mdicon name="chevron-right" :size="20" class="health-chevron"/>
-                    </div>
-
-                    <div v-if="latestIllness" class="illness-summary">
-                        <div class="illness-main">
-                            <div class="illness-diagnosis">{{ latestIllness.diagnosis }}</div>
-                            <div class="illness-status-block">
-                                <div class="pill-badge" :class="latestIllness.status?.toLowerCase()">
-                                    {{ latestIllness.status }}
-                                </div>
-                                <span class="illness-date">
-                                    {{ formatRecordDate(latestIllness.recordedAt || latestIllness.createdAt) }}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="illness-meta">
-                            <span class="pill-badge subtle">{{ latestIllness.severity || 'MILD' }}</span>
-                            <span v-if="latestIllness.bodyTemperature" class="pill-badge subtle">
-                                {{ latestIllness.bodyTemperature }}°{{ latestIllness.temperatureUnit || 'C' }}
-                            </span>
-                            <span 
-                                v-if="latestIllness.symptoms?.length" 
-                                class="symptom-chip" 
-                                v-for="symptom in latestIllness.symptoms" 
-                                :key="symptom"
-                            >
-                                {{ symptom }}
-                            </span>
-                        </div>
-                    </div>
-                    <div v-else class="health-chart-placeholder">
-                        <p class="placeholder-text">No illness entries yet</p>
-                    </div>
+                    <span class="hm-pct">{{ todayMedsTotal ? Math.round((todayMedsTaken / todayMedsTotal) * 100) : 0 }}%</span>
+                    <mdicon name="chevron-right" :size="16" class="hm-chevron"/>
                 </div>
             </div>
+
+            <!-- Active illness alert -->
+            <div class="health-alert-card" v-if="activeIllness" @click="navigateToIllness">
+                <div class="ha-icon"><mdicon name="alert-circle-outline" :size="20"/></div>
+                <div class="ha-body">
+                    <p class="ha-title">{{ activeIllness.diagnosis }}</p>
+                    <p class="ha-sub">{{ activeIllness.status }} · {{ activeIllness.severity || 'Mild' }}{{ activeIllness.bodyTemperature ? ` · ${activeIllness.bodyTemperature}°${activeIllness.temperatureUnit || 'C'}` : '' }}</p>
+                </div>
+                <mdicon name="chevron-right" :size="16" class="ha-chevron"/>
+            </div>
+
+            <!-- Vitals section label -->
+            <p class="health-section-label">Vitals</p>
+
+            <!-- Blood Pressure -->
+            <div class="vital-card glass-card" @click="navigateToBloodPressure">
+                <div class="vc-top">
+                    <div class="vc-icon vc-icon-red"><mdicon name="heart-pulse" :size="18"/></div>
+                    <div class="vc-meta">
+                        <p class="vc-name">Blood Pressure</p>
+                        <p class="vc-date">{{ bpLastDate || 'No data' }}</p>
+                    </div>
+                    <mdicon name="chevron-right" :size="18" class="vc-chevron"/>
+                </div>
+                <div class="vc-body" v-if="bpLatest">
+                    <div class="vc-reading">
+                        <span class="vc-value">{{ bpLatest.systolic }}/{{ bpLatest.diastolic }}</span>
+                        <span class="vc-unit">mmHg</span>
+                        <span class="vc-badge" :class="`vb-${bpLatest.status?.toLowerCase().replace(/\s+/g,'-')}`">{{ bpLatest.status }}</span>
+                    </div>
+                    <svg v-if="bpSparklinePoints" class="vc-spark" viewBox="0 0 100 28" preserveAspectRatio="none">
+                        <polyline :points="bpSparklinePoints" fill="none" stroke="#f87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <p v-else class="vc-empty">No readings yet — tap to add</p>
+            </div>
+
+            <!-- Blood Sugar -->
+            <div class="vital-card glass-card" @click="navigateToBloodSugar">
+                <div class="vc-top">
+                    <div class="vc-icon vc-icon-amber"><mdicon name="water-outline" :size="18"/></div>
+                    <div class="vc-meta">
+                        <p class="vc-name">Blood Sugar</p>
+                        <p class="vc-date">{{ bsLastDate || 'No data' }}</p>
+                    </div>
+                    <mdicon name="chevron-right" :size="18" class="vc-chevron"/>
+                </div>
+                <div class="vc-body" v-if="bsLatest">
+                    <div class="vc-reading">
+                        <span class="vc-value">{{ bsLatest.value }}</span>
+                        <span class="vc-unit">mg/dL</span>
+                        <span class="vc-badge" :class="`vb-${(bsStatusLabel || bsLatest.type)?.toLowerCase()}`">{{ bsStatusLabel || bsLatest.type }}</span>
+                    </div>
+                    <svg v-if="bsSparklinePoints" class="vc-spark" viewBox="0 0 100 28" preserveAspectRatio="none">
+                        <polyline :points="bsSparklinePoints" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <p v-else class="vc-empty">No readings yet — tap to add</p>
+            </div>
+
+            <!-- Body Weight -->
+            <div class="vital-card glass-card" @click="navigateToBodyWeight">
+                <div class="vc-top">
+                    <div class="vc-icon vc-icon-blue"><mdicon name="scale-bathroom" :size="18"/></div>
+                    <div class="vc-meta">
+                        <p class="vc-name">Body Weight</p>
+                        <p class="vc-date">{{ bwLastDate || 'No data' }}</p>
+                    </div>
+                    <mdicon name="chevron-right" :size="18" class="vc-chevron"/>
+                </div>
+                <div class="vc-body" v-if="bodyWeightLatest">
+                    <div class="vc-reading">
+                        <span class="vc-value">{{ bodyWeightLatest.weight }}</span>
+                        <span class="vc-unit">kg</span>
+                        <span class="vc-badge" :class="bodyWeightLatest.change > 0 ? 'vb-up' : bodyWeightLatest.change < 0 ? 'vb-down' : 'vb-stable'">
+                            {{ bodyWeightLatest.change > 0 ? `+${bodyWeightLatest.change} kg` : bodyWeightLatest.change < 0 ? `${bodyWeightLatest.change} kg` : 'Stable' }}
+                        </span>
+                    </div>
+                    <svg v-if="bwSparklinePoints" class="vc-spark" viewBox="0 0 100 28" preserveAspectRatio="none">
+                        <polyline :points="bwSparklinePoints" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <p v-else class="vc-empty">No readings yet — tap to add</p>
+            </div>
+
+            <!-- Illness history (if no active, show last entry) -->
+            <template v-if="!activeIllness">
+                <p class="health-section-label">Conditions</p>
+                <div class="vital-card glass-card" @click="navigateToIllness">
+                    <div class="vc-top">
+                        <div class="vc-icon vc-icon-purple"><mdicon name="medical-bag" :size="18"/></div>
+                        <div class="vc-meta">
+                            <p class="vc-name">Illness log</p>
+                            <p class="vc-date">{{ latestIllness ? formatRecordDate(latestIllness.recordedAt || latestIllness.createdAt) : 'No entries' }}</p>
+                        </div>
+                        <mdicon name="chevron-right" :size="18" class="vc-chevron"/>
+                    </div>
+                    <div v-if="latestIllness" class="vc-illness-row">
+                        <span class="vc-illness-name">{{ latestIllness.diagnosis }}</span>
+                        <span class="vc-badge" :class="`vb-${latestIllness.status?.toLowerCase()}`">{{ latestIllness.status }}</span>
+                        <span class="vc-badge vb-subtle">{{ latestIllness.severity || 'MILD' }}</span>
+                    </div>
+                    <p v-else class="vc-empty">No illness entries yet — tap to add</p>
+                </div>
+            </template>
+
+            <!-- AI Health Insights CTA -->
+            <div class="health-ai-cta" @click="router.push('/medical-records/insights')">
+                <div class="hai-icon"><mdicon name="brain" :size="20"/></div>
+                <div class="hai-body">
+                    <p class="hai-title">AI Health Insights</p>
+                    <p class="hai-sub">Trends, alerts, and recommendations</p>
+                </div>
+                <mdicon name="chevron-right" :size="18" class="hai-chevron"/>
+            </div>
+
         </div>
 
         <!-- Profile Tab -->
@@ -767,6 +792,18 @@ export default {
             fetchRecords: fetchMedicalRecords
         } = useMedicalRecords()
         const recordSearch = ref('')
+        const recordTypeFilter = ref('all')
+
+        const recordTypeColors = {
+            LAB_RESULT:         { bg: 'rgba(34,211,238,0.15)',  icon: '#22d3ee', border: 'rgba(34,211,238,0.28)'  },
+            PRESCRIPTION:       { bg: 'rgba(167,139,250,0.15)', icon: '#a78bfa', border: 'rgba(167,139,250,0.28)' },
+            DIAGNOSIS:          { bg: 'rgba(52,211,153,0.15)',  icon: '#34d399', border: 'rgba(52,211,153,0.28)'  },
+            IMAGING:            { bg: 'rgba(251,191,36,0.15)',  icon: '#fbbf24', border: 'rgba(251,191,36,0.28)'  },
+            VACCINATION:        { bg: 'rgba(248,113,113,0.15)', icon: '#f87171', border: 'rgba(248,113,113,0.28)' },
+            DISCHARGE_SUMMARY:  { bg: 'rgba(96,165,250,0.15)',  icon: '#60a5fa', border: 'rgba(96,165,250,0.28)'  },
+            OTHER:              { bg: 'rgba(148,163,184,0.15)', icon: '#94a3b8', border: 'rgba(148,163,184,0.28)' },
+        }
+        const getRecordTypeColor = (type) => recordTypeColors[type] || recordTypeColors.OTHER
         const {
             reminders: medicineReminders,
             loading: remindersLoading,
@@ -903,13 +940,48 @@ export default {
         })
 
         const filteredMedicalRecords = computed(() => {
+            let list = medicalRecords.value
+            if (recordTypeFilter.value !== 'all') {
+                list = list.filter(r => r.recordType === recordTypeFilter.value)
+            }
             const term = recordSearch.value.trim().toLowerCase()
-            if (!term) return medicalRecords.value
-            return medicalRecords.value.filter((record) => {
-                const title = (record.title || '').toLowerCase()
-                const typeLabel = (getRecordTypeLabel(record.recordType) || '').toLowerCase()
-                return title.includes(term) || typeLabel.includes(term)
+            if (term) {
+                list = list.filter(r =>
+                    (r.title || '').toLowerCase().includes(term) ||
+                    (getRecordTypeLabel(r.recordType) || '').toLowerCase().includes(term) ||
+                    (r.tags || []).some(t => t.toLowerCase().includes(term))
+                )
+            }
+            return list
+        })
+
+        const availableTypeFilters = computed(() => {
+            const counts = {}
+            medicalRecords.value.forEach(r => { counts[r.recordType] = (counts[r.recordType] || 0) + 1 })
+            const order = ['LAB_RESULT', 'PRESCRIPTION', 'DIAGNOSIS', 'IMAGING', 'VACCINATION', 'DISCHARGE_SUMMARY', 'OTHER']
+            const filters = [{ key: 'all', label: 'All', count: medicalRecords.value.length }]
+            order.forEach(type => {
+                if (counts[type]) filters.push({ key: type, label: recordTypeLabels[type], count: counts[type] })
             })
+            return filters
+        })
+
+        const groupedRecords = computed(() => {
+            const groups = []
+            const map = new Map()
+            filteredMedicalRecords.value.forEach(record => {
+                const d = record.recordDate ? new Date(record.recordDate) : null
+                const key = d && !isNaN(d.getTime())
+                    ? d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+                    : 'Unknown Date'
+                if (!map.has(key)) {
+                    const arr = []
+                    map.set(key, arr)
+                    groups.push({ label: key, records: arr })
+                }
+                map.get(key).push(record)
+            })
+            return groups
         })
 
         const addFamilyMember = () => {
@@ -1240,6 +1312,75 @@ export default {
             return illnessRecords.value[0]
         })
 
+        const activeIllness = computed(() => {
+            return illnessRecords.value.find(r => r.status?.toUpperCase() === 'ACTIVE' || r.status?.toUpperCase() === 'RECOVERING') || null
+        })
+
+        // sparkline helper: returns SVG polyline points string from an array of numbers
+        const buildHealthSparkline = (values, w = 100, h = 28) => {
+            if (values.length < 2) return ''
+            const min = Math.min(...values)
+            const max = Math.max(...values)
+            const range = max - min || 1
+            const pad = 2
+            return values.map((v, i) => {
+                const x = pad + (i / (values.length - 1)) * (w - pad * 2)
+                const y = h - pad - ((v - min) / range) * (h - pad * 2)
+                return `${x.toFixed(1)},${y.toFixed(1)}`
+            }).join(' ')
+        }
+
+        const bpSparklinePoints = computed(() => {
+            const vals = bpDisplayRecords.value.slice(-7).map(r => r.systolic || r.valueNumber || 0)
+            return buildHealthSparkline(vals)
+        })
+
+        const bsSparklinePoints = computed(() => {
+            const vals = bsRecords.value.slice(-7).map(r => Number(r.valueNumber) || 0)
+            return buildHealthSparkline(vals)
+        })
+
+        const bwSparklinePoints = computed(() => {
+            const vals = bodyWeightRecords.value.slice(-7).map(r => Number(r.valueNumber) || 0)
+            return buildHealthSparkline(vals)
+        })
+
+        const timeAgo = (dateStr) => {
+            if (!dateStr) return null
+            const diff = Date.now() - new Date(dateStr).getTime()
+            const days = Math.floor(diff / 86400000)
+            if (days === 0) return 'Today'
+            if (days === 1) return 'Yesterday'
+            if (days < 7) return `${days}d ago`
+            if (days < 30) return `${Math.floor(days / 7)}w ago`
+            return `${Math.floor(days / 30)}mo ago`
+        }
+
+        const bpLastDate = computed(() => {
+            const r = bpDisplayRecords.value[bpDisplayRecords.value.length - 1]
+            return r ? timeAgo(r.recordedAt || r.date) : null
+        })
+
+        const bsLastDate = computed(() => {
+            const r = bsRecords.value[bsRecords.value.length - 1]
+            return r ? timeAgo(r.recordedAt) : null
+        })
+
+        const bwLastDate = computed(() => {
+            const r = bodyWeightRecords.value[bodyWeightRecords.value.length - 1]
+            return r ? timeAgo(r.recordedAt) : null
+        })
+
+        const todayMedsTotal = computed(() => {
+            return todaysReminders.value.reduce((sum, r) => sum + (r.slots?.length || 0), 0)
+        })
+
+        const todayMedsTaken = computed(() => {
+            return todaysReminders.value.reduce((sum, r) => {
+                return sum + (r.slots?.filter(s => s.status === 'taken').length || 0)
+            }, 0)
+        })
+
         const profilesComposable = useProfiles()
         const loadProfiles = async () => {
             const token = localStorage.getItem('token')
@@ -1351,7 +1492,11 @@ export default {
             getRecordIcon,
             formatRecordDate,
             recordSearch,
+            recordTypeFilter,
             filteredMedicalRecords,
+            availableTypeFilters,
+            groupedRecords,
+            getRecordTypeColor,
             weekDays,
             bpChartData,
             showProfilePrompt,
@@ -1389,12 +1534,21 @@ export default {
             bodyWeightLatest,
             illnessRecords,
             latestIllness,
+            activeIllness,
             medicineReminders,
             remindersLoading,
             todaysReminders,
             formatFrequency,
             toggleHomeReminder,
-            hasActiveProfile
+            hasActiveProfile,
+            bpSparklinePoints,
+            bsSparklinePoints,
+            bwSparklinePoints,
+            bpLastDate,
+            bsLastDate,
+            bwLastDate,
+            todayMedsTotal,
+            todayMedsTaken,
         }
     }
 }
@@ -1407,12 +1561,11 @@ export default {
     flex-direction: column;
     align-items: stretch;
     width: 100%;
-    min-height: 100vh;
+    height: 100dvh;
     background: radial-gradient(circle at 20% 20%, rgba(79,70,229,0.15), transparent 40%),
                 radial-gradient(circle at 80% 10%, rgba(14,165,233,0.18), transparent 35%),
                 radial-gradient(circle at 50% 100%, rgba(34,197,94,0.12), transparent 40%),
                 var(--bg-main);
-    padding-bottom: 96px;
     position: relative;
     overflow: hidden;
 }
@@ -1573,8 +1726,11 @@ export default {
 }
 
 .content-wrapper {
-    padding: 18px 0 24px;
-    min-height: calc(100vh - 140px);
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 18px 0 96px;
     position: relative;
     z-index: 1;
 }
@@ -1610,155 +1766,186 @@ export default {
     50% { transform: translateY(-4px); }
 }
 
-/* Action Cards */
-.action-cards-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+/* ── Home Tab ─────────────────────────────────────────────────────────────── */
+.home-tab {
+    display: flex;
+    flex-direction: column;
     gap: 12px;
-    margin-bottom: 26px;
     padding: 0 16px;
 }
 
-.action-card-large {
-    padding: 18px 14px;
+/* Active illness alert */
+.home-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border-radius: 13px;
+    background: rgba(251,191,36,0.1);
+    border: 1px solid rgba(251,191,36,0.3);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.home-alert:active { background: rgba(251,191,36,0.15); }
+.home-alert-icon  { color: #fbbf24; flex-shrink: 0; }
+.home-alert-arrow { color: var(--text-muted); flex-shrink: 0; }
+.home-alert-body  { flex: 1; }
+.home-alert-title { margin: 0; font-size: 13px; font-weight: 800; color: var(--text-primary); }
+.home-alert-sub   { margin: 1px 0 0; font-size: 11px; color: var(--text-muted); }
+
+/* Medications card */
+.home-meds-card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.home-meds-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.hmc-left  { display: flex; align-items: center; gap: 10px; }
+.hmc-icon  { width: 36px; height: 36px; border-radius: 10px; background: rgba(167,139,250,0.15); color: #a78bfa; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.hmc-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.hmc-sub   { font-size: 12px; color: var(--text-muted); margin: 1px 0 0; }
+.hmc-pct-block { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.hmc-pct { font-size: 13px; font-weight: 800; color: var(--text-secondary); margin: 0; }
+.hmc-bar-track { width: 56px; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.hmc-bar-fill  { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #a78bfa, #38bdf8); transition: width 0.4s ease; }
+
+.home-reminder-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+.hri-left  { flex: 1; min-width: 0; }
+.hri-name  { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hri-detail { font-size: 11px; color: var(--text-muted); margin: 2px 0 0; }
+.hri-slots { display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
+.hri-slot-pill {
+    border: 1px solid rgba(103,232,249,0.3);
+    background: rgba(103,232,249,0.08);
+    color: #67e8f9;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+    cursor: pointer;
+}
+.hri-slot-pill.taken {
+    background: linear-gradient(135deg, rgba(34,197,94,0.25), rgba(16,185,129,0.2));
+    border-color: rgba(34,197,94,0.4);
+    color: #4ade80;
+}
+.hri-slot-pill.missed {
+    background: rgba(239,68,68,0.1);
+    border-color: rgba(239,68,68,0.3);
+    color: #f87171;
+}
+.hri-icon { font-size: 11px; }
+.home-meds-empty { display: flex; align-items: center; justify-content: space-between; padding: 10px 0 0; border-top: 1px solid rgba(255,255,255,0.06); }
+.home-meds-empty p { font-size: 13px; color: var(--text-muted); margin: 0; }
+.hme-btn { background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.25); color: #c4b5fd; border-radius: 10px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.home-meds-loading { font-size: 13px; color: var(--text-muted); padding: 4px 0; }
+
+/* Vitals strip */
+.vitals-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.vital-chip {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 11px 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.vital-chip:active { background: rgba(255,255,255,0.09); }
+.vchip-top { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
+.vchip-icon { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.vci-red   { background: rgba(248,113,113,0.18); color: #f87171; }
+.vci-amber { background: rgba(251,191,36,0.18);  color: #fbbf24; }
+.vci-blue  { background: rgba(96,165,250,0.18);  color: #60a5fa; }
+.vchip-label { font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2; }
+.vchip-val   { font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0; line-height: 1.1; }
+.vchip-unit  { font-size: 10px; font-weight: 400; color: var(--text-muted); }
+.vchip-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    border: 1px solid transparent;
+    align-self: flex-start;
+}
+
+/* Vital badge classes (shared with health tab) */
+.vb-normal   { background: rgba(34,197,94,0.12);  color: #4ade80; border-color: rgba(34,197,94,0.25);  }
+.vb-elevated { background: rgba(251,191,36,0.12); color: #fbbf24; border-color: rgba(251,191,36,0.3);  }
+.vb-high     { background: rgba(239,68,68,0.12);  color: #f87171; border-color: rgba(239,68,68,0.25);  }
+.vb-stage-1  { background: rgba(249,115,22,0.12); color: #fb923c; border-color: rgba(249,115,22,0.25); }
+.vb-stage-2  { background: rgba(239,68,68,0.12);  color: #f87171; border-color: rgba(239,68,68,0.25);  }
+.vb-up       { background: rgba(248,113,113,0.12); color: #f87171; border-color: rgba(248,113,113,0.25); }
+.vb-down     { background: rgba(34,197,94,0.12);  color: #4ade80; border-color: rgba(34,197,94,0.25);  }
+.vb-stable   { background: rgba(255,255,255,0.06); color: var(--text-muted); border-color: rgba(255,255,255,0.1); }
+
+/* Quick actions row */
+.quick-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.quick-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 12px 8px;
+    cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
-    text-align: center;
-    gap: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    min-height: 140px;
-    justify-content: center;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-    animation: slideFadeUp 0.5s ease both;
+    gap: 7px;
+    transition: background 0.15s;
+    color: var(--text-primary);
+    font-size: 11px;
+    font-weight: 700;
 }
-
-.action-cards-grid .action-card-large:nth-child(2) {
-    animation-delay: 0.08s;
+.quick-btn:active { background: rgba(255,255,255,0.09); transform: scale(0.97); }
+.qb-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
 }
+.qb-record  { background: linear-gradient(135deg, #6f7efc, #9b57f4); box-shadow: 0 6px 14px rgba(111,126,252,0.3); }
+.qb-reminder { background: linear-gradient(135deg, #f59e0b, #ef4444); box-shadow: 0 6px 14px rgba(245,158,11,0.3); }
+.qb-ai      { background: linear-gradient(135deg, #a78bfa, #38bdf8); box-shadow: 0 6px 14px rgba(167,139,250,0.3); }
 
-.action-card-ai {
-    margin: 0 16px 24px;
-    padding: 14px 16px;
+/* Home section header */
+.home-section-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 14px;
-    cursor: pointer;
-    background: linear-gradient(135deg, rgba(167,139,250,0.12), rgba(56,189,248,0.12));
-    border: 1px solid rgba(167,139,250,0.25);
-    box-shadow: 0 8px 24px rgba(167,139,250,0.15);
-    animation: slideFadeUp 0.6s ease both;
-    animation-delay: 0.12s;
+    padding: 0 2px;
 }
-
-.action-card-ai:active {
-    transform: scale(0.98);
-}
-
-.action-card-ai h4 {
-    font-size: 14px;
+.home-section-title {
+    font-size: 16px;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0 0 2px;
-}
-
-.action-card-ai p {
-    font-size: 12px;
-    color: var(--text-muted);
     margin: 0;
-}
-
-.action-card-ai > div {
-    flex: 1;
-}
-
-.ai-icon-wrapper {
-    width: 46px !important;
-    height: 46px !important;
-    background: linear-gradient(135deg, #a78bfa, #38bdf8) !important;
-    border-radius: 14px !important;
-    flex-shrink: 0;
-    box-shadow: 0 8px 18px rgba(167,139,250,0.3) !important;
-}
-
-.ai-chevron {
-    color: var(--text-muted);
-    flex-shrink: 0;
-}
-
-.action-card-wide {
-    margin: 0 16px 12px;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    cursor: pointer;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.09);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
-    transition: all 0.2s ease;
-}
-
-.action-card-wide:active { transform: scale(0.98); }
-
-.action-card-wide h4 {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 2px;
-}
-
-.action-card-wide p {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin: 0;
-}
-
-.action-card-wide > div { flex: 1; }
-
-.wide-icon-wrapper {
-    width: 46px !important;
-    height: 46px !important;
-    border-radius: 14px !important;
-    flex-shrink: 0;
-}
-
-.pill-icon {
-    background: linear-gradient(135deg, #a855f7, #7c3aed) !important;
-    box-shadow: 0 6px 16px rgba(168,85,247,0.3) !important;
-}
-
-.lab-icon {
-    background: linear-gradient(135deg, #22d3ee, #0891b2) !important;
-    box-shadow: 0 6px 16px rgba(34,211,238,0.3) !important;
-}
-
-.action-card-large:hover {
-    transform: translateY(-2px);
-    border-color: rgba(103,232,249,0.4);
-}
-
-.action-icon-wrapper {
-    width: 64px;
-    height: 64px;
-    background: linear-gradient(135deg, #6f7efc 0%, #9b57f4 100%);
-    border-radius: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    box-shadow: 0 10px 20px rgba(111, 126, 252, 0.35);
-}
-
-.action-card-large h4 {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-    line-height: 1.4;
 }
 
 /* Section Header */
@@ -2035,16 +2222,18 @@ export default {
     font-size: 15px;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0 0 2px 0;
+    margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
 }
 
 .record-meta {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-muted);
-    margin: 0;
+    margin: 2px 0 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2053,6 +2242,120 @@ export default {
 .record-chevron {
     color: var(--text-muted);
     flex-shrink: 0;
+}
+
+/* Type filter chips */
+.type-filter-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.type-filter-scroll::-webkit-scrollbar { display: none; }
+.type-filter-row {
+    display: flex;
+    gap: 7px;
+    width: max-content;
+}
+.type-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--glass-card-border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+}
+.type-filter-chip.active {
+    background: rgba(167,139,250,0.18);
+    border-color: rgba(167,139,250,0.45);
+    color: #a78bfa;
+}
+.tfc-count {
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(255,255,255,0.08);
+    padding: 1px 5px;
+    border-radius: 999px;
+}
+.type-filter-chip.active .tfc-count {
+    background: rgba(167,139,250,0.25);
+}
+
+/* Month group headers */
+.rec-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px 6px;
+    background: var(--bg-main);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.rec-group-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+}
+.rec-group-count {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.07);
+    color: var(--text-muted);
+}
+
+/* Record card title row (title + attachment badge) */
+.record-title-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+.rec-attach-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.07);
+    padding: 2px 5px;
+    border-radius: 999px;
+}
+
+/* Tag chips */
+.rec-tags {
+    display: flex;
+    gap: 5px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    margin-top: 4px;
+}
+.rec-tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.07);
+    color: var(--text-muted);
+    white-space: nowrap;
+    text-transform: lowercase;
+}
+.rec-tag-more {
+    background: rgba(167,139,250,0.12);
+    color: #a78bfa;
 }
 
 /* Floating Action Button */
@@ -2080,297 +2383,132 @@ export default {
 }
 
 /* Health Metrics */
-.health-metrics {
+/* ── Health Tab ────────────────────────────────────────────────────────────── */
+.health-tab { display: flex; flex-direction: column; gap: 10px; padding: 0 16px; }
+
+/* Meds progress row */
+.health-meds-row {
     display: flex;
-    flex-direction: column;
-    gap: 0;
-}
-
-.health-card {
-    background: rgba(255,255,255,0.05);
-    border-radius: 0;
-    padding: 16px 16px;
-    border-top: 1px solid rgba(255,255,255,0.08);
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    border-left: none;
-    border-right: none;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    box-shadow: none;
-    animation: slideFadeUp 0.55s ease both;
-}
-
-.health-card:nth-child(2) { animation-delay: 0.05s; }
-.health-card:nth-child(3) { animation-delay: 0.1s; }
-.health-card:nth-child(4) { animation-delay: 0.15s; }
-
-.health-card:hover {
-    border-color: rgba(103,232,249,0.4);
-    animation: floatPulse 3s ease-in-out infinite;
-}
-
-.health-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 14px;
-}
-
-.health-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: #f8fafc;
-    margin: 0 0 2px 0;
-}
-
-.health-subtitle {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin: 0;
-}
-
-.health-chevron {
-    color: var(--text-muted);
-}
-
-.health-chart {
-    position: relative;
-    display: flex;
-    gap: 8px;
-}
-
-.chart-y-axis {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    font-size: 12px;
-    color: var(--text-muted);
-    padding: 10px 0;
-    min-width: 32px;
-}
-
-.chart-area {
-    flex: 1;
-    position: relative;
-}
-
-.chart-unit {
-    position: absolute;
-    top: 0;
-    right: 0;
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-.chart-unit-bottom {
-    display: block;
-    text-align: right;
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 8px;
-}
-
-.chart-bars {
-    display: flex;
-    justify-content: space-around;
-    align-items: flex-end;
-    height: 120px;
-    padding: 10px 0;
-}
-
-.chart-bar-group {
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 8px;
-}
-
-.bp-bar {
-    width: 10px;
-    height: 100px;
-    position: relative;
-}
-
-.bp-range {
-    width: 10px;
-    background: linear-gradient(180deg, #22d3ee 0%, #a855f7 100%);
-    border-radius: 6px;
-    position: absolute;
-    left: 0;
-    display: flex;
-    flex-direction: column;
     justify-content: space-between;
-    padding: 4px 0;
+    gap: 12px;
+    background: var(--glass-ghost-bg);
+    border: 1px solid var(--glass-card-border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    cursor: pointer;
 }
+.hm-left  { display: flex; align-items: center; gap: 10px; }
+.hm-icon  { width: 36px; height: 36px; border-radius: 10px; background: rgba(167,139,250,0.15); color: #a78bfa; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.hm-label { font-size: 13px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.hm-sub   { font-size: 12px; color: var(--text-muted); margin: 0; }
+.hm-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.hm-bar-track { width: 60px; height: 5px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.hm-bar-fill  { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #a78bfa, #38bdf8); transition: width 0.4s ease; }
+.hm-pct     { font-size: 12px; font-weight: 700; color: var(--text-secondary); min-width: 30px; text-align: right; }
+.hm-chevron { color: var(--text-muted); }
 
-.bp-dot-top,
-.bp-dot-bottom {
-    width: 8px;
-    height: 8px;
-    background: #0b1020;
-    border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.7);
-    display: block;
-    margin: 0 auto;
-}
-
-.chart-label {
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-.line-chart {
-    width: 100%;
-    height: 120px;
-}
-
-.chart-x-labels {
+/* Active illness alert */
+.health-alert-card {
     display: flex;
-    justify-content: space-around;
-    margin-top: 8px;
+    align-items: center;
+    gap: 12px;
+    background: rgba(251,146,60,0.08);
+    border: 1px solid rgba(251,146,60,0.3);
+    border-radius: 14px;
+    padding: 12px 14px;
+    cursor: pointer;
 }
+.ha-icon { color: #fb923c; flex-shrink: 0; }
+.ha-body { flex: 1; }
+.ha-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.ha-sub   { font-size: 12px; color: #fb923c; margin: 2px 0 0; }
+.ha-chevron { color: var(--text-muted); flex-shrink: 0; }
 
-.chart-x-labels span {
-    font-size: 12px;
+/* Section label */
+.health-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     color: var(--text-muted);
+    margin: 4px 0 0;
+    padding: 0 2px;
 }
 
-.health-reading {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin: 10px 0;
-}
-
-.reading-value {
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--text-primary);
-}
-
-.reading-status {
-    font-size: 13px;
-    color: #a5b4fc;
-    font-weight: 600;
-}
-
-.reading-status.increase {
-    color: #22c55e;
-}
-
-.reading-status.decrease {
-    color: #f87171;
-}
-
-.illness-card .health-subtitle {
-    color: var(--text-muted);
-}
-
-.illness-summary {
+/* Vital card */
+.vital-card {
+    background: var(--glass-ghost-bg);
+    border: 1px solid var(--glass-card-border);
+    border-radius: 16px;
+    padding: 14px;
+    cursor: pointer;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    transition: border-color 0.15s;
 }
+.vital-card:active { border-color: rgba(167,139,250,0.4); }
 
-.illness-main {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
+.vc-top { display: flex; align-items: center; gap: 10px; }
+.vc-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.vc-icon-red    { background: rgba(248,113,113,0.15); color: #f87171; }
+.vc-icon-amber  { background: rgba(251,191,36,0.15);  color: #fbbf24; }
+.vc-icon-blue   { background: rgba(96,165,250,0.15);  color: #60a5fa; }
+.vc-icon-purple { background: rgba(167,139,250,0.15); color: #a78bfa; }
+.vc-meta { flex: 1; }
+.vc-name { font-size: 13px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.vc-date { font-size: 11px; color: var(--text-muted); margin: 1px 0 0; }
+.vc-chevron { color: var(--text-muted); flex-shrink: 0; }
 
-.illness-diagnosis {
-    font-size: 16px;
+.vc-body { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.vc-reading { display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap; }
+.vc-value { font-size: 22px; font-weight: 800; color: var(--text-primary); line-height: 1; }
+.vc-unit  { font-size: 12px; color: var(--text-muted); }
+.vc-spark { width: 80px; height: 28px; flex-shrink: 0; }
+
+/* Vital badges */
+.vc-badge {
+    font-size: 11px;
     font-weight: 700;
-    color: #f8fafc;
-}
-
-.illness-status-block {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
-}
-
-.pill-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
+    padding: 2px 8px;
     border-radius: 999px;
-    font-size: 13px;
-    font-weight: 700;
     text-transform: capitalize;
-    background: rgba(103,232,249,0.16);
-    color: #67e8f9;
-    border: 1px solid rgba(103,232,249,0.25);
+    flex-shrink: 0;
 }
+.vb-normal, .vb-normal-fasting  { background: rgba(34,197,94,0.12);  color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+.vb-elevated, .vb-elevated-fasting { background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+.vb-high, .vb-high-fasting { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
+.vb-low  { background: rgba(96,165,250,0.12);  color: #60a5fa; border: 1px solid rgba(96,165,250,0.25); }
+.vb-up   { background: rgba(34,197,94,0.12);   color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+.vb-down { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
+.vb-stable { background: rgba(148,163,184,0.1); color: var(--text-muted); border: 1px solid rgba(148,163,184,0.2); }
+.vb-active, .vb-recovering { background: rgba(251,146,60,0.12); color: #fb923c; border: 1px solid rgba(251,146,60,0.25); }
+.vb-resolved, .vb-recovered { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+.vb-subtle { background: rgba(255,255,255,0.06); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); }
 
-.pill-badge.subtle {
-    background: rgba(255,255,255,0.05);
-    color: var(--text-secondary);
-    border-color: rgba(255,255,255,0.08);
-}
+.vc-empty { font-size: 13px; color: var(--text-muted); margin: 0; }
 
-.pill-badge.recovered,
-.pill-badge.resolved {
-    background: rgba(34,197,94,0.15);
-    color: #4ade80;
-    border-color: rgba(34,197,94,0.25);
-}
+.vc-illness-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vc-illness-name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
 
-.pill-badge.ongoing,
-.pill-badge.chronic {
-    background: rgba(234,88,12,0.15);
-    color: #fb923c;
-    border-color: rgba(234,88,12,0.25);
-}
-
-.pill-badge.severe,
-.pill-badge.critical {
-    background: rgba(239,68,68,0.15);
-    color: #f87171;
-    border-color: rgba(239,68,68,0.25);
-}
-
-.illness-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-}
-
-.illness-date {
-    font-size: 13px;
-    color: var(--text-muted);
-}
-
-.symptom-chip {
-    background: rgba(255,255,255,0.05);
-    color: var(--text-primary);
-    border-radius: 999px;
-    padding: 6px 10px;
-    font-size: 13px;
-    font-weight: 600;
-    border: 1px solid rgba(255,255,255,0.08);
-}
-
-.health-chart-placeholder {
-    height: 120px;
+/* AI CTA */
+.health-ai-cta {
     display: flex;
     align-items: center;
-    justify-content: center;
-    background: rgba(255,255,255,0.04);
-    border-radius: 12px;
-    margin-bottom: 8px;
-    border: 1px dashed rgba(148,163,184,0.25);
+    gap: 12px;
+    background: rgba(167,139,250,0.07);
+    border: 1px solid rgba(167,139,250,0.25);
+    border-radius: 14px;
+    padding: 14px;
+    cursor: pointer;
+    margin-top: 4px;
 }
-
-.placeholder-text {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin: 0;
-}
+.hai-icon { width: 38px; height: 38px; border-radius: 11px; background: rgba(167,139,250,0.15); color: #a78bfa; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.hai-body { flex: 1; }
+.hai-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.hai-sub   { font-size: 12px; color: var(--text-muted); margin: 2px 0 0; }
+.hai-chevron { color: var(--text-muted); flex-shrink: 0; }
 
 /* Empty State */
 .empty-state {

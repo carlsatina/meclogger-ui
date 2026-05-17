@@ -285,7 +285,7 @@ export default {
 
 <style scoped>
 .page-container {
-    min-height: 100vh;
+    height: 100dvh;
     background: var(--bg-main);
     display: flex;
     flex-direction: column;
@@ -303,11 +303,10 @@ export default {
     display: flex;
     align-items: center;
     gap: 12px;
-    position: sticky;
-    top: 0;
     z-index: 10;
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--glass-card-border);
+    flex-shrink: 0;
 }
 
 .back-btn {
@@ -327,8 +326,6 @@ export default {
 .profile-subtitle { font-size: 13px; color: var(--text-muted); margin: 0; }
 
 .filter-bar {
-    position: sticky;
-    top: 57px;
     z-index: 9;
     background: var(--bg-main);
     border-bottom: 1px solid var(--glass-card-border);
@@ -336,6 +333,7 @@ export default {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    flex-shrink: 0;
 }
 
 .search-wrap {
@@ -416,7 +414,18 @@ export default {
     cursor: pointer;
 }
 
-.content { flex: 1; padding: 18px 16px 32px; position: relative; z-index: 1; display: flex; flex-direction: column; gap: 20px; }
+.content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 18px 16px 32px;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
 
 .section-label {
     font-size: 12px;

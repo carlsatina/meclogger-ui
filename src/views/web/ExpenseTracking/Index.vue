@@ -33,6 +33,26 @@
             </button>
         </div>
 
+        <!-- Quick-add prompt -->
+        <div class="exp-quick-add-bar" :class="{ 'qa-done': webQaDone, 'qa-error': !!webQaError }">
+            <mdicon v-if="webQaLoading" name="loading" :size="16" class="spin qa-icon qa-spin-icon"/>
+            <mdicon v-else-if="webQaDone" name="check-circle-outline" :size="16" class="qa-icon qa-ok-icon"/>
+            <mdicon v-else name="creation" :size="16" class="qa-icon qa-spark"/>
+            <input
+                v-model="webQaText"
+                class="exp-qa-input"
+                :placeholder="webQaDone ? webQaFeedback : (webQaError || 'Quick add — e.g. myjoy 650, grab 320 transport')"
+                :disabled="webQaLoading"
+                @keydown.enter="submitWebQa"
+                @focus="webQaError = ''; webQaDone = false"
+                maxlength="120"
+            />
+            <button v-if="webQaText.trim() && !webQaLoading" class="exp-qa-btn" @click="submitWebQa">
+                <mdicon name="send" :size="15"/>
+                Add
+            </button>
+        </div>
+
         <!-- ── OVERVIEW TAB ── -->
         <div v-if="activeTab === 'overview'" class="exp-content">
             <div class="stats-row">
@@ -340,7 +360,7 @@ export default {
     name: 'ExpenseTrackingWeb',
     setup() {
         const router = useRouter()
-        const { listExpenses, createExpense, updateExpense, deleteExpense, listCategories } = useExpenses()
+        const { listExpenses, createExpense, updateExpense, deleteExpense, listCategories, quickAddExpense } = useExpenses()
         const { listBudgetSummary, createBudget, updateBudget, deleteBudget } = useBudgets()
         const { listSubscriptions, createSubscription, updateSubscription, deleteSubscription } = useSubscriptions()
 
@@ -627,6 +647,35 @@ export default {
             subscriptions.value = subscriptions.value.filter(x => x.id !== s.id)
         }
 
+        // Web quick-add
+        const webQaText = ref('')
+        const webQaLoading = ref(false)
+        const webQaDone = ref(false)
+        const webQaError = ref('')
+        const webQaFeedback = ref('')
+
+        const submitWebQa = async () => {
+            const text = webQaText.value.trim()
+            if (!text || webQaLoading.value) return
+            webQaLoading.value = true
+            webQaError.value = ''
+            webQaDone.value = false
+            webQaFeedback.value = ''
+            try {
+                const expense = await quickAddExpense(token(), text)
+                expenses.value.unshift(expense)
+                webQaText.value = ''
+                webQaFeedback.value = `Added: ${expense.title} · ${defaultCurrency.value} ${expense.amount}`
+                webQaDone.value = true
+                setTimeout(() => { webQaDone.value = false; webQaFeedback.value = '' }, 3000)
+            } catch (e) {
+                webQaError.value = e.message || 'Could not add expense'
+                setTimeout(() => { webQaError.value = '' }, 4000)
+            } finally {
+                webQaLoading.value = false
+            }
+        }
+
         onMounted(loadAll)
 
         return {
@@ -643,6 +692,7 @@ export default {
             startEditBudget, cancelBudgetForm, saveBudget, confirmDeleteBudget,
             showSubForm, subForm, subError, subSaving, editingSubId,
             startEditSub, cancelSubForm, saveSub, confirmDeleteSub,
+            webQaText, webQaLoading, webQaDone, webQaError, webQaFeedback, submitWebQa,
         }
     }
 }
@@ -767,6 +817,52 @@ export default {
 }
 .exp-tab:hover { color: var(--text-secondary); }
 .exp-tab.active { color: #818cf8; border-bottom-color: #818cf8; background: rgba(99,102,241,0.06); }
+
+/* Quick-add bar */
+.exp-quick-add-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--glass-card-border);
+    background: var(--glass-ghost-bg);
+    transition: border-color 0.2s;
+}
+.exp-quick-add-bar.qa-done  { border-color: rgba(34,197,94,0.4); }
+.exp-quick-add-bar.qa-error { border-color: rgba(248,113,113,0.4); }
+.qa-icon { flex-shrink: 0; }
+.qa-spark { color: #818cf8; }
+.qa-ok-icon { color: #4ade80; }
+.qa-spin-icon { color: var(--text-muted); }
+.exp-qa-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: var(--text-primary);
+    min-width: 0;
+}
+.exp-qa-input::placeholder { color: var(--text-muted); }
+.exp-qa-input:disabled::placeholder { color: #4ade80; font-weight: 600; }
+.exp-qa-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(129,140,248,0.3);
+    background: rgba(99,102,241,0.1);
+    color: #818cf8;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+.exp-qa-btn:hover { background: rgba(99,102,241,0.18); }
 
 .exp-content { display: flex; flex-direction: column; gap: 20px; }
 

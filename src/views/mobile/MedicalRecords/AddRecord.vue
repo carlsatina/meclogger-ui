@@ -62,15 +62,15 @@
                 Documents
             </div>
 
-            <!-- Upload grid -->
-            <div class="upload-grid">
-                <div class="image-preview" v-for="file in existingFiles" :key="`existing-${file.id}`">
+            <!-- File preview strip -->
+            <div class="file-strip" v-if="existingFiles.length || selectedFiles.length">
+                <div class="file-thumb" v-for="file in existingFiles" :key="`existing-${file.id}`">
                     <img :src="resolveFileUrl(file.url)" :alt="file.originalName || 'Attachment'"/>
                     <button type="button" class="remove-btn" @click="removeExistingFile(file.id)">
                         <mdicon name="close" :size="14"/>
                     </button>
                 </div>
-                <div class="image-preview" v-for="(file, index) in selectedFiles" :key="file.id">
+                <div class="file-thumb" v-for="(file, index) in selectedFiles" :key="file.id">
                     <img v-if="isImageFile(file.file?.type)" :src="file.preview" alt="Uploaded record"/>
                     <div v-else class="pdf-thumb">
                         <mdicon name="file-pdf-box" :size="32" class="pdf-icon"/>
@@ -80,23 +80,27 @@
                         <mdicon name="close" :size="14"/>
                     </button>
                 </div>
+            </div>
+
+            <!-- Upload action buttons -->
+            <div class="upload-actions">
                 <button
                     type="button"
-                    class="upload-card"
+                    class="upload-btn"
                     @click="triggerFileUpload('device')"
                     :disabled="selectedFiles.length >= maxAttachments"
                 >
-                    <mdicon name="image-plus" :size="28" class="upload-icon"/>
-                    <p>From device</p>
+                    <mdicon name="image-plus" :size="20" class="upload-icon"/>
+                    <span>From device</span>
                 </button>
                 <button
                     type="button"
-                    class="upload-card"
+                    class="upload-btn"
                     @click="triggerFileUpload('camera')"
                     :disabled="selectedFiles.length >= maxAttachments"
                 >
-                    <mdicon name="camera-plus" :size="28" class="upload-icon"/>
-                    <p>Camera</p>
+                    <mdicon name="camera-plus" :size="20" class="upload-icon"/>
+                    <span>Camera</span>
                 </button>
             </div>
 
@@ -674,36 +678,43 @@ export default {
     color: #a78bfa;
 }
 
-/* Upload grid */
-.upload-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+/* File preview strip */
+.file-strip {
+    display: flex;
     gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
 }
-.image-preview {
-    background: var(--glass-ghost-bg);
-    border: 1px solid var(--glass-card-border);
-    border-radius: 14px;
-    aspect-ratio: 1;
+.file-strip::-webkit-scrollbar { display: none; }
+.file-thumb {
     position: relative;
+    flex-shrink: 0;
+    width: 88px;
+    height: 88px;
+    border-radius: 12px;
+    border: 1px solid var(--glass-card-border);
+    background: var(--glass-ghost-bg);
     overflow: hidden;
 }
-.image-preview img { width: 100%; height: 100%; object-fit: cover; }
+.file-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .remove-btn {
     position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 24px;
-    height: 24px;
+    top: 5px;
+    right: 5px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
-    background: rgba(11,16,32,0.75);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(11,16,32,0.78);
+    border: 1px solid rgba(255,255,255,0.14);
     color: var(--text-primary);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
 }
+
+/* PDF thumb inside file-thumb */
 .pdf-thumb {
     width: 100%;
     height: 100%;
@@ -711,12 +722,12 @@ export default {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
     padding: 8px;
 }
 .pdf-icon { color: #f87171; }
 .pdf-name {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text-secondary);
     margin: 0;
     text-align: center;
@@ -726,23 +737,30 @@ export default {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-.upload-card {
-    border: 1px dashed rgba(167,139,250,0.35);
-    background: rgba(167,139,250,0.05);
-    border-radius: 14px;
-    aspect-ratio: 1;
+
+/* Upload action buttons */
+.upload-actions {
     display: flex;
-    flex-direction: column;
+    gap: 10px;
+}
+.upload-btn {
+    flex: 1;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    cursor: pointer;
+    gap: 8px;
+    padding: 11px 12px;
+    border-radius: 12px;
+    border: 1px dashed rgba(167,139,250,0.35);
+    background: rgba(167,139,250,0.05);
     color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
     transition: all 0.15s;
 }
-.upload-card:active { border-color: rgba(167,139,250,0.7); background: rgba(167,139,250,0.1); }
-.upload-card:disabled { opacity: 0.45; cursor: not-allowed; }
-.upload-card p { font-size: 12px; font-weight: 600; margin: 0; }
+.upload-btn:active { border-color: rgba(167,139,250,0.7); background: rgba(167,139,250,0.1); }
+.upload-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .upload-icon { color: var(--text-muted); }
 
 /* AI extract */

@@ -8,11 +8,30 @@
             <p class="eyebrow">My wallet</p>
             <h3>Expense Tracking</h3>
         </div>
-        <button class="quick-pill" @click="openExpenseSheet">
-            <mdicon name="magic-staff" size="18" />
-            <span>Quick add</span>
+        <button class="icon-btn" @click="router.push('/settings')">
+            <mdicon name="cog-outline" size="22" />
         </button>
     </header>
+
+    <!-- Quick-add prompt bar -->
+    <div class="quick-add-bar" :class="{ 'qa-loading': quickAdding, 'qa-done': quickAddDone, 'qa-error': !!quickAddError }">
+        <mdicon v-if="quickAdding" name="loading" :size="18" class="spin qa-spinner"/>
+        <mdicon v-else-if="quickAddDone" name="check-circle-outline" :size="18" class="qa-ok-icon"/>
+        <mdicon v-else name="creation" :size="18" class="qa-spark"/>
+        <input
+            ref="qaInput"
+            v-model="quickAddText"
+            class="qa-input"
+            :placeholder="quickAddDone ? quickAddFeedback : quickAddError || 'e.g. myjoy 650'"
+            :disabled="quickAdding"
+            @keydown.enter="submitQuickAdd"
+            @focus="quickAddError = ''; quickAddDone = false"
+            maxlength="120"
+        />
+        <button v-if="quickAddText.trim() && !quickAdding" class="qa-send-btn" @click="submitQuickAdd">
+            <mdicon name="send" :size="16"/>
+        </button>
+    </div>
 
     <!-- HOME TAB -->
     <main class="content" v-if="activeTab === 'home'">
@@ -1096,7 +1115,7 @@ export default {
     setup() {
         const router = useRouter()
         const route = useRoute()
-        const { listExpenses, createExpense, deleteExpense, createCategory, updateCategory, deleteCategory, listCategories, updateExpense } = useExpenses()
+        const { listExpenses, createExpense, deleteExpense, createCategory, updateCategory, deleteCategory, listCategories, updateExpense, quickAddExpense } = useExpenses()
         const { listAccounts } = useAccounts()
         const { listCurrencies } = useCurrencies()
         const { listBudgetSummary, listBudgets, createBudget, updateBudget, deleteBudget } = useBudgets()
@@ -1173,6 +1192,38 @@ export default {
         const paying = ref(false)
         const scheduleSaving = ref(false)
         const scheduleError = ref('')
+        // Quick-add prompt
+        const quickAddText = ref('')
+        const quickAdding = ref(false)
+        const quickAddDone = ref(false)
+        const quickAddError = ref('')
+        const quickAddFeedback = ref('')
+        const qaInput = ref(null)
+
+        const submitQuickAdd = async () => {
+            const text = quickAddText.value.trim()
+            if (!text || quickAdding.value) return
+            quickAdding.value = true
+            quickAddError.value = ''
+            quickAddDone.value = false
+            quickAddFeedback.value = ''
+            const token = localStorage.getItem('token')
+            try {
+                const expense = await quickAddExpense(token, text)
+                expenses.value.unshift(expense)
+                quickAddText.value = ''
+                quickAddFeedback.value = `Added: ${expense.title} · ${expense.amount}`
+                quickAddDone.value = true
+                setTimeout(() => { quickAddDone.value = false; quickAddFeedback.value = '' }, 3000)
+                await loadExpenses()
+            } catch (e) {
+                quickAddError.value = e.message || 'Could not add expense'
+                setTimeout(() => { quickAddError.value = '' }, 4000)
+            } finally {
+                quickAdding.value = false
+            }
+        }
+
         const showQuickActions = ref(false)
         const showExpenseSheet = ref(false)
         const expenseSheetRef = ref(null)
@@ -2552,7 +2603,14 @@ export default {
             userInitials,
             categorySheetRef,
             categoryActionsSentinel,
-            categoryActionsVisible
+            categoryActionsVisible,
+            quickAddText,
+            quickAdding,
+            quickAddDone,
+            quickAddError,
+            quickAddFeedback,
+            qaInput,
+            submitQuickAdd
         }
     }
 }
