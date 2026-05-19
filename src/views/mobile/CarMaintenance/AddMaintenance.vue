@@ -376,8 +376,133 @@ export default {
 </script>
 
 <style scoped>
-.type-icon { border: none; background: transparent; color: var(--text-muted); padding: 0 10px; display: flex; align-items: center; justify-content: center; }
-.error-text { color: #dc2626; font-size: 13px; margin: 0; }
-.success-text { color: #16a34a; font-size: 13px; margin: 0; }
-.car-type-input :deep(input) { border: none !important; padding: 0; }
+/* Hero — orange gradient matching index */
+.car-hero { background: linear-gradient(135deg, #c2410c, #f97316) !important; padding: 18px 16px !important; align-items: center !important; }
+
+/* Form body */
+.car-body { padding: 16px !important; gap: 16px !important; }
+
+/* Section card wrapper for field groups */
+.car-form { gap: 14px !important; }
+
+/* Labels — uppercase caption style */
+.car-field label {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.07em !important;
+    color: var(--text-muted) !important;
+    margin-bottom: 1px !important;
+}
+
+/* Inputs */
+.car-input {
+    background: var(--glass-card-bg) !important;
+    border: 1px solid var(--glass-card-border) !important;
+    border-radius: 12px !important;
+    padding: 12px 14px !important;
+    font-size: 15px !important;
+    color: var(--text-primary) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    transition: border-color 0.15s, box-shadow 0.15s !important;
+}
+.car-input:focus {
+    outline: none !important;
+    border-color: rgba(249, 115, 22, 0.5) !important;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1) !important;
+}
+.car-select {
+    background: var(--glass-card-bg) !important;
+    border: 1px solid var(--glass-card-border) !important;
+    border-radius: 12px !important;
+    padding: 12px 14px !important;
+    font-size: 15px !important;
+    color: var(--text-primary) !important;
+    width: 100% !important;
+}
+.car-select:focus { outline: none !important; border-color: rgba(249, 115, 22, 0.5) !important; }
+.car-textarea {
+    background: var(--glass-card-bg) !important;
+    border: 1px solid var(--glass-card-border) !important;
+    border-radius: 12px !important;
+    padding: 12px 14px !important;
+    font-size: 15px !important;
+    color: var(--text-primary) !important;
+    width: 100% !important;
+    resize: vertical !important;
+    box-sizing: border-box !important;
+}
+.car-textarea:focus { outline: none !important; border-color: rgba(249, 115, 22, 0.5) !important; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1) !important; }
+
+/* Maintenance type combo input */
+.car-type-input {
+    background: var(--glass-card-bg) !important;
+    border: 1px solid var(--glass-card-border) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0 !important;
+}
+.car-type-input :deep(input) { border: none !important; outline: none !important; padding: 12px 14px !important; background: transparent !important; font-size: 15px !important; color: var(--text-primary) !important; flex: 1 !important; }
+.type-icon { border: none !important; background: transparent !important; color: var(--text-muted) !important; padding: 0 12px !important; display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; }
+
+/* Type dropdown list */
+.car-type-list {
+    margin-top: 4px !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 4px !important;
+    background: var(--glass-card-bg) !important;
+    border: 1px solid var(--glass-card-border) !important;
+    border-radius: 12px !important;
+    padding: 8px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+}
+.car-type-option {
+    border: none !important;
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    padding: 9px 10px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    text-align: left !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    transition: background 0.12s !important;
+}
+.car-type-option:hover { background: rgba(249, 115, 22, 0.1) !important; color: #fb923c !important; }
+
+/* 2-col grid — single column on narrow screens */
+.car-grid-2 { gap: 12px !important; }
+@media (max-width: 400px) {
+    .car-grid-2 { grid-template-columns: 1fr !important; }
+}
+
+/* Submit button */
+.car-btn {
+    background: linear-gradient(135deg, #f97316, #fb923c) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 14px !important;
+    padding: 14px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.35) !important;
+    width: 100% !important;
+    cursor: pointer !important;
+    transition: opacity 0.15s !important;
+}
+.car-btn:disabled { opacity: 0.6 !important; cursor: not-allowed !important; }
+.car-btn.ghost {
+    background: var(--glass-card-bg) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--glass-card-border) !important;
+    box-shadow: none !important;
+}
+
+/* Status messages */
+.error-text { color: #f87171 !important; font-size: 13px !important; margin: 0 !important; font-weight: 600 !important; }
+.success-text { color: #34d399 !important; font-size: 13px !important; margin: 0 !important; font-weight: 600 !important; }
 </style>

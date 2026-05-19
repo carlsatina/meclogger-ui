@@ -411,50 +411,169 @@ export default {
 </script>
 
 <style scoped>
-.vehicle-picker { margin: 8px 0 0; background: var(--glass-ghost-bg); color: var(--text-primary); border-radius: 0; box-shadow: none; border-top: 1px solid var(--glass-card-border); border-bottom: 1px solid var(--glass-card-border); border-left: none; border-right: none; overflow: hidden; }
-.picker-item { width: 100%; border: none; background: transparent; padding: 10px 16px; text-align: left; font-weight: 600; color: var(--text-primary); display: flex; flex-direction: column; gap: 2px; }
-.picker-item + .picker-item { border-top: 1px solid var(--glass-card-border); }
-.picker-empty { margin: 0; padding: 10px 16px; color: var(--text-muted); font-size: 13px; }
-.vehicle-pill { margin: 12px 0 0; color: var(--text-primary); border-radius: 0; border-top: 1px solid var(--glass-card-border); border-bottom: 1px solid var(--glass-card-border); border-left: none; border-right: none; padding: 12px 16px; display: flex; align-items: center; gap: 10px; box-shadow: none; }
-.avatar { width: 48px; height: 48px; border-radius: 14px; background: var(--glass-ghost-bg); display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--glass-card-border); }
+/* Hero — orange gradient */
+.car-hero { background: linear-gradient(135deg, #c2410c, #f97316) !important; padding: 20px 16px !important; }
+
+/* Vehicle pill — rounded glass card */
+.vehicle-pill {
+    margin: 16px 16px 0;
+    background: var(--glass-card-bg) !important;
+    border: 1px solid var(--glass-card-border) !important;
+    border-radius: 16px !important;
+    padding: 14px 16px !important;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--glass-card-shadow) !important;
+}
+.vehicle-pill::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #f97316, #fb923c);
+}
+.avatar {
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    background: rgba(249, 115, 22, 0.12);
+    border: 1px solid rgba(249, 115, 22, 0.2) !important;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    color: #fb923c;
+    flex-shrink: 0;
+}
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
+.vehicle-meta { flex: 1; min-width: 0; }
 .vehicle-meta p { margin: 0; }
-.vehicle-name { font-weight: 700; font-size: 15px; }
-.vehicle-odo { font-size: 13px; opacity: 0.9; }
-.picker-name { font-weight: 700; }
-.picker-odo { font-size: 13px; color: var(--text-muted); }
-.vehicle-type { font-size: 13px; opacity: 0.9; }
-.vehicle-updated { font-size: 12px; opacity: 0.8; margin: 2px 0 0; }
-.vehicle-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-.vehicle-dropdown { opacity: 0.9; }
-.update-btn { border: 1px solid var(--glass-card-border); background: var(--glass-ghost-bg); color: var(--text-primary); padding: 6px 10px; border-radius: 10px; font-weight: 700; box-shadow: none; }
-.update-btn.small { padding: 6px 10px; font-size: 13px; }
-.history-section { padding: 12px 0 80px; display: flex; flex-direction: column; gap: 0; }
-.section-header { display: flex; align-items: center; justify-content: space-between; padding: 0 16px 10px; }
-.search-bar { display: flex; align-items: center; gap: 8px; border-radius: 0; border-left: none; border-right: none; box-shadow: none; padding: 10px 16px; margin-bottom: 0; }
-.search-bar input { border: none; outline: none; width: 100%; font-size: 14px; background: transparent; color: var(--text-primary); }
-.history-card { display: grid; gap: 8px; cursor: pointer; border-radius: 0; border-left: none; border-right: none; box-shadow: none; padding: 14px 16px; margin-top: -1px; }
-.history-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.history-title { margin: 0; color: var(--text-primary); font-weight: 700; }
-.history-date { margin: 0; color: var(--text-muted); font-size: 13px; }
-.history-bottom { display: flex; align-items: center; gap: 14px; color: var(--text-primary); font-size: 13px; }
-.history-meta { display: inline-flex; align-items: center; gap: 6px; }
-.empty-state { color: var(--text-muted); text-align: center; padding: 16px; background: var(--glass-ghost-bg); border-radius: 0; box-shadow: none; border-top: 1px solid var(--glass-card-border); border-bottom: 1px solid var(--glass-card-border); border-left: none; border-right: none; }
-.fab { width: 56px; height: 56px; border-radius: 28px; border: none; background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); color: #0b1020; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35); }
-.fab-wrapper { position: fixed; bottom: 84px; right: 20px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-.fab-menu { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
-.fab-row { border: none; background: transparent; display: inline-flex; align-items: center; gap: 8px; padding: 0; }
-.fab-label { padding: 10px 12px; border-radius: 12px; color: #0b1020; font-weight: 700; font-size: 13px; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); background: var(--pill-gradient); }
-.fab-icon { width: 44px; height: 44px; border-radius: 22px; background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); color: #0b1020; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); }
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--glass-ghost-bg); display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--glass-card-border); padding: 8px 4px; backdrop-filter: blur(10px); }
-.nav-item { border: none; background: transparent; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; }
-.nav-item.active { color: var(--accent-1); font-weight: 700; }
-.modal-backdrop { position: fixed; inset: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 3000; }
-.modal { display: block; position: relative; background: var(--glass-card-bg); border-radius: 16px; padding: 16px; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2); width: 85%; max-width: 320px; height: auto; border: 1px solid var(--glass-card-border); }
-.modal-title { margin: 0 0 6px; font-weight: 800; color: var(--text-primary); }
-.modal-text { margin: 0 0 10px; color: var(--text-muted); }
-.modal-input { width: 100%; border: 1px solid var(--glass-card-border); border-radius: 10px; padding: 10px; font-size: 16px; margin-bottom: 12px; background: var(--glass-ghost-bg); color: var(--text-primary); }
-.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
-.modal-actions .cancel { border: 1px solid var(--glass-card-border); background: var(--glass-ghost-bg); color: var(--text-primary); padding: 8px 12px; border-radius: 10px; font-weight: 700; }
-.modal-actions .confirm { border: none; background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); color: #0b1020; padding: 8px 12px; border-radius: 10px; font-weight: 700; }
+.vehicle-name { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.vehicle-type { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.vehicle-odo { font-size: 13px; color: var(--text-primary); font-weight: 600; margin-top: 3px; }
+.vehicle-updated { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.vehicle-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.vehicle-dropdown { color: var(--text-muted); }
+.update-btn {
+    background: rgba(249, 115, 22, 0.1);
+    border: 1px solid rgba(249, 115, 22, 0.25) !important;
+    color: #fb923c;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: none !important;
+}
+
+/* Vehicle picker dropdown */
+.vehicle-picker {
+    background: var(--glass-card-bg) !important;
+    border: 1px solid var(--glass-card-border) !important;
+    border-radius: 12px !important;
+    margin: 8px 16px 0;
+    overflow: hidden;
+    box-shadow: var(--glass-card-shadow);
+}
+.picker-item { width: 100%; border: none; background: transparent; padding: 12px 16px; text-align: left; display: flex; flex-direction: column; gap: 2px; cursor: pointer; transition: background 0.15s; }
+.picker-item:hover { background: rgba(249, 115, 22, 0.06); }
+.picker-item + .picker-item { border-top: 1px solid var(--glass-card-border); }
+.picker-name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.picker-odo { font-size: 12px; color: var(--text-muted); }
+.picker-empty { margin: 0; padding: 12px 16px; color: var(--text-muted); font-size: 13px; }
+
+/* History section */
+.history-section { padding: 16px 16px 90px !important; display: flex !important; flex-direction: column !important; gap: 8px !important; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; padding: 0; }
+.section-header h3 { margin: 0; font-size: 15px; font-weight: 700; color: var(--text-primary); }
+
+/* Search bar */
+.search-bar {
+    display: flex !important; align-items: center !important; gap: 10px !important;
+    background: var(--glass-card-bg) !important;
+    border: 1px solid var(--glass-card-border) !important;
+    border-radius: 12px !important;
+    padding: 11px 14px !important;
+    box-shadow: var(--glass-card-shadow) !important;
+    color: var(--text-muted);
+    margin-bottom: 0 !important;
+}
+.search-bar input { border: none !important; outline: none !important; flex: 1; font-size: 14px; background: transparent; color: var(--text-primary); }
+
+/* History cards */
+.history-card {
+    background: var(--glass-card-bg) !important;
+    border-top: 1px solid var(--glass-card-border) !important;
+    border-bottom: 1px solid var(--glass-card-border) !important;
+    border-right: 1px solid var(--glass-card-border) !important;
+    border-left: 3px solid #f97316 !important;
+    border-radius: 14px !important;
+    padding: 14px 16px !important;
+    margin-top: 0 !important;
+    cursor: pointer;
+    box-shadow: var(--glass-card-shadow) !important;
+    display: flex; flex-direction: column;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.history-card:active { transform: scale(0.99); }
+.history-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.history-title { margin: 0; font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.history-date { margin: 0; font-size: 12px; color: var(--text-muted); }
+.history-bottom { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--text-muted); padding-top: 8px; border-top: 1px solid var(--glass-card-border); margin-top: 6px; }
+.history-meta { display: inline-flex; align-items: center; gap: 5px; }
+
+/* Empty state */
+.empty-state {
+    text-align: center !important; color: var(--text-muted) !important; font-size: 14px !important;
+    padding: 32px 16px !important;
+    background: var(--glass-card-bg) !important;
+    border: 1px solid var(--glass-card-border) !important;
+    border-radius: 14px !important;
+    box-shadow: none !important;
+}
+
+/* FAB */
+.fab-wrapper { position: fixed; bottom: 76px; right: 16px; }
+.fab {
+    width: 56px; height: 56px; border-radius: 18px; border: none;
+    background: linear-gradient(135deg, #f97316, #fb923c);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+
+/* Bottom nav */
+.bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    background: rgba(5, 6, 10, 0.92);
+    border-top: 1px solid var(--glass-card-border);
+    padding: 8px 4px 10px;
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    z-index: 100;
+}
+.theme-light .bottom-nav { background: rgba(238, 242, 255, 0.94); }
+.nav-item { border: none; background: transparent; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; padding: 4px 0; cursor: pointer; transition: color 0.15s; }
+.nav-item.active { color: #fb923c; font-weight: 700; }
+
+/* Odometer modal */
+.modal-backdrop { position: fixed; inset: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 3000; }
+.modal {
+    display: block; position: relative;
+    background: var(--glass-card-bg); border: 1px solid var(--glass-card-border);
+    border-radius: 20px; padding: 20px;
+    width: 90%; max-width: 340px; height: auto;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+.modal::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #f97316, #fb923c); }
+.modal-title { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.modal-text { margin: 0 0 14px; font-size: 13px; color: var(--text-muted); }
+.modal-input { width: 100%; border: 1px solid var(--glass-card-border); border-radius: 12px; padding: 11px 14px; font-size: 16px; margin-bottom: 16px; background: var(--glass-ghost-bg); color: var(--text-primary); box-sizing: border-box; }
+.modal-input:focus { outline: none; border-color: rgba(249, 115, 22, 0.5); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.modal-actions .cancel { background: var(--glass-ghost-bg); border: 1px solid var(--glass-card-border); color: var(--text-muted); padding: 9px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.modal-actions .confirm { background: linear-gradient(135deg, #f97316, #fb923c); border: none; color: #fff; padding: 9px 16px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.modal-actions .confirm:disabled { opacity: 0.6; cursor: not-allowed; }
 </style>

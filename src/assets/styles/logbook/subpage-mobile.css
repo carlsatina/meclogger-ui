@@ -1222,3 +1222,47 @@
     padding-top: 10px;
     line-height: 1.4;
 }
+
+/* ── AI page trigger button (mobile) ─────────────────────────────────────── */
+.ai-page-action {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 0 6px;
+}
+
+.ai-page-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* ── AI modal (mobile — reuses web classes, extra mobile overrides) ───────── */
+.ai-modal {
+    max-width: 100%;
+    max-height: 90vh;
+}
+
+.ai-modal-head h4 { font-size: 14px; }
+.ai-modal-head p  { font-size: 11px; }
+
+.ai-seg-btn { font-size: 11px; padding: 6px 8px; }
+
+.ai-date-input { font-size: 12px; }
+
+.ai-result-summary { font-size: 12px; }
+
+.ai-property-row p   { font-size: 11px; }
+.ai-property-header strong { font-size: 12px; }
+.ai-trend-badge      { font-size: 9px; padding: 2px 6px; }
+
+.ai-alert-row        { font-size: 12px; }
+.ai-rec-list li      { font-size: 12px; }
+
+.audit-score-badge   { font-size: 11px; }
+.audit-score-label   { font-size: 11px; }
+.audit-issue-row p   { font-size: 12px; }
+.audit-issue-meta    { font-size: 10px; }
+
+.audit-clean         { font-size: 12px; }

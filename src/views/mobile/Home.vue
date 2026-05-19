@@ -1,104 +1,132 @@
 <template>
-<div class="home-shell">
-    <div class="bg-orb orb-1"></div>
-    <div class="bg-orb orb-2"></div>
+<div class="hm-shell">
 
-    <header class="hero">
-        <div class="hero-top">
-            <div class="brand">
-                <div class="logo-mark">
-                    <img src="@/assets/MECLogger.png" alt="MEC Logger Logo" />
-                </div>
-                <div>
-                    <p class="brand-chip">MEC LOGGER</p>
-                    <h1>Control your universe</h1>
-                    <p class="eyebrow">Hi, {{ userName }}</p>
-                </div>
-            </div>
-            <div class="hero-actions">
-                <button class="theme-toggle-pill" type="button" @click="toggleTheme">
-                    <mdicon :name="isDark ? 'white-balance-sunny' : 'moon-waning-crescent'" size="18" />
-                    <span>{{ isDark ? 'Dark' : 'Light' }}</span>
-                </button>
-                <button class="icon-action-btn" @click="navigateTo('/settings')" title="Settings">
-                    <mdicon name="cog-outline" size="20" />
-                </button>
-                <button class="ghost-btn" @click="logout">
-                    <mdicon name="logout" size="18" />
-                    <span>Logout</span>
-                </button>
-            </div>
-        </div>
-        <p class="hero-sub">Health, maintenance, and finances—unified in a sleek console.</p>
-    </header>
+  <!-- Background orbs -->
+  <div class="hm-bg" aria-hidden="true">
+    <div class="hm-orb hm-orb-1"></div>
+    <div class="hm-orb hm-orb-2"></div>
+  </div>
 
-    <section class="feature-stack">
-        <div class="glass-card medical" @click="navigateTo('/medical-records')">
-            <div class="chip">Health</div>
-            <div class="card-row">
-                <div class="icon-hex">
-                    <mdicon name="hospital-box" size="24"/>
-                </div>
-                <div>
-                    <h3>Medical Records</h3>
-                    <p>Vitals, prescriptions, and scans at light speed.</p>
-                </div>
-            </div>
-        </div>
+  <!-- Sticky Header -->
+  <header class="hm-header">
+    <div class="hm-header-brand">
+      <div class="hm-header-logo">
+        <img src="@/assets/MECLogger.png" alt="MECLogger"/>
+      </div>
+      <span class="hm-header-app-name">MECLogger</span>
+    </div>
+    <div class="hm-header-actions">
+      <button class="hm-icon-btn" @click="toggleTheme" :title="isDark ? 'Light mode' : 'Dark mode'">
+        <mdicon :name="isDark ? 'white-balance-sunny' : 'moon-waning-crescent'" size="20"/>
+      </button>
+      <button class="hm-icon-btn" @click="navigateTo('/settings')" title="Settings">
+        <mdicon name="cog-outline" size="20"/>
+      </button>
+      <button class="hm-icon-btn hm-icon-logout" @click="logout" title="Logout">
+        <mdicon name="logout" size="20"/>
+      </button>
+    </div>
+  </header>
 
-        <div class="glass-card vehicle" @click="navigateTo('/car-maintenance')">
-            <div class="chip">Auto</div>
-            <div class="card-row">
-                <div class="icon-hex">
-                    <mdicon name="car-wrench" size="24"/>
-                </div>
-                <div>
-                    <h3>Car Maintenance</h3>
-                    <p>Service history, reminders, and costs—always synced.</p>
-                </div>
-            </div>
-        </div>
+  <!-- Profile Card -->
+  <div class="hm-profile-card">
+    <div class="hm-profile-inner">
+      <div class="hm-avatar-wrap">
+        <div class="hm-avatar">{{ userInitials }}</div>
+      </div>
+      <div class="hm-profile-text">
+        <p class="hm-greeting">{{ greeting }}</p>
+        <h2 class="hm-profile-name">{{ userName }}</h2>
+        <p class="hm-profile-date">{{ currentDay }}, {{ currentDate }}</p>
+      </div>
+    </div>
+  </div>
 
-        <div class="glass-card expense" @click="navigateTo('/expense-tracking')">
-            <div class="chip">Finance</div>
-            <div class="card-row">
-                <div class="icon-hex">
-                    <mdicon name="cash-multiple" size="24"/>
-                </div>
-                <div>
-                    <h3>Expense Tracking</h3>
-                    <p>Budgets, insights, and subscriptions in one feed.</p>
-                </div>
-            </div>
-        </div>
+  <!-- Section Label -->
+  <div class="hm-section-label">
+    <span>Modules</span>
+  </div>
 
-        <div v-if="canAccessLogbook" class="glass-card logbook" @click="navigateTo('/logbook/payment')">
-            <div class="chip">Logbook</div>
-            <div class="card-row">
-                <div class="icon-hex">
-                    <mdicon name="book-open-page-variant" size="24"/>
-                </div>
-                <div>
-                    <h3>Logbook</h3>
-                    <p>Daily notes, milestones, and personal highlights.</p>
-                </div>
-            </div>
-        </div>
+  <!-- Module List -->
+  <div class="hm-modules">
 
-        <div v-if="isAdmin" class="glass-card admin" @click="navigateTo('/admin/users')">
-            <div class="chip">Admin</div>
-            <div class="card-row">
-                <div class="icon-hex">
-                    <mdicon name="shield-account" size="24"/>
-                </div>
-                <div>
-                    <h3>User Approvals</h3>
-                    <p>Review pending registrations and elevate roles.</p>
-                </div>
-            </div>
-        </div>
+    <!-- Medical Records -->
+    <div class="hm-module-card hm-medical" @click="navigateTo('/medical-records')">
+      <div class="hm-module-stripe hm-stripe-medical"></div>
+      <div class="hm-module-icon hm-micon-medical">
+        <mdicon name="hospital-box-outline" size="26"/>
+      </div>
+      <div class="hm-module-body">
+        <h3 class="hm-module-title">Medical Records</h3>
+        <p class="hm-module-desc">Vitals, medications, lab results &amp; health insights</p>
+      </div>
+      <div class="hm-module-arrow">
+        <mdicon name="chevron-right" size="20"/>
+      </div>
+    </div>
 
-    </section>
+    <!-- Car Maintenance -->
+    <div class="hm-module-card hm-vehicle" @click="navigateTo('/car-maintenance')">
+      <div class="hm-module-stripe hm-stripe-vehicle"></div>
+      <div class="hm-module-icon hm-micon-vehicle">
+        <mdicon name="car-wrench" size="26"/>
+      </div>
+      <div class="hm-module-body">
+        <h3 class="hm-module-title">Car Maintenance</h3>
+        <p class="hm-module-desc">Service history, reminders &amp; cost tracking</p>
+      </div>
+      <div class="hm-module-arrow">
+        <mdicon name="chevron-right" size="20"/>
+      </div>
+    </div>
+
+    <!-- Expense Tracking -->
+    <div class="hm-module-card hm-expense" @click="navigateTo('/expense-tracking')">
+      <div class="hm-module-stripe hm-stripe-expense"></div>
+      <div class="hm-module-icon hm-micon-expense">
+        <mdicon name="cash-multiple" size="26"/>
+      </div>
+      <div class="hm-module-body">
+        <h3 class="hm-module-title">Expense Tracking</h3>
+        <p class="hm-module-desc">Budgets, spending insights &amp; subscriptions</p>
+      </div>
+      <div class="hm-module-arrow">
+        <mdicon name="chevron-right" size="20"/>
+      </div>
+    </div>
+
+    <!-- Logbook (conditional) -->
+    <div v-if="canAccessLogbook" class="hm-module-card hm-logbook" @click="navigateTo('/logbook/payment')">
+      <div class="hm-module-stripe hm-stripe-logbook"></div>
+      <div class="hm-module-icon hm-micon-logbook">
+        <mdicon name="book-open-page-variant-outline" size="26"/>
+      </div>
+      <div class="hm-module-body">
+        <h3 class="hm-module-title">Logbook</h3>
+        <p class="hm-module-desc">Payments, savings, renters &amp; reports</p>
+      </div>
+      <div class="hm-module-arrow">
+        <mdicon name="chevron-right" size="20"/>
+      </div>
+    </div>
+
+    <!-- Admin (conditional) -->
+    <div v-if="isAdmin" class="hm-module-card hm-admin" @click="navigateTo('/admin/users')">
+      <div class="hm-module-stripe hm-stripe-admin"></div>
+      <div class="hm-module-icon hm-micon-admin">
+        <mdicon name="shield-account-outline" size="26"/>
+      </div>
+      <div class="hm-module-body">
+        <h3 class="hm-module-title">User Approvals</h3>
+        <p class="hm-module-desc">Manage registrations &amp; user roles</p>
+      </div>
+      <div class="hm-module-arrow">
+        <mdicon name="chevron-right" size="20"/>
+      </div>
+    </div>
+
+  </div>
+
 </div>
 </template>
 
@@ -164,11 +192,8 @@ export default {
                 const token = localStorage.getItem('token')
                 if (!token) return
                 const prefs = await getPreferences(token)
-                if (prefs?.aiProvider) aiProvider.value = prefs.aiProvider
-                if (prefs?.aiApiKey) aiApiKey.value = prefs.aiApiKey
             } catch (e) { /* ignore */ }
         }
-
 
         onMounted(() => {
             ensureProfile()
@@ -182,10 +207,34 @@ export default {
             return role === Role.ADMIN || role === Role.FAMILY
         })
 
+        const userInitials = computed(() => {
+            const name = store.state.userProfile?.fullName || ''
+            return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() || '?'
+        })
+
+        const greeting = computed(() => {
+            const h = new Date().getHours()
+            if (h < 12) return 'Good morning'
+            if (h < 17) return 'Good afternoon'
+            return 'Good evening'
+        })
+
+        const currentDay = computed(() =>
+            new Date().toLocaleDateString('en-US', { weekday: 'long' })
+        )
+
+        const currentDate = computed(() =>
+            new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+        )
+
         return {
             navigateTo,
             logout,
             userName,
+            userInitials,
+            greeting,
+            currentDay,
+            currentDate,
             isAdmin,
             canAccessLogbook,
             isDark,
@@ -197,385 +246,258 @@ export default {
 </script>
 
 <style scoped>
-.home-shell {
-    position: relative;
-    min-height: 100vh;
-    padding: 0 0 80px;
-    background: var(--home-bg-mobile);
-    color: var(--text-primary);
-    overflow: hidden;
+
+/* ── Shell ───────────────────────────────── */
+.hm-shell {
+  position: relative;
+  min-height: 100vh;
+  padding-bottom: 88px;
+  background: var(--home-bg-mobile);
+  color: var(--text-primary);
+  overflow: hidden;
 }
 
-.bg-orb {
-    position: absolute;
-    filter: blur(50px);
-    opacity: 0.35;
-    z-index: 0;
+/* ── Background orbs ─────────────────────── */
+.hm-bg { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.hm-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.28;
 }
-.orb-1 {
-    width: 280px;
-    height: 280px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #4f46e5, #06b6d4);
-    top: -100px;
-    left: -80px;
+.hm-orb-1 {
+  width: 320px; height: 320px;
+  top: -120px; left: -80px;
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
 }
-.orb-2 {
-    width: 240px;
-    height: 240px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #22c55e, #8b5cf6);
-    bottom: -80px;
-    right: -60px;
+.hm-orb-2 {
+  width: 260px; height: 260px;
+  bottom: 120px; right: -80px;
+  background: linear-gradient(135deg, #22c55e, #8b5cf6);
+}
+.theme-light .hm-orb { opacity: 0.22; }
+
+/* ── Header ──────────────────────────────── */
+.hm-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  background: rgba(5, 6, 10, 0.78);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.theme-light .hm-header {
+  background: rgba(238, 242, 255, 0.88);
+  border-bottom-color: rgba(79, 70, 229, 0.1);
+}
+.hm-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.hm-header-logo {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.hm-header-logo img { width: 100%; height: 100%; object-fit: contain; }
+.hm-header-app-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+.hm-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.hm-icon-btn {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.theme-light .hm-icon-btn {
+  background: rgba(79, 70, 229, 0.06);
+  border-color: rgba(79, 70, 229, 0.12);
+}
+.hm-icon-btn:active { background: rgba(255, 255, 255, 0.12); color: var(--text-primary); }
+.theme-light .hm-icon-btn:active { background: rgba(79, 70, 229, 0.14); }
+.hm-icon-logout { color: #fca5a5; }
+.theme-light .hm-icon-logout { color: #dc2626; }
+
+/* ── Profile Card ────────────────────────── */
+.hm-profile-card {
+  position: relative;
+  z-index: 1;
+  margin: 16px 14px 8px;
+  background: var(--glass-card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 18px 18px;
+  overflow: hidden;
+}
+.hm-profile-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #4f46e5, #06b6d4, #22c55e);
+}
+.theme-light .hm-profile-card { border-color: rgba(79, 70, 229, 0.12); }
+.hm-profile-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.hm-avatar-wrap { flex-shrink: 0; }
+.hm-avatar {
+  width: 52px; height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.5px;
+}
+.hm-profile-text { flex: 1; min-width: 0; }
+.hm-greeting {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin: 0 0 2px;
+}
+.hm-profile-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.4px;
+  margin: 0 0 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hm-profile-date {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
 }
 
-.hero {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    gap: 10px;
-    padding: 14px 16px 10px;
+/* ── Section label ───────────────────────── */
+.hm-section-label {
+  position: relative;
+  z-index: 1;
+  padding: 16px 18px 8px;
+}
+.hm-section-label span {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
 }
 
-.hero-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
+/* ── Module List ─────────────────────────── */
+.hm-modules {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 14px;
 }
 
-.brand {
-    display: flex;
-    gap: 12px;
-    align-items: center;
+/* ── Module Card ─────────────────────────── */
+.hm-module-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--glass-card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 18px;
+  padding: 14px 14px 14px 0;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.18s, transform 0.18s;
+}
+.theme-light .hm-module-card { border-color: rgba(79, 70, 229, 0.1); }
+.hm-module-card:active { transform: scale(0.985); }
+
+/* Left colored stripe */
+.hm-module-stripe {
+  width: 4px;
+  align-self: stretch;
+  border-radius: 0 3px 3px 0;
+  flex-shrink: 0;
+}
+.hm-stripe-medical { background: linear-gradient(180deg, #4f46e5, #06b6d4); }
+.hm-stripe-vehicle { background: linear-gradient(180deg, #f97316, #fbbf24); }
+.hm-stripe-expense { background: linear-gradient(180deg, #10b981, #6ee7b7); }
+.hm-stripe-logbook { background: linear-gradient(180deg, #8b5cf6, #c4b5fd); }
+.hm-stripe-admin   { background: linear-gradient(180deg, #f59e0b, #fde68a); }
+
+/* Module icon */
+.hm-module-icon {
+  width: 46px; height: 46px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.hm-micon-medical { background: rgba(79,70,229,0.14); color: #818cf8; border: 1px solid rgba(79,70,229,0.18); }
+.hm-micon-vehicle { background: rgba(249,115,22,0.14); color: #fb923c; border: 1px solid rgba(249,115,22,0.18); }
+.hm-micon-expense { background: rgba(16,185,129,0.14); color: #34d399; border: 1px solid rgba(16,185,129,0.18); }
+.hm-micon-logbook { background: rgba(139,92,246,0.14); color: #a78bfa; border: 1px solid rgba(139,92,246,0.18); }
+.hm-micon-admin   { background: rgba(245,158,11,0.14); color: #fbbf24; border: 1px solid rgba(245,158,11,0.18); }
+
+/* Module body */
+.hm-module-body { flex: 1; min-width: 0; }
+.hm-module-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 3px;
+  letter-spacing: -0.2px;
+}
+.hm-module-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.logo-mark {
-    width: 64px;
-    height: 64px;
-    border-radius: 14px;
-    background: var(--glass-ghost-bg);
-    display: grid;
-    place-items: center;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
-    border: 1px solid var(--glass-card-border);
-    overflow: hidden;
+/* Module arrow */
+.hm-module-arrow {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  padding-right: 4px;
+  opacity: 0.5;
 }
 
-.logo-mark img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-.brand-chip {
-    margin: 0;
-    font-size: 12px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    font-weight: 700;
-}
-
-.hero h1 {
-    margin: 2px 0 2px;
-    font-size: 22px;
-    font-weight: 800;
-    background: linear-gradient(135deg, #a5b4fc, #67e8f9);
-    -webkit-background-clip: text;
-    color: transparent;
-    letter-spacing: -0.3px;
-}
-
-.eyebrow {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 13px;
-}
-
-.hero-sub {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: 14px;
-}
-
-.hero-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-}
-
-.version-pill {
-    display: inline-flex;
-    align-items: center;
-    padding: 8px 12px;
-    border-radius: 12px;
-    background: var(--glass-ghost-bg);
-    border: 1px solid var(--glass-card-border);
-    color: var(--text-primary);
-    font-weight: 700;
-    font-size: 12px;
-}
-
-.icon-action-btn {
-    border: 1px solid var(--glass-ghost-border);
-    background: var(--glass-ghost-bg);
-    color: var(--text-primary);
-    border-radius: 12px;
-    padding: 10px;
-    display: inline-flex;
-    align-items: center;
-    cursor: pointer;
-    backdrop-filter: blur(6px);
-}
-
-.ghost-btn {
-    border: 1px solid var(--glass-ghost-border);
-    background: var(--glass-ghost-bg);
-    color: var(--text-primary);
-    border-radius: 12px;
-    padding: 10px 12px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    font-weight: 700;
-    backdrop-filter: blur(6px);
-}
-
-.feature-stack {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    gap: 12px;
-    margin-top: 10px;
-}
-
-.glass-card {
-    background: var(--glass-card-bg);
-    border-radius: 0;
-    border-top: 1px solid var(--glass-card-border);
-    border-bottom: 1px solid var(--glass-card-border);
-    border-left: none;
-    border-right: none;
-    box-shadow: none;
-    padding: 14px 16px;
-    cursor: pointer;
-    display: grid;
-    gap: 10px;
-    transition: background 0.18s ease;
-}
-
-.glass-card:active {
-    background: var(--glass-ghost-bg);
-}
-
-.glass-card .chip {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-weight: 700;
-    font-size: 11px;
-    color: #0b1020;
-    background: var(--pill-gradient);
-    box-shadow: 0 6px 14px rgba(6, 182, 212, 0.3);
-    width: fit-content;
-}
-
-.glass-card.admin .chip {
-    background: linear-gradient(135deg, #f97316, #ec4899);
-    box-shadow: 0 6px 14px rgba(236, 72, 153, 0.3);
-}
-.glass-card.logbook .chip {
-    background: linear-gradient(135deg, #22c55e, #38bdf8);
-    box-shadow: 0 6px 14px rgba(56, 189, 248, 0.25);
-}
-
-.card-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.icon-hex {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-    display: grid;
-    place-items: center;
-    color: #0b1020;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
-}
-
-.glass-card.admin .icon-hex {
-    background: linear-gradient(135deg, #f97316, #ec4899);
-}
-.glass-card.logbook .icon-hex {
-    background: linear-gradient(135deg, #22c55e, #38bdf8);
-    color: #0b1020;
-}
-
-.glass-card h3 {
-    margin: 0;
-    font-size: 16px;
-    color: var(--text-primary);
-    letter-spacing: -0.2px;
-}
-
-.glass-card p {
-    margin: 2px 0 0;
-    font-size: 13px;
-    color: var(--text-secondary);
-    line-height: 1.4;
-}
-
-.settings-section-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 16px 4px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
-}
-
-.ai-card {
-    cursor: default;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-.ai-card:active { background: var(--glass-card-bg); }
-
-.ai-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.ai-chip {
-    background: linear-gradient(135deg, #a78bfa, #38bdf8) !important;
-    box-shadow: 0 6px 14px rgba(167, 139, 250, 0.3) !important;
-}
-.ai-hex {
-    background: linear-gradient(135deg, #a78bfa, #38bdf8) !important;
-}
-.ai-header-row { align-items: flex-start; }
-
-.ai-status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 999px;
-}
-.ai-status-badge.status-on  { background: rgba(34,197,94,0.12);  color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
-.ai-status-badge.status-off { background: rgba(148,163,184,0.1); color: var(--text-muted); border: 1px solid rgba(148,163,184,0.2); }
-.status-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-}
-
-.ai-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-.ai-field-group { display: flex; flex-direction: column; gap: 5px; }
-.ai-label {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-}
-.ai-select,
-.ai-input {
-    padding: 10px 12px;
-    border-radius: 10px;
-    border: 1px solid var(--glass-card-border);
-    background: var(--glass-ghost-bg);
-    color: var(--text-primary);
-    font-size: 14px;
-    width: 100%;
-    outline: none;
-}
-.ai-select:focus, .ai-input:focus { border-color: rgba(167,139,250,0.5); }
-
-.ai-key-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-.ai-key-row .ai-input { flex: 1; width: auto; }
-.key-eye-btn {
-    background: var(--glass-ghost-bg);
-    border: 1px solid var(--glass-card-border);
-    border-radius: 10px;
-    padding: 9px 10px;
-    color: var(--text-muted);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-}
-.key-eye-btn:hover { color: var(--text-primary); }
-
-.ai-hint {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin: 2px 0 0;
-    line-height: 1.4;
-}
-.ai-error {
-    font-size: 12px;
-    color: #fca5a5;
-    margin: 0;
-}
-.ai-save-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    width: 100%;
-    padding: 11px;
-    border-radius: 12px;
-    border: none;
-    background: linear-gradient(135deg, #a78bfa, #38bdf8);
-    color: #0b1020;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: opacity 0.15s;
-}
-.ai-save-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-
-.spin { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
+/* ── Smaller screens ─────────────────────── */
 @media (max-width: 375px) {
-    .hero h1 {
-        font-size: 20px;
-    }
-    .glass-card h3 {
-        font-size: 15px;
-    }
-    .glass-card p {
-        font-size: 12px;
-    }
-    .logo-mark {
-        width: 52px;
-        height: 52px;
-    }
+  .hm-profile-name { font-size: 18px; }
+  .hm-avatar { width: 44px; height: 44px; font-size: 15px; }
+  .hm-module-title { font-size: 15px; }
 }
 </style>
