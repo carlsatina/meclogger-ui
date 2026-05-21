@@ -76,8 +76,10 @@ export default {
   background: var(--glass-ghost-bg);
   color: var(--text-primary);
   backdrop-filter: blur(10px);
-  position: relative;
-  z-index: 2;
+  -webkit-backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .logbook-top-nav.mobile {

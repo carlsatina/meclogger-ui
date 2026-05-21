@@ -1,5 +1,5 @@
 <template>
-<div class="car-shell">
+<div class="car-shell stagger-page stagger-seq" :class="{ 'stagger-ready': staggerReady }">
     <div class="car-orb one"></div>
     <div class="car-orb two"></div>
     <div class="car-hero">
@@ -597,364 +597,280 @@ export default {
 </script>
 
 <style scoped>
+/* ── Hero ── */
+.car-hero { background: linear-gradient(135deg, #c2410c, #f97316) !important; padding: 20px 16px !important; }
+
+/* ── Vehicle pill ── */
 .vehicle-pill {
-  margin-top: 12px;
-  color: var(--text-primary);
-  border-radius: 0;
-  border-left: none;
-  border-right: none;
-  box-shadow: none;
-  padding: 12px 16px;
+  margin: 16px 16px 0;
+  background: var(--glass-card-bg) !important;
+  border: 1px solid var(--glass-card-border) !important;
+  border-radius: 16px !important;
+  padding: 14px 16px !important;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--glass-card-shadow) !important;
+}
+.vehicle-pill::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f97316, #fb923c);
 }
 
 .avatar {
-  width: 48px;
-  height: 48px;
+  width: 48px; height: 48px;
   border-radius: 14px;
-  background: var(--glass-ghost-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: rgba(249, 115, 22, 0.12);
+  border: 1px solid rgba(249, 115, 22, 0.2) !important;
+  display: flex; align-items: center; justify-content: center;
   overflow: hidden;
-  border: 1px solid var(--glass-card-border);
+  color: #fb923c;
+  flex-shrink: 0;
 }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-.avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.vehicle-meta p {
-  margin: 0;
-}
-
-.vehicle-name {
-  font-weight: 700;
-  font-size: 15px;
-}
-
-.vehicle-type {
-  font-size: 13px;
-  opacity: 0.9;
-}
-
-.vehicle-odo {
-  font-size: 12px;
-  opacity: 0.9;
-}
-
-.vehicle-updated {
-  font-size: 11px;
-  opacity: 0.8;
-  margin: 2px 0 0;
-}
-
-.vehicle-actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.vehicle-dropdown {
-  opacity: 0.9;
-}
+.vehicle-meta { flex: 1; min-width: 0; }
+.vehicle-meta p { margin: 0; }
+.vehicle-name { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.vehicle-type { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.vehicle-odo { font-size: 13px; color: var(--text-primary); font-weight: 600; margin-top: 3px; }
+.vehicle-updated { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.vehicle-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.vehicle-dropdown { color: var(--text-muted); }
 
 .update-btn {
-  border: 1px solid var(--glass-card-border);
-  background: var(--glass-ghost-bg);
-  color: var(--text-primary);
-  padding: 6px 10px;
+  background: rgba(249, 115, 22, 0.1);
+  border: 1px solid rgba(249, 115, 22, 0.25) !important;
+  color: #fb923c;
+  padding: 6px 12px;
   border-radius: 10px;
+  font-size: 13px;
   font-weight: 700;
-  box-shadow: none;
-}
-
-.update-btn.small {
-  padding: 6px 10px;
-  font-size: 13px;
-}
-
-.vehicle-picker {
-  margin-top: 8px;
-  color: var(--text-primary);
-  border-radius: 0;
-  box-shadow: none;
-  border-top: 1px solid var(--glass-card-border);
-  border-bottom: 1px solid var(--glass-card-border);
-  border-left: none;
-  border-right: none;
-  overflow: hidden;
-}
-
-.picker-item {
-  width: 100%;
-  border: none;
-  background: transparent;
-  padding: 10px 16px;
-  text-align: left;
-  font-weight: 600;
-  color: var(--text-primary);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.picker-item + .picker-item {
-  border-top: 1px solid var(--glass-card-border);
-}
-
-.picker-empty {
-  margin: 0;
-  padding: 10px 12px;
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-.schedule-card {
-  display: grid;
-  gap: 10px;
   cursor: pointer;
-  border-radius: 0;
-  border-left: none;
-  border-right: none;
-  box-shadow: none;
-  padding: 14px 16px;
-  margin-top: -1px;
+  box-shadow: none !important;
 }
+.update-btn.small { padding: 6px 10px; font-size: 13px; }
 
-.schedule-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* ── Vehicle picker ── */
+.vehicle-picker {
+  background: var(--glass-card-bg) !important;
+  border: 1px solid var(--glass-card-border) !important;
+  border-radius: 12px !important;
+  margin: 8px 16px 0;
+  overflow: hidden;
+  box-shadow: var(--glass-card-shadow);
 }
+.picker-item { width: 100%; border: none; background: transparent; padding: 12px 16px; text-align: left; display: flex; flex-direction: column; gap: 2px; cursor: pointer; transition: background 0.15s; }
+.picker-item:hover { background: rgba(249, 115, 22, 0.06); }
+.picker-item + .picker-item { border-top: 1px solid var(--glass-card-border); }
+.picker-name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.picker-odo { font-size: 12px; color: var(--text-muted); }
+.picker-empty { margin: 0; padding: 12px 16px; color: var(--text-muted); font-size: 13px; }
 
-.schedule-title {
-  margin: 0;
-  color: var(--text-primary);
-  font-weight: 800;
+/* ── Search bar ── */
+.car-search {
+  display: flex !important; align-items: center !important; gap: 10px !important;
+  background: var(--glass-card-bg) !important;
+  border: 1px solid var(--glass-card-border) !important;
+  border-radius: 12px !important;
+  padding: 11px 14px !important;
+  box-shadow: var(--glass-card-shadow) !important;
+  color: var(--text-muted);
+  margin: 0 16px !important;
 }
+.car-search input { border: none !important; outline: none !important; flex: 1; font-size: 14px; background: transparent; color: var(--text-primary); }
 
+/* ── Body padding ── */
+.car-body { padding: 16px 0 90px !important; display: flex !important; flex-direction: column !important; gap: 8px !important; }
+
+/* ── Schedule cards ── */
+.schedule-card {
+  background: var(--glass-card-bg) !important;
+  border-top: 1px solid var(--glass-card-border) !important;
+  border-bottom: 1px solid var(--glass-card-border) !important;
+  border-right: 1px solid var(--glass-card-border) !important;
+  border-left: 3px solid #f97316 !important;
+  border-radius: 14px !important;
+  padding: 14px 16px !important;
+  margin: 0 16px !important;
+  cursor: pointer;
+  display: flex; flex-direction: column; gap: 10px;
+  box-shadow: var(--glass-card-shadow) !important;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.schedule-card:active { transform: scale(0.99); }
+
+.schedule-top { display: flex; align-items: center; justify-content: space-between; }
+.schedule-title { margin: 0; font-size: 15px; font-weight: 700; color: var(--text-primary); }
+
+/* ── Status pills ── */
 .schedule-date-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--glass-card-border);
-  background: var(--glass-ghost-bg);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.schedule-date-pill.status-missed {
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.schedule-date-pill.status-complete {
-  background: rgba(34, 197, 94, 0.12);
-  color: #16a34a;
-  border-color: rgba(34, 197, 94, 0.3);
-}
-
-.schedule-bottom {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  color: var(--text-primary);
-  font-size: 13px;
-}
-
-.schedule-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.drawer-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  padding: 16px;
-  z-index: 1050;
-}
-
-.drawer-content {
-  width: 100%;
-  max-width: 520px;
-  border-radius: 18px;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
-}
-
-.drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-.drawer-title {
-  margin: 0;
-  color: var(--text-primary);
-}
-
-.drawer-date {
-  margin: 0 0 6px;
-  color: var(--text-muted);
-}
-
-.drawer-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 6px 0;
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.drawer-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.label {
-  font-weight: 700;
-  color: var(--text-muted);
-  font-size: 12px;
-  text-transform: uppercase;
-}
-
-.value {
-  font-weight: 700;
-}
-
-.modal-input {
-  width: 100%;
-  border: 1px solid var(--glass-card-border);
-  border-radius: 10px;
-  padding: 10px;
-  font-size: 16px;
-  margin: 8px 0 12px;
-  background: var(--glass-ghost-bg);
-  color: var(--text-primary);
-}
-
-.car-notif-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 1200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px 16px;
-}
-
-.car-notif-card {
-  width: 100%;
-  max-width: 520px;
-  max-height: 70vh;
-  overflow: auto;
-  animation: slideFadeUp 0.3s ease;
-}
-
-.notif-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.notif-label {
-  margin: 0;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.notif-title {
-  margin: 0;
-  color: var(--text-primary);
-}
-
-.notif-empty {
-  text-align: center;
-  color: var(--text-muted);
-  padding: 12px;
-}
-
-.notif-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.notif-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px;
-  border-radius: 12px;
-  background: var(--glass-ghost-bg);
-  border: 1px solid var(--glass-card-border);
-}
-
-.notif-main {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.notif-name {
-  margin: 0;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.notif-meta {
-  margin: 0;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.notif-pill {
-  display: inline-flex;
-  align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  border-radius: 12px;
+  border-radius: 10px;
   font-size: 12px;
+  font-weight: 700;
   border: 1px solid transparent;
+  background: rgba(249, 115, 22, 0.12);
+  color: #fb923c;
+  border-color: rgba(249, 115, 22, 0.25);
 }
-
-.notif-pill.status-done {
+.schedule-date-pill.status-missed {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+.schedule-date-pill.status-done {
   background: rgba(34, 197, 94, 0.12);
   color: #4ade80;
   border-color: rgba(34, 197, 94, 0.2);
 }
 
-.notif-pill.status-missed {
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
-  border-color: rgba(239, 68, 68, 0.2);
+.schedule-bottom { display: flex; align-items: center; gap: 14px; font-size: 13px; color: var(--text-muted); padding-top: 8px; border-top: 1px solid var(--glass-card-border); margin-top: 2px; }
+.schedule-meta { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ── Empty state ── */
+.car-empty {
+  text-align: center !important; color: var(--text-muted) !important; font-size: 14px !important;
+  padding: 32px 16px !important;
+  background: var(--glass-card-bg) !important;
+  border: 1px solid var(--glass-card-border) !important;
+  border-radius: 14px !important;
+  margin: 0 16px !important;
+  box-shadow: none !important;
 }
 
-.notif-pill.status-upcoming {
-  background: rgba(103, 232, 249, 0.12);
-  color: #67e8f9;
-  border-color: rgba(103, 232, 249, 0.2);
+/* ── FAB ── */
+.car-fab {
+  background: linear-gradient(135deg, #f97316, #fb923c) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4) !important;
+  border-radius: 18px !important;
 }
+
+/* ── Bottom nav ── */
+.car-bottom-nav {
+  background: rgba(5, 6, 10, 0.92) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+.theme-light .car-bottom-nav { background: rgba(238, 242, 255, 0.94) !important; }
+.car-nav-item.active { color: #fb923c !important; font-weight: 700; }
+
+/* ── Drawer ── */
+.drawer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex; justify-content: center; align-items: flex-end;
+  padding: 16px; z-index: 1050;
+}
+.drawer-content {
+  width: 100%; max-width: 520px;
+  position: relative; overflow: hidden;
+  border-radius: 20px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+}
+.drawer-content::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f97316, #fb923c);
+}
+.drawer-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.drawer-title { margin: 0; font-size: 17px; font-weight: 800; color: var(--text-primary); }
+.drawer-date { margin: 0 0 10px; font-size: 13px; color: var(--text-muted); }
+.drawer-row { display: flex; justify-content: space-between; gap: 8px; margin: 6px 0; color: var(--text-primary); font-size: 14px; }
+.drawer-actions { display: flex; gap: 10px; margin-top: 16px; }
+.label { font-weight: 700; color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.value { font-weight: 700; }
+
+/* Drawer buttons */
+.car-btn {
+  background: linear-gradient(135deg, #f97316, #fb923c) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 6px 16px rgba(249, 115, 22, 0.35) !important;
+  flex: 1;
+}
+.car-btn.danger {
+  background: linear-gradient(135deg, #ef4444, #f87171) !important;
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* ── Odometer modal (glass-confirm reuse) ── */
+.modal-input {
+  width: 100%;
+  border: 1px solid var(--glass-card-border);
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-size: 16px;
+  margin: 8px 0 16px;
+  background: var(--glass-ghost-bg);
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+.modal-input:focus { outline: none; border-color: rgba(249, 115, 22, 0.5); }
+
+:deep(.glass-confirm-card) { position: relative; overflow: hidden; }
+:deep(.glass-confirm-card)::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f97316, #fb923c);
+}
+:deep(.glass-confirm-actions .confirm) {
+  background: linear-gradient(135deg, #f97316, #fb923c) !important;
+  color: #fff !important;
+  border: none !important;
+}
+
+/* ── Notifications panel ── */
+.car-notif-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1200;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px 16px;
+}
+.car-notif-card {
+  width: 100%; max-width: 520px; max-height: 70vh;
+  overflow: auto;
+  position: relative; overflow: hidden;
+  border-radius: 20px !important;
+}
+.car-notif-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f97316, #fb923c);
+}
+.notif-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.notif-label { margin: 0; font-size: 12px; color: var(--text-muted); }
+.notif-title { margin: 0; font-weight: 800; color: var(--text-primary); }
+.notif-empty { text-align: center; color: var(--text-muted); padding: 12px; }
+.notif-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.notif-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 12px; border-radius: 12px;
+  background: var(--glass-ghost-bg); border: 1px solid var(--glass-card-border);
+}
+.notif-main { display: flex; flex-direction: column; gap: 4px; }
+.notif-name { margin: 0; font-weight: 700; color: var(--text-primary); }
+.notif-meta { margin: 0; font-size: 12px; color: var(--text-muted); }
+.notif-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-radius: 10px; font-size: 12px; font-weight: 700;
+  border: 1px solid transparent;
+}
+.notif-pill.status-done { background: rgba(34, 197, 94, 0.12); color: #4ade80; border-color: rgba(34, 197, 94, 0.2); }
+.notif-pill.status-missed { background: rgba(239, 68, 68, 0.12); color: #f87171; border-color: rgba(239, 68, 68, 0.2); }
+.notif-pill.status-upcoming { background: rgba(249, 115, 22, 0.12); color: #fb923c; border-color: rgba(249, 115, 22, 0.2); }
 </style>

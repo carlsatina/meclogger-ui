@@ -309,48 +309,85 @@ export default {
 </script>
 
 <style scoped>
+/* ── Hero ── */
+.car-hero { background: linear-gradient(135deg, #c2410c, #f97316) !important; padding: 20px 16px !important; }
+
+/* ── Form body ── */
+.car-body { padding: 16px !important; display: flex !important; flex-direction: column !important; gap: 14px !important; }
+
+/* ── Field labels ── */
+.car-field label { color: var(--text-primary); font-size: 13px; font-weight: 700; }
+
+/* ── Inputs / select / textarea — orange focus ── */
+.car-input:focus,
+.car-select:focus,
+.car-textarea:focus {
+  outline: none !important;
+  border-color: rgba(249, 115, 22, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.15) !important;
+}
+
+/* ── Upload card ── */
 .upload-card {
+  background: var(--glass-card-bg) !important;
+  border: 1px solid var(--glass-card-border) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--glass-card-shadow) !important;
+  padding: 16px !important;
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
+.upload-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f97316, #fb923c);
+}
+.upload-card label { font-size: 13px; font-weight: 700; color: var(--text-primary); }
 
 .upload-box {
-  border: 1px dashed var(--glass-card-border);
+  border: 1px dashed rgba(249, 115, 22, 0.35);
   border-radius: 12px;
   padding: 14px;
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--text-primary);
-  background: var(--glass-ghost-bg);
+  color: #fb923c;
+  background: rgba(249, 115, 22, 0.06);
   cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.15s;
 }
+.upload-box:hover { background: rgba(249, 115, 22, 0.1); }
 
-.hidden {
-  display: none;
-}
+.hidden { display: none; }
 
 .preview {
-  margin-top: 8px;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid var(--glass-card-border);
+  border: 1px solid rgba(249, 115, 22, 0.2);
 }
+.preview img { width: 100%; height: auto; display: block; }
 
-.preview img {
-  width: 100%;
-  height: auto;
-  display: block;
+/* ── Submit button ── */
+.car-btn[type="submit"] {
+  background: linear-gradient(135deg, #f97316, #fb923c) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 8px 20px rgba(249, 115, 22, 0.35) !important;
+  border-radius: 14px !important;
+  padding: 14px !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
 }
+.car-btn[type="submit"]:disabled { opacity: 0.65 !important; cursor: not-allowed !important; }
 
-.error-text {
-  color: #ef4444;
-  margin: 8px 0 0;
-}
-
-.success-text {
-  color: #22c55e;
-  margin: 8px 0 0;
-}
+/* ── Messages ── */
+.error-text { color: #f87171; margin: 4px 0 0; font-size: 13px; }
+.success-text { color: #4ade80; margin: 4px 0 0; font-size: 13px; }
 </style>

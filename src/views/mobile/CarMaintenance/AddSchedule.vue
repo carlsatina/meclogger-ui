@@ -291,9 +291,39 @@ export default {
 </script>
 
 <style scoped>
-.type-field {
-  position: relative;
+/* ── Hero ── */
+.car-hero { background: linear-gradient(135deg, #c2410c, #f97316) !important; padding: 20px 16px !important; }
+
+/* ── Form body ── */
+.car-body { padding: 16px !important; display: flex !important; flex-direction: column !important; gap: 14px !important; }
+
+/* ── Field labels ── */
+.car-field label { color: var(--text-primary); font-size: 13px; font-weight: 700; }
+
+/* ── Inputs / select / textarea — orange focus ── */
+.car-input:focus,
+.car-select:focus,
+.car-textarea:focus {
+  outline: none !important;
+  border-color: rgba(249, 115, 22, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.15) !important;
 }
+
+/* ── Submit button ── */
+.car-btn[type="submit"] {
+  background: linear-gradient(135deg, #f97316, #fb923c) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 8px 20px rgba(249, 115, 22, 0.35) !important;
+  border-radius: 14px !important;
+  padding: 14px !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+}
+.car-btn[type="submit"]:disabled { opacity: 0.65 !important; cursor: not-allowed !important; }
+
+/* ── Maintenance type combo ── */
+.type-field { position: relative; }
 
 .type-input {
   display: flex;
@@ -303,51 +333,45 @@ export default {
   border-radius: 12px;
   padding: 4px 6px 4px 10px;
   background: var(--glass-ghost-bg);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
+.type-input:focus-within {
+  border-color: rgba(249, 115, 22, 0.5);
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.15);
+}
+.type-input .car-input { border: none !important; background: transparent !important; padding: 8px 0 !important; box-shadow: none !important; }
 
-.type-input .car-input {
-  border: none;
-  background: transparent;
-  padding: 8px 0;
-  box-shadow: none;
-}
-
-.type-toggle {
-  border: none;
-  background: transparent;
-  color: var(--text-primary);
-  padding: 6px;
-  border-radius: 10px;
-}
+.type-toggle { border: none; background: transparent; color: var(--text-muted); padding: 6px; border-radius: 10px; cursor: pointer; }
 
 .type-dropdown {
-  margin-top: 8px;
+  margin-top: 6px;
+  background: var(--glass-card-bg);
+  border: 1px solid var(--glass-card-border);
+  border-radius: 12px;
+  box-shadow: var(--glass-card-shadow);
+  overflow: hidden;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 6px;
+  gap: 0;
 }
-
 .type-option {
   border: none;
   background: transparent;
   color: var(--text-primary);
-  padding: 10px;
-  border-radius: 10px;
+  padding: 11px 12px;
+  border-radius: 0;
   text-align: left;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 1px solid var(--glass-card-border);
+  transition: background 0.12s;
 }
+.type-option:last-child { border-bottom: none; }
+.type-option:active,
+.type-option:hover { background: rgba(249, 115, 22, 0.08); color: #fb923c; }
 
-.type-option:active {
-  background: var(--glass-ghost-bg);
-}
-
-.error-text {
-  color: #ef4444;
-  margin: 6px 0 0;
-}
-
-.success-text {
-  color: #22c55e;
-  margin: 6px 0 0;
-}
+/* ── Messages ── */
+.error-text { color: #f87171; margin: 4px 0 0; font-size: 13px; }
+.success-text { color: #4ade80; margin: 4px 0 0; font-size: 13px; }
 </style>
