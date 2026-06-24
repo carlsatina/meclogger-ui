@@ -12,11 +12,11 @@
           <p class="sub">Review new registrations and set roles.</p>
         </div>
       </div>
-    </header>
       <button class="ghost glass-btn-ghost" @click="backToHome">
         <mdicon name="home" size="18" />
         <span>Home</span>
       </button>
+    </header>
 
     <section class="stack">
       <div v-if="loading" class="hint">Loading users…</div>
@@ -38,8 +38,12 @@
               <option v-for="r in roleOptions" :key="r" :value="r">{{ r }}</option>
             </select>
           </div>
-          <button class="primary glass-btn-primary" :disabled="saving[u.id]" @click="changeRole(u.id)">
-            {{ saving[u.id] ? 'Saving…' : 'Update role' }}
+          <button
+            class="primary glass-btn-primary"
+            :disabled="saving[u.id] || draftRoles[u.id] === u.role"
+            @click="changeRole(u.id)"
+          >
+            {{ saving[u.id] ? 'Saving…' : draftRoles[u.id] === u.role ? 'No changes' : 'Update role' }}
           </button>
         </article>
       </div>
@@ -125,6 +129,7 @@ onMounted(() => {
   padding: 20px 16px 80px;
   display: grid;
   gap: 16px;
+  align-content: start;
   position: relative;
   overflow: hidden;
   color: var(--text-primary);
@@ -269,16 +274,20 @@ h2 {
 .pill {
   display: inline-flex;
   align-items: center;
-  padding: 4px 8px;
+  padding: 4px 10px;
   border-radius: 999px;
   font-weight: 700;
   font-size: 11px;
-  border: 1px solid rgba(226, 232, 240, 0.4);
+  letter-spacing: 0.04em;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-secondary);
   text-transform: uppercase;
 }
-.pill.guest { background: #fff7ed; color: #c2410c; }
-.pill.user { background: #e0f2fe; color: #0369a1; }
-.pill.admin { background: #ecfdf3; color: #047857; }
+.pill.guest  { background: rgba(249, 115, 22, 0.14); color: #fb923c; border-color: rgba(249, 115, 22, 0.32); }
+.pill.user   { background: rgba(56, 189, 248, 0.14); color: #7dd3fc; border-color: rgba(56, 189, 248, 0.32); }
+.pill.family { background: rgba(168, 85, 247, 0.14); color: #c4b5fd; border-color: rgba(168, 85, 247, 0.32); }
+.pill.admin  { background: rgba(34, 197, 94, 0.14);  color: #4ade80; border-color: rgba(34, 197, 94, 0.32); }
 .role-row {
   display: grid;
   gap: 6px;
@@ -307,6 +316,12 @@ h2 {
   font-size: 14px;
   width: 100%;
   box-shadow: 0 12px 26px rgba(34, 197, 94, 0.25);
+  transition: opacity 0.15s ease;
+}
+.primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 .hint {
   padding: 12px 0;
