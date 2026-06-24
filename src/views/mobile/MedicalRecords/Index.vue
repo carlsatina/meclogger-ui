@@ -7,26 +7,16 @@
         :title="getTabTitle()"
         :profile-name="activeProfileName"
         :show-back="false"
+        :show-home="true"
         @profile-click="showProfileSwitcher = true"
     >
         <template #actions>
             <div class="top-bar-actions">
-                <mdicon 
-                    name="bell-outline" 
-                    :size="24" 
+                <mdicon
+                    name="bell-outline"
+                    :size="24"
                     class="action-icon"
                     @click="handleNotificationBell"
-                />
-                <mdicon 
-                    name="magnify" 
-                    :size="24" 
-                    class="action-icon"
-                />
-                <mdicon 
-                    name="home-outline" 
-                    :size="24" 
-                    class="action-icon"
-                    @click="router.push('/')"
                 />
             </div>
         </template>
@@ -1623,12 +1613,12 @@ export default {
 .orb-2 { width: 240px; height: 240px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #8b5cf6); bottom: -100px; right: -80px; }
 
 /* ── TopBar action icons ─────────────────────────────────── */
-.top-bar-actions { display: flex; align-items: center; gap: 8px; }
+.top-bar-actions { display: flex; align-items: center; gap: 6px; }
 .action-icon {
     cursor: pointer;
     color: var(--text-secondary);
-    padding: 8px;
-    border-radius: 10px;
+    padding: 6px;
+    border-radius: 9px;
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.07);
     transition: background 0.15s, color 0.15s;

@@ -2,25 +2,32 @@
 <div class="top-bar glass-nav glass-nav-orb">
     <div class="top-bar-content">
         <div class="left-section">
-            <mdicon 
+            <mdicon
                 v-if="showBack"
-                name="chevron-left" 
-                :size="28" 
+                name="chevron-left"
+                :size="28"
                 @click="handleBack"
                 class="back-button"
             />
-            <div v-if="profileName" class="profile-chip main" @click="$emit('profile-click')">
-                <div class="profile-avatar">
-                    <mdicon name="account-circle" :size="26"/>
-                </div>
-                <span>{{ profileName }}</span>
-                <mdicon name="chevron-down" :size="14" class="chip-caret"/>
-            </div>
-            <div v-else class="title-wrapper">
+            <mdicon
+                v-if="showHome"
+                name="home-outline"
+                :size="24"
+                @click="handleHome"
+                class="home-button"
+            />
+            <div class="title-wrapper">
                 <h2 class="title">{{ title }}</h2>
             </div>
         </div>
         <div class="right-section">
+            <div v-if="profileName" class="profile-chip main" @click="$emit('profile-click')">
+                <div class="profile-avatar">
+                    <mdicon name="account-circle" :size="22"/>
+                </div>
+                <span>{{ profileName }}</span>
+                <mdicon name="chevron-down" :size="14" class="chip-caret"/>
+            </div>
             <slot name="actions"></slot>
         </div>
     </div>
@@ -46,6 +53,14 @@ export default {
             type: String,
             default: '/'
         },
+        showHome: {
+            type: Boolean,
+            default: false
+        },
+        homeRoute: {
+            type: String,
+            default: '/'
+        },
         subtitle: {
             type: String,
             default: ''
@@ -62,8 +77,13 @@ export default {
             router.push(props.backRoute)
         }
 
+        const handleHome = () => {
+            router.push(props.homeRoute)
+        }
+
         return {
-            handleBack
+            handleBack,
+            handleHome
         }
     }
 }
@@ -93,8 +113,9 @@ export default {
 .left-section {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     flex: 1;
+    min-width: 0;
 }
 
 .back-button {
@@ -110,12 +131,28 @@ export default {
     transform: scale(0.95);
 }
 
+.home-button {
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.home-button:active {
+    background: var(--glass-ghost-bg);
+    transform: scale(0.95);
+}
+
 .title {
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
     letter-spacing: -0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .title-wrapper {
@@ -126,14 +163,14 @@ export default {
 .right-section {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .profile-chip {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
+    gap: 6px;
+    padding: 4px 10px;
     background: var(--glass-ghost-bg);
     border: 1px solid var(--glass-card-border);
     border-radius: 999px;
@@ -143,8 +180,8 @@ export default {
 }
 
 .profile-avatar {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     background: linear-gradient(135deg, #4f46e5, #06b6d4);
     display: flex;
@@ -154,8 +191,8 @@ export default {
 }
 
 .profile-chip.main {
-    padding: 6px 14px;
-    font-size: 13px;
+    padding: 3px 6px 3px 4px;
+    font-size: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
 }

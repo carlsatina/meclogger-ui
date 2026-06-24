@@ -401,31 +401,6 @@
                             </div>
                         </transition-group>
                     </div>
-                    <div class="tx-summary">
-                        <div class="tx-summary-head">
-                            <span class="tx-summary-month">{{ monthLabel(0) }}</span>
-                            <span class="tx-summary-count">
-                                {{ transactionsForMonth.length }}
-                                {{ transactionsForMonth.length === 1 ? 'transaction' : 'transactions' }}
-                            </span>
-                        </div>
-                        <div class="tx-summary-stats" :class="{ split: transactionPlannedOut > 0 }">
-                            <div class="tx-summary-stat">
-                                <span class="tss-label">Spent</span>
-                                <span class="tss-val spent">{{ formatMoney(defaultCurrency, transactionOut) }}</span>
-                            </div>
-                            <template v-if="transactionPlannedOut > 0">
-                                <div class="tx-summary-stat">
-                                    <span class="tss-label">Upcoming</span>
-                                    <span class="tss-val upcoming">{{ formatMoney(defaultCurrency, transactionPlannedOut) }}</span>
-                                </div>
-                                <div class="tx-summary-stat">
-                                    <span class="tss-label">Total</span>
-                                    <span class="tss-val total">{{ formatMoney(defaultCurrency, transactionAllTotal) }}</span>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
                 </section>
                 <div v-else class="empty-state slide-up">
                     <div class="icon-circle purple">
@@ -834,19 +809,27 @@
                             </button>
                         </div>
                         <div v-if="budgets.length" class="budget-manage-list">
-                            <div class="manage-row" v-for="b in budgets" :key="b.id">
-                                <div>
-                                    <p class="item-title">{{ b.name }}</p>
-                                    <p class="item-sub">{{ formatDate(b.startDate) }} - {{ formatDate(b.endDate) }}</p>
-                                    <p class="sub">{{ formatMoney(b.currency || defaultCurrency, b.spent || 0) }} / {{ formatMoney(b.currency || defaultCurrency, b.amount || 0) }}</p>
+                            <div class="budget-manage-card" v-for="b in budgets" :key="b.id">
+                                <div class="bmc-head">
+                                    <div class="bmc-titles">
+                                        <p class="bmc-name">{{ b.name }}</p>
+                                        <p class="bmc-dates">{{ formatDate(b.startDate) }} – {{ formatDate(b.endDate) }}</p>
+                                    </div>
+                                    <div class="bmc-actions">
+                                        <button class="icon-btn ghost" aria-label="Edit budget" @click="startEditBudget(b)">
+                                            <mdicon name="pencil-outline" size="18" />
+                                        </button>
+                                        <button class="icon-btn ghost danger" aria-label="Delete budget" @click="handleDeleteBudget(b)">
+                                            <mdicon name="trash-can-outline" size="18" />
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="row manage-actions">
-                                    <button class="icon-btn ghost" @click="startEditBudget(b)">
-                                        <mdicon name="pencil-outline" size="18" />
-                                    </button>
-                                    <button class="icon-btn ghost danger" @click="handleDeleteBudget(b)">
-                                        <mdicon name="trash-can-outline" size="18" />
-                                    </button>
+                                <div class="progress slim" style="margin: 12px 0 6px">
+                                    <div class="bar" :class="budgetPctClass(b)" :style="{ width: budgetProgress(b) }"></div>
+                                </div>
+                                <div class="bmc-foot">
+                                    <span class="bmc-amt">{{ formatMoney(b.currency || defaultCurrency, b.spent || 0) }} <span class="bmc-amt-sep">of</span> {{ formatMoney(b.currency || defaultCurrency, b.amount || 0) }}</span>
+                                    <span class="dbc-pct" :class="budgetPctClass(b)">{{ budgetProgress(b) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -1635,6 +1618,35 @@
             </transition>
         </div>
     </transition>
+
+    <div
+        class="tx-summary tx-summary-floating"
+        v-if="activeTab === 'transactions' && transactionsForMonth.length > 0"
+    >
+        <div class="tx-summary-head">
+            <span class="tx-summary-month">{{ monthLabel(0) }}</span>
+            <span class="tx-summary-count">
+                {{ transactionsForMonth.length }}
+                {{ transactionsForMonth.length === 1 ? 'transaction' : 'transactions' }}
+            </span>
+        </div>
+        <div class="tx-summary-stats" :class="{ split: transactionPlannedOut > 0 }">
+            <div class="tx-summary-stat">
+                <span class="tss-label">Spent</span>
+                <span class="tss-val spent">{{ formatMoney(defaultCurrency, transactionOut) }}</span>
+            </div>
+            <template v-if="transactionPlannedOut > 0">
+                <div class="tx-summary-stat">
+                    <span class="tss-label">Upcoming</span>
+                    <span class="tss-val upcoming">{{ formatMoney(defaultCurrency, transactionPlannedOut) }}</span>
+                </div>
+                <div class="tx-summary-stat">
+                    <span class="tss-label">Total</span>
+                    <span class="tss-val total">{{ formatMoney(defaultCurrency, transactionAllTotal) }}</span>
+                </div>
+            </template>
+        </div>
+    </div>
 
     <nav class="bottom-nav">
         <button class="nav-btn" :class="{ active: activeTab === 'home' }" @click="setTab('home')">

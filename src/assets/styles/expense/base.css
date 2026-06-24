@@ -796,7 +796,7 @@
 .expense-theme .more-page {
   display: grid;
   gap: 16px;
-  padding-bottom: 24px;
+  padding-bottom: calc(96px + var(--safe-bottom));
 }
 
 .expense-theme .more-hero {
@@ -2137,6 +2137,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  overflow-x: hidden;
 }
 .expense-theme .dash-home > * { flex-shrink: 0; }
 
@@ -2263,6 +2264,61 @@
 .expense-theme .progress .bar.bar-danger { background: #f87171; }
 .expense-theme .dbc-amounts { display: flex; justify-content: space-between; }
 .expense-theme .dbc-amt { font-size: 11px; color: var(--text-muted); }
+
+/* Budget management cards (More page) */
+.expense-theme .budget-manage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+.expense-theme .budget-manage-card {
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--glass-card-bg);
+  border: 1px solid var(--glass-card-border);
+}
+.expense-theme .bmc-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.expense-theme .bmc-titles { min-width: 0; }
+.expense-theme .bmc-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.expense-theme .bmc-dates {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 3px 0 0;
+}
+.expense-theme .bmc-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.expense-theme .bmc-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.expense-theme .bmc-amt {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.expense-theme .bmc-amt-sep {
+  font-weight: 400;
+  color: var(--text-muted);
+}
 
 /* Section header */
 .expense-theme .dash-section-head {
@@ -2406,6 +2462,27 @@
 .expense-theme .tss-val.spent { color: #f87171; }
 .expense-theme .tss-val.upcoming { color: var(--text-muted); }
 .expense-theme .tss-val.total { color: var(--text-primary); }
+
+/* Floating month summary, pinned above the bottom nav (edge to edge) */
+.expense-theme .tx-summary-floating {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(54px + var(--safe-bottom));
+  margin: 0;
+  z-index: 11;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  border-top: 1px solid var(--glass-card-border);
+  backdrop-filter: blur(12px);
+}
+
+/* clear space so the last transactions can scroll above the floating bar */
+.expense-theme .transactions-pane {
+  padding-bottom: 132px;
+}
 
 /* ── Schedules tab ─────────────────────────────────────────────── */
 .expense-theme .sched-page { padding: 12px 16px 100px; display: flex; flex-direction: column; gap: 14px; }
