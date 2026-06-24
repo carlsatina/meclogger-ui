@@ -2,15 +2,7 @@
 <div class="car-shell stagger-page stagger-seq" :class="{ 'stagger-ready': staggerReady }">
     <div class="car-orb one"></div>
     <div class="car-orb two"></div>
-    <div class="car-hero">
-        <div>
-            <h2 class="car-hero-title">Vehicles</h2>
-            <p class="car-hero-sub">Manage your garage</p>
-        </div>
-        <button class="car-icon-btn" @click="goBack">
-            <mdicon name="home" :size="22"/>
-        </button>
-    </div>
+    <CarTopBar title="Vehicles" subtitle="Manage your garage" />
 
     <div class="car-body">
         <div class="car-search car-card">
@@ -109,12 +101,14 @@ import { useRouter } from 'vue-router'
 import { useCarMaintenance } from '@/composables/carMaintenance'
 import { API_BASE_URL } from '@/constants/config'
 import Loading from '@/components/Loading.vue'
+import CarTopBar from '@/components/CarMaintenance/CarTopBar.vue'
 import { useStaggerReady } from '@/composables/staggerReady'
 
 export default {
     name: 'CarMaintenanceVehiclesMobile',
     components: {
-        Loading
+        Loading,
+        CarTopBar
     },
     setup() {
         const router = useRouter()
@@ -126,7 +120,6 @@ export default {
         const loadingOverlay = ref(false)
         const staggerReady = useStaggerReady()
 
-        const goBack = () => router.push('/')
         const goHome = () => router.push('/car-maintenance')
         const goDashboard = () => router.push('/car-maintenance')
         const goSchedules = () => router.push('/car-maintenance/schedules')
@@ -188,7 +181,6 @@ export default {
             vehicles,
             filteredVehicles,
             errorMessage,
-            goBack,
             goHome,
             goDashboard,
             goSchedules,
@@ -209,7 +201,6 @@ export default {
 
 <style scoped>
 /* ── Hero ── */
-.car-hero { background: linear-gradient(135deg, #c2410c, #f97316) !important; padding: 20px 16px !important; }
 
 /* ── Body ── */
 .car-body { padding: 16px 16px 90px !important; display: flex !important; flex-direction: column !important; gap: 8px !important; }

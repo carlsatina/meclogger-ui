@@ -312,11 +312,6 @@
                     </p>
                 </template>
             </div>
-
-            <!-- Floating Action Button -->
-            <button class="fab" @click="navigateToAddRecord">
-                <mdicon name="plus" :size="28"/>
-            </button>
         </div>
 
         <!-- My Health Tab -->
@@ -445,6 +440,29 @@
                 </div>
             </template>
 
+            <!-- Reports -->
+            <p class="health-section-label">Reports</p>
+            <div class="vital-card glass-card" @click="navigateToLabResults">
+                <div class="vc-top">
+                    <div class="vc-icon vc-icon-cyan"><mdicon name="flask-outline" :size="18"/></div>
+                    <div class="vc-meta">
+                        <p class="vc-name">Lab Results</p>
+                        <p class="vc-date">Tests, values & trends</p>
+                    </div>
+                    <mdicon name="chevron-right" :size="18" class="vc-chevron"/>
+                </div>
+            </div>
+            <div class="vital-card glass-card" @click="navigateToMedications">
+                <div class="vc-top">
+                    <div class="vc-icon vc-icon-purple"><mdicon name="pill" :size="18"/></div>
+                    <div class="vc-meta">
+                        <p class="vc-name">Medications</p>
+                        <p class="vc-date">Prescriptions & dosages</p>
+                    </div>
+                    <mdicon name="chevron-right" :size="18" class="vc-chevron"/>
+                </div>
+            </div>
+
             <!-- AI Health Insights CTA -->
             <div class="health-ai-cta" @click="router.push('/medical-records/insights')">
                 <div class="hai-icon"><mdicon name="brain" :size="20"/></div>
@@ -530,8 +548,13 @@
         </div>
     </div>
 
+    <!-- Floating Action Button (outside transformed .tab-content so position:fixed anchors to viewport) -->
+    <button v-if="activeTab === 'records'" class="fab" @click="navigateToAddRecord">
+        <mdicon name="plus" :size="28"/>
+    </button>
+
     <!-- Bottom Navigation -->
-    <BottomNav 
+    <BottomNav
         :active-tab="activeTab"
         :profile-name="activeProfileName"
         @change-tab="handleTabChange"
@@ -772,6 +795,28 @@ export default {
             if (!ensureProfileSelected()) return
             router.push({
                 path: '/medical-records/illness',
+                query: {
+                    profileId: activeMemberId.value,
+                    profileName: activeProfileName.value
+                }
+            })
+        }
+
+        const navigateToLabResults = () => {
+            if (!ensureProfileSelected()) return
+            router.push({
+                path: '/medical-records/lab-results',
+                query: {
+                    profileId: activeMemberId.value,
+                    profileName: activeProfileName.value
+                }
+            })
+        }
+
+        const navigateToMedications = () => {
+            if (!ensureProfileSelected()) return
+            router.push({
+                path: '/medical-records/medications',
                 query: {
                     profileId: activeMemberId.value,
                     profileName: activeProfileName.value
@@ -1508,6 +1553,8 @@ export default {
             navigateToBloodSugar,
             navigateToBodyWeight,
             navigateToIllness,
+            navigateToLabResults,
+            navigateToMedications,
             profileMembers,
             profileSections,
             supportSections,
@@ -1898,6 +1945,7 @@ export default {
 .vc-icon-amber  { background: rgba(251,191,36,0.14);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
 .vc-icon-blue   { background: rgba(96,165,250,0.14);  color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); }
 .vc-icon-purple { background: rgba(192,132,252,0.14); color: #c084fc; border: 1px solid rgba(192,132,252,0.2); }
+.vc-icon-cyan   { background: rgba(34,211,238,0.14);  color: #22d3ee; border: 1px solid rgba(34,211,238,0.2); }
 .vc-meta { flex: 1; min-width: 0; }
 .vc-name { margin: 0; font-size: 14px; font-weight: 700; color: var(--text-primary); }
 .vc-date { margin: 2px 0 0; font-size: 11px; color: var(--text-muted); }

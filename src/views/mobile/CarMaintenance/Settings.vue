@@ -2,15 +2,7 @@
 <div class="car-shell stagger-page stagger-seq" :class="{ 'stagger-ready': staggerReady }">
     <div class="car-orb one"></div>
     <div class="car-orb two"></div>
-    <div class="car-hero">
-        <div>
-            <h2 class="car-hero-title">Settings</h2>
-            <p class="car-hero-sub">Personalize your maintenance</p>
-        </div>
-        <button class="car-icon-btn" @click="goHome">
-            <mdicon name="home" :size="22"/>
-        </button>
-    </div>
+    <CarTopBar title="Settings" subtitle="Personalize your maintenance" />
 
     <div class="car-body settings-body">
         <div class="profile-card car-card">
@@ -100,13 +92,15 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCarMaintenance } from '@/composables/carMaintenance'
 import Loading from '@/components/Loading.vue'
+import CarTopBar from '@/components/CarMaintenance/CarTopBar.vue'
 import { useStaggerReady } from '@/composables/staggerReady'
 
 import store from '@/store'
 export default {
     name: 'CarMaintenanceSettingsMobile',
     components: {
-        Loading
+        Loading,
+        CarTopBar
     },
     setup() {
         const router = useRouter()
@@ -146,7 +140,6 @@ export default {
             }
         }
 
-        const goBack = () => router.back()
         const goHome = () => router.push('/')
         const goSchedules = () => router.push('/car-maintenance/schedules')
         const goVehicles = () => router.push('/car-maintenance/vehicles')
@@ -212,7 +205,6 @@ export default {
         })
 
         return {
-            goBack,
             goHome,
             goSchedules,
             goVehicles,
@@ -236,7 +228,6 @@ export default {
 
 <style scoped>
 /* ── Hero ── */
-.car-hero { background: linear-gradient(135deg, #c2410c, #f97316) !important; padding: 20px 16px !important; }
 
 /* ── Body ── */
 .car-body { padding: 16px 16px 90px !important; display: flex !important; flex-direction: column !important; gap: 12px !important; }

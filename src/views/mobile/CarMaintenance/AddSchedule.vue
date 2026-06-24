@@ -2,18 +2,7 @@
 <div class="car-shell stagger-page stagger-seq" :class="{ 'stagger-ready': staggerReady }">
     <div class="car-orb one"></div>
     <div class="car-orb two"></div>
-    <div class="car-hero">
-        <button class="car-icon-btn" @click="goBackPage">
-            <mdicon name="chevron-left" :size="22"/>
-        </button>
-        <div>
-            <h2 class="car-hero-title">{{ editingId ? 'Edit Schedule' : 'Add Schedule' }}</h2>
-            <p class="car-hero-sub">Create reminders for maintenance</p>
-        </div>
-        <button class="car-icon-btn" @click="goBack">
-            <mdicon name="home" :size="22"/>
-        </button>
-    </div>
+    <CarTopBar :title="editingId ? 'Edit Schedule' : 'Add Schedule'" subtitle="Create reminders for maintenance" leading="back" />
 
     <form class="car-body car-form" @submit.prevent="submitSchedule">
         <div class="car-field">
@@ -82,12 +71,14 @@ import { useRouter, useRoute } from 'vue-router'
 import { useCarMaintenance } from '@/composables/carMaintenance'
 import { scheduleMaintenanceNotification, cancelReminderNotifications, ensureLocalNotificationPermission } from '@/composables/localNotifications'
 import Loading from '@/components/Loading.vue'
+import CarTopBar from '@/components/CarMaintenance/CarTopBar.vue'
 import { useStaggerReady } from '@/composables/staggerReady'
 
 export default {
     name: 'CarMaintenanceAddSchedule',
     components: {
-        Loading
+        Loading,
+        CarTopBar
     },
     setup() {
         const router = useRouter()
@@ -215,8 +206,6 @@ export default {
             showTypeDropdown.value = false
         }
 
-        const goBack = () => router.push('/')
-        const goBackPage = () => router.back()
 
         const loadReminder = async(id) => {
             await withOverlay(async() => {
@@ -275,8 +264,6 @@ export default {
             errorMessage,
             successMessage,
             editingId,
-            goBack,
-            goBackPage,
             submitSchedule,
             displayName,
             showTypeDropdown,
@@ -292,7 +279,6 @@ export default {
 
 <style scoped>
 /* ── Hero ── */
-.car-hero { background: linear-gradient(135deg, #c2410c, #f97316) !important; padding: 20px 16px !important; }
 
 /* ── Form body ── */
 .car-body { padding: 16px !important; display: flex !important; flex-direction: column !important; gap: 14px !important; }

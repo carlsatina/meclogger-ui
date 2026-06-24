@@ -2,18 +2,7 @@
 <div class="car-shell">
     <div class="car-orb one"></div>
     <div class="car-orb two"></div>
-    <div class="car-hero">
-        <button class="car-icon-btn ghost" @click="goBackPage">
-            <mdicon name="chevron-left" :size="22"/>
-        </button>
-        <div>
-            <h2 class="car-hero-title">Vehicle Details</h2>
-            <p class="car-hero-sub">Specs and registration info</p>
-        </div>
-        <button class="car-icon-btn" @click="goBack">
-            <mdicon name="home" :size="22"/>
-        </button>
-    </div>
+    <CarTopBar title="Vehicle Details" subtitle="Specs and registration info" leading="back" />
 
     <div v-if="loading" class="empty-state car-card">Loading...</div>
     <div v-else-if="errorMessage" class="empty-state car-card">{{ errorMessage }}</div>
@@ -85,9 +74,13 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCarMaintenance } from '@/composables/carMaintenance'
 import { API_BASE_URL } from '@/constants/config'
+import CarTopBar from '@/components/CarMaintenance/CarTopBar.vue'
 
 export default {
     name: 'CarMaintenanceVehicleDetail',
+    components: {
+        CarTopBar
+    },
     setup() {
         const route = useRoute()
         const router = useRouter()
@@ -98,8 +91,6 @@ export default {
         const errorMessage = ref('')
         const showDelete = ref(false)
 
-        const goBack = () => router.push('/')
-        const goBackPage = () => router.back()
 
         const loadVehicle = async() => {
             loading.value = true
@@ -159,8 +150,6 @@ export default {
             errorMessage,
             displayName,
             formatExpiry,
-            goBack,
-            goBackPage,
             API_BASE_URL,
             showDelete,
             confirmDelete,

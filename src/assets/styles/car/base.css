@@ -1,37 +1,9 @@
 .car-shell {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg-main);
   position: relative;
   overflow-x: hidden;
-  padding-bottom: 64px;
   color: var(--text-primary);
-}
-
-.car-hero {
-  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-  color: #0b1020;
-  padding: 16px;
-  border-radius: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-}
-
-.car-hero .car-hero-title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.car-hero .car-hero-sub {
-  margin: 0;
-  font-size: 13px;
-  color: rgba(11, 16, 32, 0.85);
 }
 
 .car-brand {
@@ -81,12 +53,6 @@
 .car-icon-btn.ghost {
   background: transparent;
   border-color: transparent;
-}
-
-.car-hero-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .car-body {
@@ -727,9 +693,9 @@
   position: fixed;
   bottom: calc(88px + var(--safe-bottom));
   right: 16px;
-  width: 56px;
-  height: 56px;
-  border-radius: 28px;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
   border: none;
   background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   color: #0b1020;

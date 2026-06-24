@@ -2,20 +2,13 @@
 <div class="car-shell stagger-page stagger-seq" :class="{ 'stagger-ready': staggerReady }">
     <div class="car-orb one"></div>
     <div class="car-orb two"></div>
-    <div class="car-hero">
-        <div>
-            <h2 class="car-hero-title">Maintenance Schedules</h2>
-            <p class="car-hero-sub">Never miss a service</p>
-        </div>
-        <div class="car-hero-actions">
-            <button class="car-icon-btn" @click="goBack">
-                <mdicon name="home" :size="22"/>
-            </button>
-            <button class="car-icon-btn" @click="toggleNotifications">
+    <CarTopBar title="Maintenance Schedules" subtitle="Never miss a service">
+        <template #actions>
+            <button type="button" @click="toggleNotifications">
                 <mdicon name="bell-outline" :size="20"/>
             </button>
-        </div>
-    </div>
+        </template>
+    </CarTopBar>
 
     <div v-if="showNotificationsPanel" class="car-notif-overlay" @click.self="showNotificationsPanel = false">
         <div class="car-notif-card car-card">
@@ -47,35 +40,16 @@
     </div>
 
     <div class="car-body">
-        <div class="vehicle-pill car-card" @click="toggleVehiclePicker">
-            <div class="avatar">
-                <img v-if="selectedVehicle?.imageUrl" :src="selectedVehicle.imageUrl.startsWith('http') ? selectedVehicle.imageUrl : `${API_BASE_URL}${selectedVehicle.imageUrl}`" alt="Vehicle" />
-                <mdicon v-else name="car-sports" :size="26"/>
-            </div>
-            <div class="vehicle-meta">
-                <p class="vehicle-name">{{ selectedVehicle ? displayName(selectedVehicle) : 'Select a vehicle' }}</p>
-                <p class="vehicle-type">{{ selectedVehicle?.vehicleType || '' }}</p>
-                <p class="vehicle-odo" v-if="selectedVehicle">Odometer: {{ formattedOdometer }}</p>
-                <p class="vehicle-updated">Last update: {{ formattedOdometerDate || '—' }}</p>
-            </div>
-            <div class="vehicle-actions">
-                <button class="update-btn small" @click.stop="updateOdometer" :disabled="!selectedVehicle">
-                    Update
-                </button>
-                <mdicon name="chevron-down" :size="22" class="vehicle-dropdown"/>
-            </div>
-        </div>
-        <div v-if="showVehiclePicker" class="vehicle-picker car-card">
-            <button 
-                v-for="v in vehicles" 
-                :key="v.id" 
-                class="picker-item"
-                @click.stop="selectVehicle(v.id)"
-            >
-                <span class="picker-name">{{ displayName(v) }}</span>
-                <span class="picker-odo">Odometer: {{ formatMileage(v.currentMileage) }}</span>
-            </button>
-            <p v-if="!vehicles.length" class="picker-empty">No vehicles yet.</p>
+        <div class="vehicle-card-host">
+            <VehicleCard
+                :vehicle="selectedVehicle"
+                :vehicles="vehicles"
+                :odometer="formattedOdometer"
+                :last-update="formattedOdometerDate"
+                :format-mileage="formatMileage"
+                @update="updateOdometer"
+                @select="selectVehicle"
+            />
         </div>
 
         <div class="car-search car-card">
@@ -190,7 +164,7 @@
     </transition>
 
     <button class="car-fab" @click="addSchedule">
-        <mdicon name="plus" :size="24"/>
+        <mdicon name="plus" :size="20"/>
     </button>
 
     <nav class="car-bottom-nav glass-nav-orb">
@@ -225,13 +199,17 @@ import { useRouter } from 'vue-router'
 import { useCarMaintenance } from '@/composables/carMaintenance'
 import { API_BASE_URL } from '@/constants/config'
 import Loading from '@/components/Loading.vue'
+import CarTopBar from '@/components/CarMaintenance/CarTopBar.vue'
+import VehicleCard from '@/components/CarMaintenance/VehicleCard.vue'
 import { useStaggerReady } from '@/composables/staggerReady'
 import { scheduleMaintenanceNotification, cancelReminderNotifications, ensureLocalNotificationPermission } from '@/composables/localNotifications'
 
 export default {
     name: 'CarMaintenanceSchedulesMobile',
     components: {
-        Loading
+        Loading,
+        CarTopBar,
+        VehicleCard
     },
     setup() {
         const router = useRouter()
@@ -239,7 +217,6 @@ export default {
         const vehicles = ref([])
         const selectedVehicleId = ref(localStorage.getItem('selectedVehicleId') || '')
 
-        const showVehiclePicker = ref(false)
         const showOdometerModal = ref(false)
         const odometerInput = ref('')
         const savingOdometer = ref(false)
@@ -284,7 +261,6 @@ export default {
             }
         }
 
-        const goBack = () => router.push('/')
         const goHome = () => router.push('/car-maintenance')
         const addSchedule = () => {
             router.push({ path: '/car-maintenance/schedules/add', query: selectedVehicleId.value ? { vehicleId: selectedVehicleId.value } : {} })
@@ -324,9 +300,6 @@ export default {
             return `${converted.toLocaleString()} ${distanceUnit.value === 'mi' ? 'mi' : 'km'}`
         }
 
-        const toggleVehiclePicker = () => {
-            showVehiclePicker.value = !showVehiclePicker.value
-        }
         const updateOdometer = () => {
             if (!selectedVehicle.value) return
             odometerInput.value = selectedVehicle.value.currentMileage || ''
@@ -355,7 +328,6 @@ export default {
 
         const selectVehicle = (vehicleId) => {
             selectedVehicleId.value = vehicleId
-            showVehiclePicker.value = false
             localStorage.setItem('selectedVehicleId', vehicleId)
             loadReminders()
         }
@@ -545,7 +517,6 @@ export default {
 
         return {
             vehicles,
-            goBack,
             goHome,
             addSchedule,
             goVehicles,
@@ -558,8 +529,6 @@ export default {
             formattedOdometerDate,
             formattedOdometer,
             formatDate,
-            showVehiclePicker,
-            toggleVehiclePicker,
             selectVehicle,
             showOdometerModal,
             odometerInput,
@@ -597,81 +566,8 @@ export default {
 </script>
 
 <style scoped>
-/* ── Hero ── */
-.car-hero { background: linear-gradient(135deg, #c2410c, #f97316) !important; padding: 20px 16px !important; }
-
-/* ── Vehicle pill ── */
-.vehicle-pill {
-  margin: 16px 16px 0;
-  background: var(--glass-card-bg) !important;
-  border: 1px solid var(--glass-card-border) !important;
-  border-radius: 16px !important;
-  padding: 14px 16px !important;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--glass-card-shadow) !important;
-}
-.vehicle-pill::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #f97316, #fb923c);
-}
-
-.avatar {
-  width: 48px; height: 48px;
-  border-radius: 14px;
-  background: rgba(249, 115, 22, 0.12);
-  border: 1px solid rgba(249, 115, 22, 0.2) !important;
-  display: flex; align-items: center; justify-content: center;
-  overflow: hidden;
-  color: #fb923c;
-  flex-shrink: 0;
-}
-.avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-.vehicle-meta { flex: 1; min-width: 0; }
-.vehicle-meta p { margin: 0; }
-.vehicle-name { font-size: 15px; font-weight: 700; color: var(--text-primary); }
-.vehicle-type { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
-.vehicle-odo { font-size: 13px; color: var(--text-primary); font-weight: 600; margin-top: 3px; }
-.vehicle-updated { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-.vehicle-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.vehicle-dropdown { color: var(--text-muted); }
-
-.update-btn {
-  background: rgba(249, 115, 22, 0.1);
-  border: 1px solid rgba(249, 115, 22, 0.25) !important;
-  color: #fb923c;
-  padding: 6px 12px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: none !important;
-}
-.update-btn.small { padding: 6px 10px; font-size: 13px; }
-
-/* ── Vehicle picker ── */
-.vehicle-picker {
-  background: var(--glass-card-bg) !important;
-  border: 1px solid var(--glass-card-border) !important;
-  border-radius: 12px !important;
-  margin: 8px 16px 0;
-  overflow: hidden;
-  box-shadow: var(--glass-card-shadow);
-}
-.picker-item { width: 100%; border: none; background: transparent; padding: 12px 16px; text-align: left; display: flex; flex-direction: column; gap: 2px; cursor: pointer; transition: background 0.15s; }
-.picker-item:hover { background: rgba(249, 115, 22, 0.06); }
-.picker-item + .picker-item { border-top: 1px solid var(--glass-card-border); }
-.picker-name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-.picker-odo { font-size: 12px; color: var(--text-muted); }
-.picker-empty { margin: 0; padding: 12px 16px; color: var(--text-muted); font-size: 13px; }
+/* ── Vehicle card host ── */
+.vehicle-card-host { margin: 0 16px; }
 
 /* ── Search bar ── */
 .car-search {
@@ -752,8 +648,8 @@ export default {
 .car-fab {
   background: linear-gradient(135deg, #f97316, #fb923c) !important;
   color: #fff !important;
-  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4) !important;
-  border-radius: 18px !important;
+  box-shadow: 0 6px 18px rgba(249, 115, 22, 0.38) !important;
+  border-radius: 14px !important;
 }
 
 /* ── Bottom nav ── */

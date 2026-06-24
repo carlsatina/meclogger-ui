@@ -2,19 +2,13 @@
 <div class="car-shell stagger-page stagger-seq" :class="{ 'stagger-ready': staggerReady }">
     <div class="car-orb one"></div>
     <div class="car-orb two"></div>
-    <div class="car-hero">
-        <button class="car-icon-btn" @click="goBack">
-            <mdicon name="arrow-left" :size="22"/>
-        </button>
-        <div>
-            <h2 class="car-hero-title">Maintenance Detail</h2>
-            <p class="car-hero-sub">Service record overview</p>
-        </div>
-        <span class="car-icon-btn ghost"></span>
-        <button class="car-icon-btn" @click="editRecord">
-            <mdicon name="pencil" :size="20"/>
-        </button>
-    </div>
+    <CarTopBar title="Maintenance Detail" subtitle="Service record overview" leading="back">
+        <template #actions>
+            <button type="button" @click="editRecord">
+                <mdicon name="pencil" :size="20"/>
+            </button>
+        </template>
+    </CarTopBar>
 
     <div v-if="loading" class="empty-state car-card">Loading...</div>
     <div v-else-if="errorMessage" class="empty-state car-card">{{ errorMessage }}</div>
@@ -90,12 +84,14 @@ import { useRoute, useRouter } from 'vue-router'
 import { API_BASE_URL } from '@/constants/config'
 import { useCarMaintenance } from '@/composables/carMaintenance'
 import Loading from '@/components/Loading.vue'
+import CarTopBar from '@/components/CarMaintenance/CarTopBar.vue'
 import { useStaggerReady } from '@/composables/staggerReady'
 
 export default {
     name: 'MaintenanceDetailMobile',
     components: {
-        Loading
+        Loading,
+        CarTopBar
     },
     setup() {
         const route = useRoute()
@@ -177,13 +173,6 @@ export default {
             })
         }
 
-        const goBack = () => {
-            if (window.history.length > 1) {
-                router.back()
-            } else {
-                router.push('/car-maintenance')
-            }
-        }
         const editRecord = () => {
             if (!record.value) return
             router.push({ path: '/car-maintenance/maintenance/add', query: { edit: 'true', id: record.value.id, vehicleId: record.value.vehicleId } })
@@ -213,7 +202,6 @@ export default {
             formatDate,
             formatMileage,
             formatCurrency,
-            goBack,
             editRecord,
             deleteRecord,
             confirmDelete,

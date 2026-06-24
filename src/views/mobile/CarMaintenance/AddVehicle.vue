@@ -2,18 +2,7 @@
 <div class="car-shell stagger-page stagger-seq" :class="{ 'stagger-ready': staggerReady }">
     <div class="car-orb one"></div>
     <div class="car-orb two"></div>
-    <div class="car-hero">
-        <button class="car-icon-btn" @click="goBackPage">
-            <mdicon name="chevron-left" :size="22"/>
-        </button>
-        <div>
-            <h2 class="car-hero-title">{{ isEditing ? 'Edit Vehicle' : 'Add Vehicle' }}</h2>
-            <p class="car-hero-sub">Keep your garage organized</p>
-        </div>
-        <button class="car-icon-btn" @click="goBack">
-            <mdicon name="home" :size="22"/>
-        </button>
-    </div>
+    <CarTopBar :title="isEditing ? 'Edit Vehicle' : 'Add Vehicle'" subtitle="Keep your garage organized" leading="back" />
 
     <form class="car-body car-form" @submit.prevent="submitVehicle">
         <div class="car-card upload-card">
@@ -106,12 +95,14 @@ import { useRouter, useRoute } from 'vue-router'
 import { API_BASE_URL } from '@/constants/config'
 import { useCarMaintenance } from '@/composables/carMaintenance'
 import Loading from '@/components/Loading.vue'
+import CarTopBar from '@/components/CarMaintenance/CarTopBar.vue'
 import { useStaggerReady } from '@/composables/staggerReady'
 
 export default {
     name: 'CarMaintenanceAddVehicleMobile',
     components: {
-        Loading
+        Loading,
+        CarTopBar
     },
     setup() {
         const router = useRouter()
@@ -142,8 +133,6 @@ export default {
         const loadingOverlay = ref(false)
         const staggerReady = useStaggerReady()
 
-        const goBack = () => router.push('/')
-        const goBackPage = () => router.back()
 
         const withOverlay = async(fn) => {
             loadingOverlay.value = true
@@ -295,8 +284,6 @@ export default {
             submitting,
             errorMessage,
             successMessage,
-            goBack,
-            goBackPage,
             triggerFileInput,
             handleFileChange,
             submitVehicle,
@@ -310,7 +297,6 @@ export default {
 
 <style scoped>
 /* ── Hero ── */
-.car-hero { background: linear-gradient(135deg, #c2410c, #f97316) !important; padding: 20px 16px !important; }
 
 /* ── Form body ── */
 .car-body { padding: 16px !important; display: flex !important; flex-direction: column !important; gap: 14px !important; }

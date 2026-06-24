@@ -2,45 +2,18 @@
 <div class="car-shell stagger-page stagger-seq" :class="{ 'stagger-ready': staggerReady }">
     <div class="car-orb one"></div>
     <div class="car-orb two"></div>
-    <div class="car-hero">
-        <div>
-            <h2 class="car-hero-title">Vehicle Logs</h2>
-            <p class="car-hero-sub">Maintenance, costs, and history</p>
-        </div>
-        <button class="car-icon-btn" @click="goAppHome">
-            <mdicon name="home" :size="24"/>
-        </button>
-    </div>
+    <CarTopBar title="Vehicle Logs" subtitle="Maintenance, costs, and history" />
 
-    <div class="vehicle-pill car-card" @click="toggleVehiclePicker">
-        <div class="avatar">
-            <img v-if="selectedVehicle?.imageUrl" :src="selectedVehicle.imageUrl.startsWith('http') ? selectedVehicle.imageUrl : `${API_BASE_URL}${selectedVehicle.imageUrl}`" alt="Vehicle" />
-            <mdicon v-else name="car-sports" :size="26"/>
-        </div>
-        <div class="vehicle-meta">
-            <p class="vehicle-name">{{ selectedVehicle ? displayName(selectedVehicle) : 'Select a vehicle' }}</p>
-            <p class="vehicle-type">{{ selectedVehicle?.vehicleType || '' }}</p>
-            <p class="vehicle-odo" v-if="selectedVehicle">Odometer: {{ formattedOdometer }}</p>
-            <p class="vehicle-updated">Last update: {{ formattedOdometerDate || '—' }}</p>
-        </div>
-        <div class="vehicle-actions">
-            <button class="update-btn small" @click.stop="updateOdometer" :disabled="!selectedVehicle">
-                Update
-            </button>
-            <mdicon name="chevron-down" :size="22" class="vehicle-dropdown"/>
-        </div>
-    </div>
-    <div v-if="showVehiclePicker" class="vehicle-picker">
-        <button 
-            v-for="v in vehicles" 
-            :key="v.id" 
-            class="picker-item"
-            @click.stop="selectVehicle(v.id)"
-        >
-            <span class="picker-name">{{ displayName(v) }}</span>
-            <span class="picker-odo">Odometer: {{ formatMileage(v.currentMileage) }}</span>
-        </button>
-        <p v-if="!vehicles.length" class="picker-empty">No vehicles yet.</p>
+    <div class="vehicle-card-host">
+        <VehicleCard
+            :vehicle="selectedVehicle"
+            :vehicles="vehicles"
+            :odometer="formattedOdometer"
+            :last-update="formattedOdometerDate"
+            :format-mileage="formatMileage"
+            @update="updateOdometer"
+            @select="selectVehicle"
+        />
     </div>
 
     <section class="history-section car-body">
@@ -71,24 +44,15 @@
         >
             <div class="history-top">
                 <p class="history-title">{{ item.maintenanceType || item.title }}</p>
-                <p class="history-date">{{ formatDate(item.serviceDate) }}</p>
+                <p class="history-cost">{{ formatCurrency(item.cost, item.currency) }}</p>
             </div>
-            <div class="history-bottom">
-                <div class="history-meta">
-                    <mdicon name="counter" :size="18"/>
-                    <span>{{ formatMileage(item.mileageAtService) }}</span>
-                </div>
-                <div class="history-meta">
-                    <mdicon name="cash" :size="18"/>
-                    <span>{{ formatCurrency(item.cost, item.currency) }}</span>
-                </div>
-            </div>
+            <p class="history-meta-line">{{ [formatDate(item.serviceDate), item.servicedBy, item.partsUsed].filter(Boolean).join('  ·  ') }}</p>
         </div>
     </section>
 
     <div class="fab-wrapper">
         <button class="fab" @click="addMaintenance">
-            <mdicon name="plus" :size="24"/>
+            <mdicon name="plus" :size="20"/>
         </button>
     </div>
 
@@ -138,12 +102,16 @@ import { useRouter } from 'vue-router'
 import { useCarMaintenance } from '@/composables/carMaintenance'
 import { API_BASE_URL } from '@/constants/config'
 import Loading from '@/components/Loading.vue'
+import CarTopBar from '@/components/CarMaintenance/CarTopBar.vue'
+import VehicleCard from '@/components/CarMaintenance/VehicleCard.vue'
 import { useStaggerReady } from '@/composables/staggerReady'
 
 export default {
     name: "CarMaintenanceMobile",
     components: {
-        Loading
+        Loading,
+        CarTopBar,
+        VehicleCard
     },
     setup() {
         const router = useRouter()
@@ -156,7 +124,6 @@ export default {
         const selectedVehicleId = ref(localStorage.getItem('selectedVehicleId') || '')
         const maintenanceRecords = ref([])
         const searchTerm = ref('')
-        const showVehiclePicker = ref(false)
         const loading = ref(false)
         const loadingOverlay = ref(false)
         const errorMessage = ref('')
@@ -167,16 +134,7 @@ export default {
             return vehicles.value.find(v => v.id === selectedVehicleId.value) || null
         })
 
-        const goBack = () => {
-            if (window.history.length > 1) {
-                router.back()
-            } else {
-                router.push('/car-maintenance/vehicles')
-            }
-        }
-
         const goHome = () => router.push('/car-maintenance')
-        const goAppHome = () => router.push('/')
         const goSchedules = () => router.push('/car-maintenance/schedules')
         const goReport = () => router.push('/car-maintenance/report')
         const goVehicles = () => router.push('/car-maintenance/vehicles')
@@ -324,13 +282,8 @@ export default {
             }
         }
 
-        const toggleVehiclePicker = () => {
-            showVehiclePicker.value = !showVehiclePicker.value
-        }
-
         const selectVehicle = async(vehicleId) => {
             selectedVehicleId.value = vehicleId
-            showVehiclePicker.value = false
             localStorage.setItem('selectedVehicleId', vehicleId)
             await withOverlay(() => loadMaintenanceRecords(vehicleId, searchTerm.value))
         }
@@ -361,14 +314,8 @@ export default {
             }, 300)
         }
 
-        const displayName = (vehicle) => {
-            if (!vehicle) return 'Vehicle'
-            const parts = [vehicle.make, vehicle.model, vehicle.year].filter(Boolean)
-            return parts.join(' ').trim() || 'Vehicle'
-        }
 
         return {
-            goBack,
             vehicles,
             selectedVehicle,
             maintenanceRecords,
@@ -381,7 +328,6 @@ export default {
             addMaintenance,
             openHistory,
             goHome,
-            goAppHome,
             goSchedules,
             goReport,
             goVehicles,
@@ -389,14 +335,11 @@ export default {
             addVehicle,
             searchTerm,
             debouncedSearch,
-            showVehiclePicker,
-            toggleVehiclePicker,
             selectVehicle,
             selectedVehicleId,
             loading,
             loadingOverlay,
             errorMessage,
-            displayName,
             distanceUnit,
             API_BASE_URL,
             openRecordDetail,
@@ -411,77 +354,8 @@ export default {
 </script>
 
 <style scoped>
-/* Hero — orange gradient */
-.car-hero { background: linear-gradient(135deg, #c2410c, #f97316) !important; padding: 20px 16px !important; }
-
-/* Vehicle pill — rounded glass card */
-.vehicle-pill {
-    margin: 16px 16px 0;
-    background: var(--glass-card-bg) !important;
-    border: 1px solid var(--glass-card-border) !important;
-    border-radius: 16px !important;
-    padding: 14px 16px !important;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--glass-card-shadow) !important;
-}
-.vehicle-pill::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #f97316, #fb923c);
-}
-.avatar {
-    width: 48px; height: 48px;
-    border-radius: 14px;
-    background: rgba(249, 115, 22, 0.12);
-    border: 1px solid rgba(249, 115, 22, 0.2) !important;
-    display: flex; align-items: center; justify-content: center;
-    overflow: hidden;
-    color: #fb923c;
-    flex-shrink: 0;
-}
-.avatar img { width: 100%; height: 100%; object-fit: cover; }
-.vehicle-meta { flex: 1; min-width: 0; }
-.vehicle-meta p { margin: 0; }
-.vehicle-name { font-size: 15px; font-weight: 700; color: var(--text-primary); }
-.vehicle-type { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
-.vehicle-odo { font-size: 13px; color: var(--text-primary); font-weight: 600; margin-top: 3px; }
-.vehicle-updated { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-.vehicle-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.vehicle-dropdown { color: var(--text-muted); }
-.update-btn {
-    background: rgba(249, 115, 22, 0.1);
-    border: 1px solid rgba(249, 115, 22, 0.25) !important;
-    color: #fb923c;
-    padding: 6px 12px;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: none !important;
-}
-
-/* Vehicle picker dropdown */
-.vehicle-picker {
-    background: var(--glass-card-bg) !important;
-    border: 1px solid var(--glass-card-border) !important;
-    border-radius: 12px !important;
-    margin: 8px 16px 0;
-    overflow: hidden;
-    box-shadow: var(--glass-card-shadow);
-}
-.picker-item { width: 100%; border: none; background: transparent; padding: 12px 16px; text-align: left; display: flex; flex-direction: column; gap: 2px; cursor: pointer; transition: background 0.15s; }
-.picker-item:hover { background: rgba(249, 115, 22, 0.06); }
-.picker-item + .picker-item { border-top: 1px solid var(--glass-card-border); }
-.picker-name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-.picker-odo { font-size: 12px; color: var(--text-muted); }
-.picker-empty { margin: 0; padding: 12px 16px; color: var(--text-muted); font-size: 13px; }
+/* Vehicle card host — spacing around the shared VehicleCard component */
+.vehicle-card-host { margin: 16px 16px 0; }
 
 /* History section */
 .history-section { padding: 16px 16px 90px !important; display: flex !important; flex-direction: column !important; gap: 8px !important; }
@@ -508,20 +382,19 @@ export default {
     border-bottom: 1px solid var(--glass-card-border) !important;
     border-right: 1px solid var(--glass-card-border) !important;
     border-left: 3px solid #f97316 !important;
-    border-radius: 14px !important;
-    padding: 14px 16px !important;
+    border-radius: 12px !important;
+    padding: 10px 14px !important;
     margin-top: 0 !important;
     cursor: pointer;
     box-shadow: var(--glass-card-shadow) !important;
-    display: flex; flex-direction: column;
+    display: flex; flex-direction: column; gap: 2px;
     transition: transform 0.15s, box-shadow 0.15s;
 }
 .history-card:active { transform: scale(0.99); }
-.history-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-.history-title { margin: 0; font-size: 15px; font-weight: 700; color: var(--text-primary); }
-.history-date { margin: 0; font-size: 12px; color: var(--text-muted); }
-.history-bottom { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--text-muted); padding-top: 8px; border-top: 1px solid var(--glass-card-border); margin-top: 6px; }
-.history-meta { display: inline-flex; align-items: center; gap: 5px; }
+.history-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.history-title { margin: 0; font-size: 15px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-cost { margin: 0; flex-shrink: 0; font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.history-meta-line { margin: 0; font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Empty state */
 .empty-state {
@@ -534,14 +407,16 @@ export default {
 }
 
 /* FAB */
-.fab-wrapper { position: fixed; bottom: 76px; right: 16px; }
+.fab-wrapper { position: fixed; bottom: 84px; right: 16px; }
 .fab {
-    width: 56px; height: 56px; border-radius: 18px; border: none;
+    width: 46px; height: 46px; border-radius: 14px; border: none;
     background: linear-gradient(135deg, #f97316, #fb923c);
     color: #fff;
-    box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4);
+    box-shadow: 0 6px 18px rgba(249, 115, 22, 0.38);
     display: flex; align-items: center; justify-content: center; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
 }
+.fab:active { transform: scale(0.93); }
 
 /* Bottom nav */
 .bottom-nav {

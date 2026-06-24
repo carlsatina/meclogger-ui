@@ -2,18 +2,7 @@
 <div class="car-shell stagger-page stagger-seq" :class="{ 'stagger-ready': staggerReady }">
     <div class="car-orb one"></div>
     <div class="car-orb two"></div>
-    <div class="car-hero">
-        <button class="car-icon-btn" @click="goBackPage">
-            <mdicon name="chevron-left" :size="22"/>
-        </button>
-        <div>
-            <h2 class="car-hero-title">Add Maintenance</h2>
-            <p class="car-hero-sub">Track service details and costs</p>
-        </div>
-        <button class="car-icon-btn" @click="goBack">
-            <mdicon name="home" :size="22"/>
-        </button>
-    </div>
+    <CarTopBar title="Add Maintenance" subtitle="Track service details and costs" leading="back" />
 
     <form class="car-body car-form" @submit.prevent="submitRecord">
         <div v-if="isEditing" class="car-field">
@@ -128,12 +117,14 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useCarMaintenance } from '@/composables/carMaintenance'
 import Loading from '@/components/Loading.vue'
+import CarTopBar from '@/components/CarMaintenance/CarTopBar.vue'
 import { useStaggerReady } from '@/composables/staggerReady'
 
 export default {
     name: 'CarMaintenanceAddMaintenanceMobile',
     components: {
-        Loading
+        Loading,
+        CarTopBar
     },
     setup() {
         const router = useRouter()
@@ -195,15 +186,6 @@ export default {
         }))
 
         const distanceUnitLabel = computed(() => distanceUnit.value === 'mi' ? 'miles' : 'km')
-
-        const goBack = () => {
-            if (window.history.length > 1) {
-                router.back()
-            } else {
-                router.push('/car-maintenance')
-            }
-        }
-        const goBackPage = () => router.back()
 
         const withOverlay = async(fn) => {
             loadingOverlay.value = true
@@ -355,8 +337,6 @@ export default {
             submitting,
             errorMessage,
             successMessage,
-            goBack,
-            goBackPage,
             submitRecord,
             displayName,
             isEditing,
@@ -377,7 +357,6 @@ export default {
 
 <style scoped>
 /* Hero — orange gradient matching index */
-.car-hero { background: linear-gradient(135deg, #c2410c, #f97316) !important; padding: 18px 16px !important; align-items: center !important; }
 
 /* Form body */
 .car-body { padding: 16px !important; gap: 16px !important; }

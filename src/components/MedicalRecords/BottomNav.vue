@@ -5,7 +5,7 @@
         :class="{ active: activeTab === 'home' }"
         @click="$emit('change-tab', 'home')"
     >
-        <mdicon name="view-dashboard-outline" :size="24"/>
+        <mdicon name="view-dashboard-outline" :size="22"/>
         <span class="nav-label">Dashboard</span>
     </div>
     
@@ -14,7 +14,7 @@
         :class="{ active: activeTab === 'records' }"
         @click="$emit('change-tab', 'records')"
     >
-        <mdicon name="file-document-multiple" :size="24"/>
+        <mdicon name="file-document-multiple" :size="22"/>
         <span class="nav-label">Records</span>
     </div>
     
@@ -23,7 +23,7 @@
         :class="{ active: activeTab === 'health' }"
         @click="$emit('change-tab', 'health')"
     >
-        <mdicon name="heart-pulse" :size="24"/>
+        <mdicon name="heart-pulse" :size="22"/>
         <span class="nav-label">My Health</span>
     </div>
     
@@ -32,7 +32,7 @@
         :class="{ active: activeTab === 'profile' }"
         @click="$emit('change-tab', 'profile')"
     >
-        <mdicon name="account-circle" :size="24"/>
+        <mdicon name="account-circle" :size="22"/>
         <span class="nav-label">Profile</span>
     </div>
 </div>
@@ -62,7 +62,7 @@ export default {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 10px 8px calc(14px + var(--safe-bottom));
+    padding: 8px 6px calc(8px + var(--safe-bottom));
     box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
     z-index: 1000;
     border-top: 1px solid var(--glass-card-border);
@@ -72,8 +72,8 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    padding: 10px 12px;
+    gap: 3px;
+    padding: 6px 10px;
     cursor: pointer;
     transition: all 0.3s ease;
     color: var(--text-secondary);
@@ -99,7 +99,7 @@ export default {
 }
 
 .nav-label {
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 500;
     letter-spacing: 0.2px;
 }
