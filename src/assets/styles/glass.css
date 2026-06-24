@@ -25,6 +25,7 @@
   --toggle-bg: rgba(255, 255, 255, 0.06);
   --danger-gradient: linear-gradient(135deg, #f97316, #ef4444);
   --surface-plain: rgba(255, 255, 255, 0.05);
+  --icon-tile-base: #161a24;
   --nav-orb-opacity: 0.22;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
@@ -56,6 +57,7 @@
   --confirm-border: rgba(79, 70, 229, 0.18);
   --toggle-bg: rgba(255, 255, 255, 0.82);
   --surface-plain: rgba(255, 255, 255, 0.92);
+  --icon-tile-base: #e9edf6;
   --nav-orb-opacity: 0.34;
 }
 

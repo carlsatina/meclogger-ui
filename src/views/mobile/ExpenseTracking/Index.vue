@@ -8,8 +8,8 @@
             <p class="eyebrow">My wallet</p>
             <h3>Expense Tracking</h3>
         </div>
-        <button class="icon-btn" @click="router.push('/settings')">
-            <mdicon name="cog-outline" size="22" />
+        <button class="icon-btn" @click="openSearch" aria-label="Search">
+            <mdicon name="magnify" size="24" />
         </button>
     </header>
 
@@ -125,7 +125,7 @@
         <div class="dash-activity-card glass-card slide-up" v-if="expenses.length">
             <div class="dai-item" v-for="exp in expenses.slice(0, 5)" :key="exp.id">
                 <div class="icon-circle dai-icon"
-                    :style="{ background: exp.categoryColor || '#6366f1', color: '#fff' }"
+                    :style="{ '--cat-color': exp.categoryColor || '#6366f1' }"
                 >
                     <mdicon :name="exp.categoryIcon || 'cash-multiple'" size="18" />
                 </div>
@@ -184,7 +184,7 @@
         <div class="sched-list stagger-seq" v-if="filteredSchedules.length">
             <div class="sched-card glass-card slide-up" v-for="item in filteredSchedules" :key="item.id">
                 <div class="sched-card-main">
-                    <div class="icon-circle sched-icon" :style="{ background: item.iconBg || 'var(--text-primary)', color: item.iconColor || '#0f172a' }">
+                    <div class="icon-circle sched-icon" :style="{ '--cat-color': item.iconBg || 'var(--text-primary)' }">
                         <mdicon :name="item.icon" size="20" />
                     </div>
                     <div class="sched-info">
@@ -259,8 +259,13 @@
                 </button>
             </div>
         </section>
-        <transition name="month-slide" mode="out-in">
-            <div class="transactions-pane slide-up" :key="viewMonthKey">
+        <transition :name="monthSlideName" mode="out-in">
+            <div
+                class="transactions-pane slide-up"
+                :key="viewMonthKey"
+                @touchstart="onMonthTouchStart"
+                @touchend="onMonthTouchEnd"
+            >
                 <div v-if="budgetSummaryPill" class="budget-pill slide-up" @click="setTab('home')">
                     <div>
                         <p class="micro muted">Budget status</p>
@@ -287,10 +292,7 @@
                                     @click="toggleTxnDetail(exp)"
                                 >
                                     <div class="icon-circle"
-                                        :style="{
-                                            background: exp.categoryColor || 'var(--text-primary)',
-                                            color: exp.categoryColor ? '#fff' : '#0f172a'
-                                        }"
+                                        :style="{ '--cat-color': exp.categoryColor || 'var(--text-primary)' }"
                                     >
                                         <mdicon :name="exp.categoryIcon || 'cash-multiple'" size="20" />
                                     </div>
@@ -399,9 +401,30 @@
                             </div>
                         </transition-group>
                     </div>
-                    <div class="tx-footer">
-                        <span class="tx-footer-label">{{ transactionsForMonth.length }} transactions</span>
-                        <span class="tx-footer-total">{{ formatMoney(defaultCurrency, transactionOut) }}</span>
+                    <div class="tx-summary">
+                        <div class="tx-summary-head">
+                            <span class="tx-summary-month">{{ monthLabel(0) }}</span>
+                            <span class="tx-summary-count">
+                                {{ transactionsForMonth.length }}
+                                {{ transactionsForMonth.length === 1 ? 'transaction' : 'transactions' }}
+                            </span>
+                        </div>
+                        <div class="tx-summary-stats" :class="{ split: transactionPlannedOut > 0 }">
+                            <div class="tx-summary-stat">
+                                <span class="tss-label">Spent</span>
+                                <span class="tss-val spent">{{ formatMoney(defaultCurrency, transactionOut) }}</span>
+                            </div>
+                            <template v-if="transactionPlannedOut > 0">
+                                <div class="tx-summary-stat">
+                                    <span class="tss-label">Upcoming</span>
+                                    <span class="tss-val upcoming">{{ formatMoney(defaultCurrency, transactionPlannedOut) }}</span>
+                                </div>
+                                <div class="tx-summary-stat">
+                                    <span class="tss-label">Total</span>
+                                    <span class="tss-val total">{{ formatMoney(defaultCurrency, transactionAllTotal) }}</span>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                 </section>
                 <div v-else class="empty-state slide-up">
@@ -427,8 +450,13 @@
             </transition>
         </section>
 
-        <transition name="month-slide" mode="out-in">
-            <div class="cal-pane slide-up" :key="viewMonthKey">
+        <transition :name="monthSlideName" mode="out-in">
+            <div
+                class="cal-pane slide-up"
+                :key="viewMonthKey"
+                @touchstart="onMonthTouchStart"
+                @touchend="onMonthTouchEnd"
+            >
                 <div class="cal-grid">
                     <span v-for="d in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="d" class="cal-dow">{{ d }}</span>
                     <template v-for="(cell, idx) in calendarCells">
@@ -464,10 +492,7 @@
                                 @click="toggleTxnDetail(exp)"
                             >
                                 <div class="icon-circle"
-                                    :style="{
-                                        background: exp.categoryColor || 'var(--text-primary)',
-                                        color: exp.categoryColor ? '#fff' : '#0f172a'
-                                    }"
+                                    :style="{ '--cat-color': exp.categoryColor || 'var(--text-primary)' }"
                                 >
                                     <mdicon :name="exp.categoryIcon || 'cash-multiple'" size="20" />
                                 </div>
@@ -608,7 +633,7 @@
                 <span class="micro muted">Highest spend</span>
             </div>
             <div class="cat-row">
-                <div class="icon-circle" :style="{ background: topCategory.color || 'var(--text-primary)', color: topCategory.color ? '#fff' : '#0f172a' }">
+                <div class="icon-circle" :style="{ '--cat-color': topCategory.color || 'var(--text-primary)' }">
                     <mdicon :name="topCategory.icon || 'star'" size="20" />
                 </div>
                 <div class="cat-main">
@@ -629,7 +654,7 @@
             </div>
             <transition-group name="list-fade" tag="div" class="category-list stagger-seq">
                 <div class="cat-row slide-up" v-for="cat in categoryBreakdown" :key="cat.id || cat.name">
-                    <div class="icon-circle" :style="{ background: cat.color || 'var(--text-primary)', color: cat.color ? '#fff' : '#0f172a' }">
+                    <div class="icon-circle" :style="{ '--cat-color': cat.color || 'var(--text-primary)' }">
                         <mdicon :name="cat.icon || 'label-outline'" size="18" />
                     </div>
                     <div class="cat-main">
@@ -676,13 +701,13 @@
         </div>
     </main>
 
-    <main class="content" v-else-if="activeTab === 'profile'">
-        <section class="profile-hero slide-up">
+    <!-- MORE / PROFILE TAB -->
+    <main class="content more-page" v-else-if="activeTab === 'profile'">
+        <section class="more-hero slide-up">
             <div class="avatar pill pop-in">
                 <span>{{ userInitials }}</span>
             </div>
             <div class="profile-meta">
-                <p class="eyebrow muted">Profile</p>
                 <h3 class="profile-name">{{ userName || 'User' }}</h3>
                 <p class="sub">{{ userEmail || 'Welcome back' }}</p>
             </div>
@@ -691,34 +716,53 @@
             </button>
         </section>
 
-        <section class="section profile-cards stagger-seq">
-            <div class="card profile-card slide-up">
-                <div class="cat-card-head" @click="catListOpen = !catListOpen">
-                    <div>
-                        <p class="label">Expense categories</p>
-                        <h4>{{ categories.length }} {{ categories.length === 1 ? 'category' : 'categories' }}</h4>
-                    </div>
-                    <div class="cat-actions" @click.stop>
-                        <button
-                            v-if="!categories.length"
-                            class="primary-chip ghost-chip seed-chip"
-                            :disabled="seedingCategories"
-                            @click="seedDefaultCategories"
-                        >
-                            <mdicon name="star-shooting-outline" size="18" />
-                            <span>{{ seedingCategories ? 'Loading...' : 'Load defaults' }}</span>
-                        </button>
-                        <button class="primary-chip ghost-chip" @click="openAddCategory">
-                            <mdicon name="plus-circle-outline" size="18" />
-                            <span>Add</span>
-                        </button>
-                        <button class="icon-btn ghost cat-chevron" :class="{ open: catListOpen }">
-                            <mdicon name="chevron-down" size="20" />
-                        </button>
-                    </div>
-                </div>
-                <transition name="cat-collapse">
-                    <div v-if="catListOpen" class="cat-collapse-body">
+        <section class="menu-group slide-up">
+            <p class="menu-group-label">General</p>
+            <div class="menu-list">
+                <button type="button" class="menu-row" @click="router.push('/settings')">
+                    <span class="menu-icon" :style="{ '--cat-color': '#94a3b8' }">
+                        <mdicon name="cog-outline" size="20" />
+                    </span>
+                    <span class="menu-row-main">
+                        <span class="menu-row-title">Settings</span>
+                        <span class="menu-row-sub">AI provider, currency, theme</span>
+                    </span>
+                    <mdicon class="menu-chevron" name="chevron-right" size="20" />
+                </button>
+            </div>
+        </section>
+
+        <section class="menu-group slide-up">
+            <p class="menu-group-label">Preferences</p>
+            <div class="menu-list">
+                <!-- Expense categories -->
+                <button type="button" class="menu-row" @click="catListOpen = !catListOpen">
+                    <span class="menu-icon" :style="{ '--cat-color': '#fb923c' }">
+                        <mdicon name="shape-outline" size="20" />
+                    </span>
+                    <span class="menu-row-main">
+                        <span class="menu-row-title">Expense categories</span>
+                        <span class="menu-row-sub">{{ categories.length }} {{ categories.length === 1 ? 'category' : 'categories' }}</span>
+                    </span>
+                    <mdicon class="menu-chevron" :class="{ open: catListOpen }" name="chevron-down" size="20" />
+                </button>
+                <transition name="tx-expand">
+                    <div v-if="catListOpen" class="menu-expand">
+                        <div class="menu-expand-actions">
+                            <button
+                                v-if="!categories.length"
+                                class="primary-chip ghost-chip"
+                                :disabled="seedingCategories"
+                                @click="seedDefaultCategories"
+                            >
+                                <mdicon name="star-shooting-outline" size="18" />
+                                <span>{{ seedingCategories ? 'Loading...' : 'Load defaults' }}</span>
+                            </button>
+                            <button class="primary-chip ghost-chip" @click="openAddCategory">
+                                <mdicon name="plus-circle-outline" size="18" />
+                                <span>Add category</span>
+                            </button>
+                        </div>
                         <div class="cat-list" v-if="categories.length">
                             <div
                                 class="cat-row-item"
@@ -727,7 +771,7 @@
                             >
                                 <div
                                     class="icon-circle cat-icon"
-                                    :style="{ background: cat.color || '#475569' }"
+                                    :style="{ '--cat-color': cat.color || '#475569' }"
                                 >
                                     <mdicon :name="cat.icon || 'label-outline'" size="18" />
                                 </div>
@@ -757,109 +801,115 @@
                         <p v-else class="sub" style="margin-top: 8px">No categories yet. Load defaults or add your own.</p>
                     </div>
                 </transition>
-            </div>
 
-            <div class="card profile-card slide-up">
-                <div class="row">
-                    <div>
-                        <p class="label">Currency & accounts</p>
-                        <h4>{{ defaultCurrency }} • {{ accounts.length }} accounts</h4>
-                        <p class="sub">
-                            Default account: {{ defaultAccountName || 'None' }}
-                        </p>
-                    </div>
-                    <button class="text-btn" @click="router.push('/expense-tracking/accounts')">Manage</button>
-                </div>
-                <div class="chips">
-                    <span
-                        v-for="cur in currencies"
-                        :key="cur.id || cur.code"
-                        class="pill ghost chip-with-icon"
-                        :style="{ borderColor: cur.isDefault ? '#4f46e5' : 'var(--text-primary)', color: '#0f172a' }"
-                    >
-                        <mdicon :name="cur.isDefault ? 'star' : 'cash-multiple'" size="16" :style="{ color: cur.isDefault ? '#4f46e5' : '#475569' }" />
-                        {{ cur.code }}
+                <!-- Currency & accounts -->
+                <button type="button" class="menu-row" @click="router.push('/expense-tracking/accounts')">
+                    <span class="menu-icon" :style="{ '--cat-color': '#818cf8' }">
+                        <mdicon name="credit-card-outline" size="20" />
                     </span>
-                    <span
-                        v-for="acct in accounts"
-                        :key="acct.id || acct.name"
-                        class="pill ghost chip-with-icon"
-                        :style="{ borderColor: acct.isDefault ? '#22c55e' : 'var(--text-primary)', color: '#0f172a' }"
-                    >
-                        <mdicon :name="acct.isDefault ? 'star' : 'credit-card-outline'" size="16" :style="{ color: acct.isDefault ? '#22c55e' : '#475569' }" />
-                        {{ acct.name }}
+                    <span class="menu-row-main">
+                        <span class="menu-row-title">Currency &amp; accounts</span>
+                        <span class="menu-row-sub">{{ defaultCurrency }} • {{ accounts.length }} {{ accounts.length === 1 ? 'account' : 'accounts' }} • Default: {{ defaultAccountName || 'None' }}</span>
                     </span>
-                </div>
-            </div>
+                    <mdicon class="menu-chevron" name="chevron-right" size="20" />
+                </button>
 
-            <div class="card profile-card slide-up">
-                <div class="row">
-                    <div>
-                        <p class="label">Alerts & reminders</p>
-                        <h4>Smart alerts</h4>
-                        <p class="sub">Threshold: $1,000/mo • Subscriptions: $250/mo</p>
-                    </div>
-                    <button class="text-btn">Edit</button>
-                </div>
-                <div class="toggles">
-                    <div class="toggle-row">
-                        <div>
-                            <p class="item-title">Push notifications</p>
-                            <p class="item-sub">Spikes, due bills, budgets</p>
-                        </div>
-                        <span class="switch on"></span>
-                    </div>
-                    <div class="toggle-row">
-                        <div>
-                            <p class="item-title">Email summaries</p>
-                            <p class="item-sub">Weekly digest every Monday</p>
-                        </div>
-                        <span class="switch"></span>
-            </div>
-        </div>
-    </div>
-
-            <div class="card profile-card slide-up">
-                <div class="row">
-                    <div>
-                        <p class="label">Manage budgets</p>
-                        <h4>Budgets</h4>
-                        <p class="sub">{{ budgets.length ? `${budgets.length} active` : 'No budgets yet' }}</p>
-                    </div>
-                    <button class="inline-pill" @click="openBudgetSheet">
-                        <mdicon name="plus-circle-outline" size="16" />
-                        <span>New</span>
-                    </button>
-                </div>
-                <div v-if="budgets.length" class="budget-manage-list">
-                    <div class="manage-row" v-for="b in budgets" :key="b.id">
-                        <div>
-                            <p class="item-title">{{ b.name }}</p>
-                            <p class="item-sub">{{ formatDate(b.startDate) }} - {{ formatDate(b.endDate) }}</p>
-                            <p class="sub">{{ formatMoney(b.currency || defaultCurrency, b.spent || 0) }} / {{ formatMoney(b.currency || defaultCurrency, b.amount || 0) }}</p>
-                        </div>
-                        <div class="row manage-actions">
-                            <button class="icon-btn ghost" @click="startEditBudget(b)">
-                                <mdicon name="pencil-outline" size="18" />
-                            </button>
-                            <button class="icon-btn ghost danger" @click="handleDeleteBudget(b)">
-                                <mdicon name="trash-can-outline" size="18" />
+                <!-- Budgets -->
+                <button type="button" class="menu-row" @click="budgetListOpen = !budgetListOpen">
+                    <span class="menu-icon" :style="{ '--cat-color': '#4ade80' }">
+                        <mdicon name="target" size="20" />
+                    </span>
+                    <span class="menu-row-main">
+                        <span class="menu-row-title">Budgets</span>
+                        <span class="menu-row-sub">{{ budgets.length ? `${budgets.length} active` : 'No budgets yet' }}</span>
+                    </span>
+                    <mdicon class="menu-chevron" :class="{ open: budgetListOpen }" name="chevron-down" size="20" />
+                </button>
+                <transition name="tx-expand">
+                    <div v-if="budgetListOpen" class="menu-expand">
+                        <div class="menu-expand-actions">
+                            <button class="primary-chip ghost-chip" @click="openBudgetSheet">
+                                <mdicon name="plus-circle-outline" size="18" />
+                                <span>New budget</span>
                             </button>
                         </div>
+                        <div v-if="budgets.length" class="budget-manage-list">
+                            <div class="manage-row" v-for="b in budgets" :key="b.id">
+                                <div>
+                                    <p class="item-title">{{ b.name }}</p>
+                                    <p class="item-sub">{{ formatDate(b.startDate) }} - {{ formatDate(b.endDate) }}</p>
+                                    <p class="sub">{{ formatMoney(b.currency || defaultCurrency, b.spent || 0) }} / {{ formatMoney(b.currency || defaultCurrency, b.amount || 0) }}</p>
+                                </div>
+                                <div class="row manage-actions">
+                                    <button class="icon-btn ghost" @click="startEditBudget(b)">
+                                        <mdicon name="pencil-outline" size="18" />
+                                    </button>
+                                    <button class="icon-btn ghost danger" @click="handleDeleteBudget(b)">
+                                        <mdicon name="trash-can-outline" size="18" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <p v-else class="sub">Create a budget to get started.</p>
                     </div>
-                </div>
-                <p v-else class="sub">Create a budget to get started.</p>
-            </div>
+                </transition>
 
-            <div class="card profile-card danger slide-up">
-                <div class="row">
-                    <div>
-                        <p class="label">Data & backup</p>
-                        <h4>Export & restore</h4>
-                        <p class="sub">Export CSV/JSON • Restore from backup</p>
+                <!-- Alerts & reminders -->
+                <button type="button" class="menu-row" @click="alertsOpen = !alertsOpen">
+                    <span class="menu-icon" :style="{ '--cat-color': '#f472b6' }">
+                        <mdicon name="bell-outline" size="20" />
+                    </span>
+                    <span class="menu-row-main">
+                        <span class="menu-row-title">Alerts &amp; reminders</span>
+                        <span class="menu-row-sub">Spikes, due bills, weekly digest</span>
+                    </span>
+                    <mdicon class="menu-chevron" :class="{ open: alertsOpen }" name="chevron-down" size="20" />
+                </button>
+                <transition name="tx-expand">
+                    <div v-if="alertsOpen" class="menu-expand">
+                        <div class="toggles">
+                            <div class="toggle-row">
+                                <div>
+                                    <p class="item-title">Push notifications</p>
+                                    <p class="item-sub">Spikes, due bills, budgets</p>
+                                </div>
+                                <span class="switch on"></span>
+                            </div>
+                            <div class="toggle-row">
+                                <div>
+                                    <p class="item-title">Email summaries</p>
+                                    <p class="item-sub">Weekly digest every Monday</p>
+                                </div>
+                                <span class="switch"></span>
+                            </div>
+                        </div>
                     </div>
-                    <button class="text-btn danger-text">Export</button>
-                </div>
+                </transition>
+            </div>
+        </section>
+
+        <section class="menu-group slide-up">
+            <p class="menu-group-label">Data</p>
+            <div class="menu-list">
+                <button type="button" class="menu-row">
+                    <span class="menu-icon" :style="{ '--cat-color': '#38bdf8' }">
+                        <mdicon name="tray-arrow-down" size="20" />
+                    </span>
+                    <span class="menu-row-main">
+                        <span class="menu-row-title">Export &amp; backup</span>
+                        <span class="menu-row-sub">Export CSV/JSON • Restore from backup</span>
+                    </span>
+                    <mdicon class="menu-chevron" name="chevron-right" size="20" />
+                </button>
+                <button type="button" class="menu-row danger-row" @click="logout">
+                    <span class="menu-icon" :style="{ '--cat-color': '#f87171' }">
+                        <mdicon name="logout" size="20" />
+                    </span>
+                    <span class="menu-row-main">
+                        <span class="menu-row-title">Sign out</span>
+                    </span>
+                    <mdicon class="menu-chevron" name="chevron-right" size="20" />
+                </button>
             </div>
         </section>
     </main>
@@ -1305,6 +1355,287 @@
         </div>
     </div>
 
+    <!-- SEARCH SCREEN -->
+    <transition name="search-slide">
+        <div v-if="showSearch" class="search-screen">
+            <header class="search-nav">
+                <button class="icon-btn ghost" @click="closeSearch" aria-label="Back">
+                    <mdicon name="arrow-left" size="24" />
+                </button>
+                <h2 class="search-title">Search</h2>
+            </header>
+
+            <div class="search-controls">
+                <div class="search-input-wrap">
+                    <input
+                        ref="searchInputRef"
+                        v-model="searchQuery"
+                        class="search-input"
+                        type="text"
+                        placeholder="Search..."
+                    />
+                    <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''" aria-label="Clear">
+                        <mdicon name="close" size="18" />
+                    </button>
+                    <mdicon v-else class="search-input-icon" name="magnify" size="20" />
+                </div>
+                <button class="search-tool-btn" @click="closeSearch(); setTab('calendar')" aria-label="Calendar">
+                    <mdicon name="calendar-month-outline" size="20" />
+                </button>
+                <button
+                    class="search-tool-btn"
+                    :class="{ 'has-active': hasActiveFilters }"
+                    @click="openFilters"
+                    aria-label="Filters"
+                >
+                    <mdicon name="filter-variant" size="20" />
+                    <span v-if="hasActiveFilters" class="filter-dot"></span>
+                </button>
+            </div>
+
+            <div class="search-body">
+                <div v-if="expensesLoading && !searchGroups.length" class="search-loading">
+                    <mdicon name="loading" size="32" class="spin" />
+                    <p class="sub">Loading transactions…</p>
+                </div>
+                <div v-else-if="searchGroups.length" class="search-list">
+                    <div v-for="group in searchGroups" :key="group.label" class="tx-group">
+                        <div class="tx-group-header">
+                            <span class="tx-group-label">{{ group.label }}</span>
+                            <span class="tx-group-total">- {{ formatMoney(defaultCurrency, group.total) }}</span>
+                        </div>
+                        <div class="tx-entry" v-for="exp in group.items" :key="exp.id">
+                            <div
+                                class="item compact-item mt-1 tx-row"
+                                :class="{ clickable: !exp.planned, expanded: expandedTxnId === exp.id }"
+                                @click="toggleTxnDetail(exp)"
+                            >
+                                <div class="icon-circle"
+                                    :style="{ '--cat-color': exp.categoryColor || 'var(--text-primary)' }"
+                                >
+                                    <mdicon :name="exp.categoryIcon || 'cash-multiple'" size="20" />
+                                </div>
+                                <div class="item-main">
+                                    <p class="item-title">{{ exp.title }}</p>
+                                    <p class="item-sub light" v-if="exp.categoryName">{{ exp.categoryName }}</p>
+                                </div>
+                                <div class="tx-amount-wrap">
+                                    <div class="item-amount" :class="{ planned: exp.planned }">
+                                        {{ formatMoney(defaultCurrency, exp.amount) }}
+                                    </div>
+                                    <button
+                                        v-if="exp.planned"
+                                        class="pill tiny-pill success"
+                                        @click.stop="handlePayPlanned(exp)"
+                                    >
+                                        <mdicon name="cash-check" size="16" />
+                                        <span>Pay</span>
+                                    </button>
+                                    <mdicon
+                                        v-if="!exp.planned"
+                                        class="tx-chevron"
+                                        :class="{ open: expandedTxnId === exp.id }"
+                                        name="chevron-down"
+                                        size="20"
+                                    />
+                                </div>
+                            </div>
+                            <transition name="tx-expand">
+                                <div
+                                    v-if="!exp.planned && expandedTxnId === exp.id"
+                                    class="tx-detail"
+                                    @click.stop
+                                >
+                                    <label class="field">
+                                        <span>Title</span>
+                                        <input type="text" v-model="inlineForm.title" placeholder="e.g. Groceries" />
+                                    </label>
+                                    <div class="tx-detail-grid">
+                                        <label class="field">
+                                            <span>Amount</span>
+                                            <input type="number" step="0.01" v-model.number="inlineForm.amount" placeholder="0.00" />
+                                        </label>
+                                        <label class="field">
+                                            <span>Date</span>
+                                            <input type="date" v-model="inlineForm.expenseDate" />
+                                        </label>
+                                    </div>
+                                    <label class="field">
+                                        <span>Budget</span>
+                                        <select v-model="inlineForm.budgetId">
+                                            <option value="">Auto-apply to matching budgets</option>
+                                            <option v-for="b in budgets" :key="b.id" :value="b.id">
+                                                {{ b.name }} • {{ formatMoney(b.currency || defaultCurrency, b.amount) }}
+                                            </option>
+                                        </select>
+                                    </label>
+                                    <label class="field">
+                                        <span>Category</span>
+                                        <div class="pill-row inline-cats">
+                                            <button
+                                                v-for="cat in categories"
+                                                :key="cat.id"
+                                                type="button"
+                                                class="pill-option compact"
+                                                :class="{ active: inlineForm.categoryId === cat.id }"
+                                                @click="inlineForm.categoryId = cat.id"
+                                                :style="{ borderColor: cat.color || 'var(--text-primary)', color: '#0f172a' }"
+                                            >
+                                                <mdicon :name="cat.icon || 'label-outline'" size="18" :style="{ color: cat.color || '#4f46e5' }" />
+                                                <span>{{ cat.name }}</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="pill-option compact"
+                                                :class="{ active: !inlineForm.categoryId }"
+                                                @click="inlineForm.categoryId = ''"
+                                            >
+                                                <mdicon name="shape-outline" size="18" />
+                                                <span>Uncategorized</span>
+                                            </button>
+                                        </div>
+                                    </label>
+                                    <p v-if="inlineError" class="error-text">{{ inlineError }}</p>
+                                    <div class="tx-detail-actions">
+                                        <button
+                                            type="button"
+                                            class="pill tiny-pill danger"
+                                            @click="startDeleteExpense(exp)"
+                                        >
+                                            <mdicon name="trash-can-outline" size="16" />
+                                            <span>Delete</span>
+                                        </button>
+                                        <div class="tx-detail-spacer"></div>
+                                        <button type="button" class="text-btn" @click="closeTxnDetail">Cancel</button>
+                                        <button
+                                            type="button"
+                                            class="primary-btn solid"
+                                            :disabled="inlineSaving"
+                                            @click="handleSaveInline(exp)"
+                                        >
+                                            {{ inlineSaving ? 'Saving...' : 'Save' }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </transition>
+                        </div>
+                    </div>
+                </div>
+                <div v-else class="empty-state slide-up">
+                    <div class="icon-circle purple">
+                        <mdicon name="magnify" size="20" />
+                    </div>
+                    <p class="item-title">{{ searchQuery ? 'No matches' : 'No transactions' }}</p>
+                    <p class="sub">{{ searchQuery ? 'Try a different search term.' : 'Log an expense to see it here.' }}</p>
+                </div>
+            </div>
+
+            <!-- FILTER SHEET -->
+            <transition name="filter-sheet">
+                <div v-if="showFilters" class="filter-overlay" @click.self="closeFilters">
+                    <div class="filter-sheet">
+                        <div class="filter-sheet-head">
+                            <h2 class="filter-title">Filters</h2>
+                            <button class="icon-btn ghost" @click="closeFilters" aria-label="Close">
+                                <mdicon name="close" size="22" />
+                            </button>
+                        </div>
+
+                        <div class="filter-sheet-body">
+                            <!-- Categories -->
+                            <p class="filter-label">Category</p>
+                            <div class="filter-cat-row">
+                                <button
+                                    type="button"
+                                    class="filter-cat"
+                                    :class="{ active: !draftFilters.categoryId }"
+                                    @click="draftFilters.categoryId = ''"
+                                >
+                                    <span class="filter-cat-icon" :style="{ '--cat-color': 'var(--text-muted)' }">
+                                        <mdicon name="shape-outline" size="22" />
+                                    </span>
+                                    <span class="filter-cat-name">All</span>
+                                </button>
+                                <button
+                                    v-for="cat in categories"
+                                    :key="cat.id"
+                                    type="button"
+                                    class="filter-cat"
+                                    :class="{ active: draftFilters.categoryId === cat.id }"
+                                    @click="draftFilters.categoryId = cat.id"
+                                >
+                                    <span class="filter-cat-icon" :style="{ '--cat-color': cat.color || '#475569' }">
+                                        <mdicon :name="cat.icon || 'label-outline'" size="22" />
+                                    </span>
+                                    <span class="filter-cat-name">{{ cat.name }}</span>
+                                </button>
+                            </div>
+
+                            <!-- Amount range -->
+                            <p class="filter-label">Amount range</p>
+                            <div class="range-slider">
+                                <div class="range-track"></div>
+                                <div class="range-fill" :style="rangeFillStyle"></div>
+                                <input
+                                    type="range"
+                                    class="range-input"
+                                    :min="amountBounds.lo"
+                                    :max="amountBounds.hi"
+                                    v-model.number="draftFilters.amountMin"
+                                    @input="onRangeMinInput"
+                                />
+                                <input
+                                    type="range"
+                                    class="range-input"
+                                    :min="amountBounds.lo"
+                                    :max="amountBounds.hi"
+                                    v-model.number="draftFilters.amountMax"
+                                    @input="onRangeMaxInput"
+                                />
+                            </div>
+                            <div class="range-values">
+                                <span class="range-pill">{{ formatMoney(defaultCurrency, draftFilters.amountMin) }}</span>
+                                <span class="range-pill">{{ formatMoney(defaultCurrency, draftFilters.amountMax) }}</span>
+                            </div>
+
+                            <!-- Type -->
+                            <p class="filter-label">Type</p>
+                            <div class="filter-chip-row">
+                                <button
+                                    v-for="opt in [{ k: 'all', l: 'All' }, { k: 'once', l: 'One-time' }, { k: 'recurring', l: 'Recurring' }]"
+                                    :key="opt.k"
+                                    type="button"
+                                    class="filter-chip"
+                                    :class="{ active: draftFilters.type === opt.k }"
+                                    @click="draftFilters.type = opt.k"
+                                >
+                                    {{ opt.l }}
+                                </button>
+                            </div>
+
+                            <!-- Notes -->
+                            <p class="filter-label">Notes</p>
+                            <div class="filter-text-wrap">
+                                <input
+                                    type="text"
+                                    class="filter-text-input"
+                                    v-model="draftFilters.notes"
+                                    placeholder="Notes contain..."
+                                />
+                                <mdicon class="filter-text-icon" name="note-text-outline" size="18" />
+                            </div>
+                        </div>
+
+                        <div class="filter-sheet-actions">
+                            <button type="button" class="filter-btn clear" @click="clearFilters">Clear</button>
+                            <button type="button" class="filter-btn apply" @click="applyFilters">Apply</button>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+        </div>
+    </transition>
+
     <nav class="bottom-nav">
         <button class="nav-btn" :class="{ active: activeTab === 'home' }" @click="setTab('home')">
             <mdicon name="view-dashboard-outline" size="22" />
@@ -1323,8 +1654,8 @@
             <span>Schedules</span>
         </button>
         <button class="nav-btn" :class="{ active: activeTab === 'profile' }" @click="setTab('profile')">
-            <mdicon name="account-circle-outline" size="22" />
-            <span>Profile</span>
+            <mdicon name="dots-horizontal-circle-outline" size="22" />
+            <span>More</span>
         </button>
     </nav>
 </div>
@@ -1384,6 +1715,8 @@ export default {
         }
         const editingCategoryId = ref(null)
         const catListOpen = ref(false)
+        const budgetListOpen = ref(false)
+        const alertsOpen = ref(false)
         const categories = ref([])
         const categoriesLoaded = ref(false)
         const accounts = ref([])
@@ -1408,6 +1741,7 @@ export default {
         const showBudgetSheet = ref(false)
         const todayStr = () => new Date().toISOString().slice(0, 10)
         const expenses = ref([])
+        const expensesLoading = ref(false)
         const budgetForm = ref({
             name: '',
             amount: '',
@@ -1703,6 +2037,10 @@ export default {
         const transactionOut = computed(() => {
             return displayedExpenses.value.reduce((sum, e) => sum + Number(e.amount || 0), 0)
         })
+        const transactionPlannedOut = computed(() => {
+            return plannedTransactions.value.reduce((sum, e) => sum + Number(e.amount || 0), 0)
+        })
+        const transactionAllTotal = computed(() => transactionOut.value + transactionPlannedOut.value)
 
         /* ── Calendar tab ── */
         const formatCompact = (cur, amt) => {
@@ -1779,10 +2117,139 @@ export default {
             const label = d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
             return isToday ? `Today, ${label}` : label
         })
+
+        /* ── Search screen ── */
+        const showSearch = ref(false)
+        const searchQuery = ref('')
+        const searchInputRef = ref(null)
+        const openSearch = async () => {
+            showSearch.value = true
+            await nextTick()
+            searchInputRef.value?.focus()
+        }
+        const closeSearch = () => {
+            showSearch.value = false
+        }
+        const fullDateLabel = (dateStr) => {
+            const d = new Date(dateStr)
+            if (isNaN(d.getTime())) return 'Unknown date'
+            const today = new Date(); today.setHours(0, 0, 0, 0)
+            const day = new Date(d); day.setHours(0, 0, 0, 0)
+            const monthDay = d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
+            if (day.getTime() === today.getTime()) return `Today, ${monthDay}`
+            const opts = { weekday: 'long', month: 'long', day: 'numeric' }
+            if (day.getFullYear() !== today.getFullYear()) opts.year = 'numeric'
+            return d.toLocaleDateString(undefined, opts)
+        }
+        /* Filters */
+        const defaultFilters = () => ({ categoryId: '', type: 'all', notes: '', amountMin: null, amountMax: null })
+        const showFilters = ref(false)
+        const draftFilters = ref(defaultFilters())
+        const appliedFilters = ref(defaultFilters())
+        const amountBounds = computed(() => {
+            const amts = expenses.value
+                .map(e => Number(e.amount || 0))
+                .filter(n => Number.isFinite(n))
+            if (!amts.length) return { lo: 0, hi: 0 }
+            return { lo: Math.floor(Math.min(...amts)), hi: Math.ceil(Math.max(...amts)) }
+        })
+        const rangeFillStyle = computed(() => {
+            const { lo, hi } = amountBounds.value
+            const span = hi - lo
+            if (span <= 0) return { left: '0%', right: '0%' }
+            const min = draftFilters.value.amountMin ?? lo
+            const max = draftFilters.value.amountMax ?? hi
+            return {
+                left: `${((min - lo) / span) * 100}%`,
+                right: `${((hi - max) / span) * 100}%`
+            }
+        })
+        const onRangeMinInput = () => {
+            if (draftFilters.value.amountMin > draftFilters.value.amountMax) {
+                draftFilters.value.amountMin = draftFilters.value.amountMax
+            }
+        }
+        const onRangeMaxInput = () => {
+            if (draftFilters.value.amountMax < draftFilters.value.amountMin) {
+                draftFilters.value.amountMax = draftFilters.value.amountMin
+            }
+        }
+        const openFilters = () => {
+            if (!categoriesLoaded.value) loadCategories()
+            const { lo, hi } = amountBounds.value
+            draftFilters.value = {
+                ...appliedFilters.value,
+                amountMin: appliedFilters.value.amountMin ?? lo,
+                amountMax: appliedFilters.value.amountMax ?? hi
+            }
+            showFilters.value = true
+        }
+        const closeFilters = () => {
+            showFilters.value = false
+        }
+        const clearFilters = () => {
+            const { lo, hi } = amountBounds.value
+            draftFilters.value = { ...defaultFilters(), amountMin: lo, amountMax: hi }
+        }
+        const applyFilters = () => {
+            const { lo, hi } = amountBounds.value
+            const d = draftFilters.value
+            appliedFilters.value = {
+                categoryId: d.categoryId,
+                type: d.type,
+                notes: d.notes.trim(),
+                amountMin: d.amountMin > lo ? d.amountMin : null,
+                amountMax: d.amountMax < hi ? d.amountMax : null
+            }
+            showFilters.value = false
+        }
+        const hasActiveFilters = computed(() => {
+            const f = appliedFilters.value
+            return !!(f.categoryId || f.type !== 'all' || f.notes || f.amountMin != null || f.amountMax != null)
+        })
+
+        const searchResults = computed(() => {
+            const q = searchQuery.value.trim().toLowerCase()
+            const f = appliedFilters.value
+            const notes = f.notes.toLowerCase()
+            let list = expenses.value.map(exp => ({ ...exp, planned: false }))
+            if (q) {
+                list = list.filter(e =>
+                    (e.title || '').toLowerCase().includes(q) ||
+                    (e.categoryName || '').toLowerCase().includes(q)
+                )
+            }
+            if (f.categoryId) list = list.filter(e => e.categoryId === f.categoryId)
+            if (f.type === 'once') list = list.filter(e => !e.isRecurring)
+            else if (f.type === 'recurring') list = list.filter(e => e.isRecurring)
+            if (notes) list = list.filter(e => (e.notes || '').toLowerCase().includes(notes))
+            if (f.amountMin != null) list = list.filter(e => Number(e.amount || 0) >= f.amountMin)
+            if (f.amountMax != null) list = list.filter(e => Number(e.amount || 0) <= f.amountMax)
+            return list.slice().sort((a, b) => new Date(b.expenseDate) - new Date(a.expenseDate))
+        })
+        const searchGroups = computed(() => {
+            const groups = []
+            const map = new Map()
+            searchResults.value.forEach(exp => {
+                const label = fullDateLabel(exp.expenseDate)
+                if (!map.has(label)) {
+                    const g = { label, items: [], total: 0 }
+                    map.set(label, g)
+                    groups.push(g)
+                }
+                const g = map.get(label)
+                g.items.push(exp)
+                g.total += Number(exp.amount || 0)
+            })
+            return groups
+        })
+
         const transactionIn = computed(() => 0)
         const transactionNet = computed(() => transactionIn.value - transactionOut.value)
         const todayLabel = computed(() => new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }))
+        const monthSlideName = ref('month-slide')
         const changeMonth = (step) => {
+            monthSlideName.value = step >= 0 ? 'month-slide' : 'month-slide-back'
             monthOffset.value += step
         }
         const budgetProgress = (budget) => {
@@ -1851,14 +2318,20 @@ export default {
             showBudgetDeleteConfirm.value = true
         }
         const touchStartX = ref(0)
+        const touchStartY = ref(0)
         const onMonthTouchStart = (e) => {
-            touchStartX.value = e.changedTouches?.[0]?.clientX || 0
+            const t = e.changedTouches?.[0]
+            touchStartX.value = t?.clientX || 0
+            touchStartY.value = t?.clientY || 0
         }
         const onMonthTouchEnd = (e) => {
-            const endX = e.changedTouches?.[0]?.clientX || 0
-            const diff = endX - touchStartX.value
-            if (Math.abs(diff) > 30) {
-                changeMonth(diff < 0 ? 1 : -1)
+            const t = e.changedTouches?.[0]
+            const dx = (t?.clientX || 0) - touchStartX.value
+            const dy = (t?.clientY || 0) - touchStartY.value
+            // Only treat as a month swipe when the gesture is clearly horizontal,
+            // so vertical scrolling through the list never changes the month.
+            if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                changeMonth(dx < 0 ? 1 : -1)
             }
         }
         const openQuickActions = () => {
@@ -2146,12 +2619,14 @@ export default {
             const cat = categories.value.find(c => c.id === exp.categoryId)
             return {
                 ...exp,
+                categoryName: cat?.name || exp.categoryName || null,
                 categoryIcon: cat?.icon || exp.categoryIcon || null,
                 categoryColor: cat?.color || exp.categoryColor || null
             }
         }
 
         const loadExpenses = async() => {
+            expensesLoading.value = true
             try {
                 const token = localStorage.getItem('token')
                 if (!token) return
@@ -2159,6 +2634,8 @@ export default {
                 expenses.value = Array.isArray(list) ? list.map(decorateExpense) : []
             } catch (err) {
                 console.error(err)
+            } finally {
+                expensesLoading.value = false
             }
         }
 
@@ -2928,6 +3405,9 @@ export default {
             handleSaveCategory,
             editingCategoryId,
             catListOpen,
+            budgetListOpen,
+            alertsOpen,
+            logout,
             startEditCategory,
             deletingCategoryId,
             handleDeleteCategory,
@@ -2970,10 +3450,31 @@ export default {
             scheduleTotal,
             subscriptionTotal,
             transactionOut,
+            transactionPlannedOut,
+            transactionAllTotal,
             transactionIn,
             transactionNet,
             transactionsForMonth,
             groupedTransactions,
+            showSearch,
+            searchQuery,
+            searchInputRef,
+            openSearch,
+            closeSearch,
+            searchGroups,
+            expensesLoading,
+            monthSlideName,
+            showFilters,
+            draftFilters,
+            amountBounds,
+            rangeFillStyle,
+            onRangeMinInput,
+            onRangeMaxInput,
+            openFilters,
+            closeFilters,
+            clearFilters,
+            applyFilters,
+            hasActiveFilters,
             formatCompact,
             calendarCells,
             selectedDay,
