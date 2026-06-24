@@ -280,48 +280,122 @@
                             <span class="tx-group-count">{{ group.items.length }}</span>
                         </div>
                         <transition-group name="list-fade" tag="div">
-                            <div class="item compact-item mt-1 swipeable slide-up" v-for="exp in group.items" :key="exp.id">
-                                <div class="icon-circle"
-                                    :style="{
-                                        background: exp.categoryColor || 'var(--text-primary)',
-                                        color: exp.categoryColor ? '#fff' : '#0f172a'
-                                    }"
+                            <div class="tx-entry" v-for="exp in group.items" :key="exp.id">
+                                <div
+                                    class="item compact-item mt-1 slide-up tx-row"
+                                    :class="{ clickable: !exp.planned, expanded: expandedTxnId === exp.id }"
+                                    @click="toggleTxnDetail(exp)"
                                 >
-                                    <mdicon :name="exp.categoryIcon || 'cash-multiple'" size="20" />
+                                    <div class="icon-circle"
+                                        :style="{
+                                            background: exp.categoryColor || 'var(--text-primary)',
+                                            color: exp.categoryColor ? '#fff' : '#0f172a'
+                                        }"
+                                    >
+                                        <mdicon :name="exp.categoryIcon || 'cash-multiple'" size="20" />
+                                    </div>
+                                    <div class="item-main">
+                                        <p class="item-title">{{ exp.title }}</p>
+                                    </div>
+                                    <div class="tx-amount-wrap">
+                                        <div class="item-amount" :class="{ planned: exp.planned }">
+                                            {{ formatMoney(defaultCurrency, exp.amount) }}
+                                        </div>
+                                        <button
+                                            v-if="exp.planned"
+                                            class="pill tiny-pill success"
+                                            @click.stop="handlePayPlanned(exp)"
+                                        >
+                                            <mdicon name="cash-check" size="16" />
+                                            <span>Pay</span>
+                                        </button>
+                                        <mdicon
+                                            v-if="!exp.planned"
+                                            class="tx-chevron"
+                                            :class="{ open: expandedTxnId === exp.id }"
+                                            name="chevron-down"
+                                            size="20"
+                                        />
+                                    </div>
                                 </div>
-                                <div class="item-main">
-                                    <p class="item-title">{{ exp.title }}</p>
-                                    <p class="item-sub light">
-                                        <span v-if="exp.planned" class="pill tiny-pill ghost planned-pill muted">Upcoming</span>
-                                        <span class="inline-actions">
+                                <transition name="tx-expand">
+                                    <div
+                                        v-if="!exp.planned && expandedTxnId === exp.id"
+                                        class="tx-detail"
+                                        @click.stop
+                                    >
+                                        <label class="field">
+                                            <span>Title</span>
+                                            <input type="text" v-model="inlineForm.title" placeholder="e.g. Groceries" />
+                                        </label>
+                                        <div class="tx-detail-grid">
+                                            <label class="field">
+                                                <span>Amount</span>
+                                                <input type="number" step="0.01" v-model.number="inlineForm.amount" placeholder="0.00" />
+                                            </label>
+                                            <label class="field">
+                                                <span>Date</span>
+                                                <input type="date" v-model="inlineForm.expenseDate" />
+                                            </label>
+                                        </div>
+                                        <label class="field">
+                                            <span>Budget</span>
+                                            <select v-model="inlineForm.budgetId">
+                                                <option value="">Auto-apply to matching budgets</option>
+                                                <option v-for="b in budgets" :key="b.id" :value="b.id">
+                                                    {{ b.name }} • {{ formatMoney(b.currency || defaultCurrency, b.amount) }}
+                                                </option>
+                                            </select>
+                                        </label>
+                                        <label class="field">
+                                            <span>Category</span>
+                                            <div class="pill-row inline-cats">
+                                                <button
+                                                    v-for="cat in categories"
+                                                    :key="cat.id"
+                                                    type="button"
+                                                    class="pill-option compact"
+                                                    :class="{ active: inlineForm.categoryId === cat.id }"
+                                                    @click="inlineForm.categoryId = cat.id"
+                                                    :style="{ borderColor: cat.color || 'var(--text-primary)', color: '#0f172a' }"
+                                                >
+                                                    <mdicon :name="cat.icon || 'label-outline'" size="18" :style="{ color: cat.color || '#4f46e5' }" />
+                                                    <span>{{ cat.name }}</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="pill-option compact"
+                                                    :class="{ active: !inlineForm.categoryId }"
+                                                    @click="inlineForm.categoryId = ''"
+                                                >
+                                                    <mdicon name="shape-outline" size="18" />
+                                                    <span>Uncategorized</span>
+                                                </button>
+                                            </div>
+                                        </label>
+                                        <p v-if="inlineError" class="error-text">{{ inlineError }}</p>
+                                        <div class="tx-detail-actions">
                                             <button
-                                                v-if="exp.planned"
-                                                class="pill tiny-pill success"
-                                                @click="handlePayPlanned(exp)"
-                                            >
-                                                <mdicon name="cash-check" size="16" />
-                                                <span>Pay</span>
-                                            </button>
-                                            <button
-                                                v-if="!exp.planned"
-                                                class="pill tiny-pill"
-                                                @click="startEditExpense(exp)"
-                                            >
-                                                <mdicon name="pencil-outline" size="16" />
-                                            </button>
-                                            <button
-                                                v-if="!exp.planned"
+                                                type="button"
                                                 class="pill tiny-pill danger"
                                                 @click="startDeleteExpense(exp)"
                                             >
                                                 <mdicon name="trash-can-outline" size="16" />
+                                                <span>Delete</span>
                                             </button>
-                                        </span>
-                                    </p>
-                                </div>
-                                <div class="item-amount" :class="{ planned: exp.planned }">
-                                    {{ formatMoney(defaultCurrency, exp.amount) }}
-                                </div>
+                                            <div class="tx-detail-spacer"></div>
+                                            <button type="button" class="text-btn" @click="closeTxnDetail">Cancel</button>
+                                            <button
+                                                type="button"
+                                                class="primary-btn solid"
+                                                :disabled="inlineSaving"
+                                                @click="handleSaveInline(exp)"
+                                            >
+                                                {{ inlineSaving ? 'Saving...' : 'Save' }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </transition>
                             </div>
                         </transition-group>
                     </div>
@@ -338,6 +412,178 @@
                     <p class="sub">Log an expense to see it here.</p>
                 </div>
            </div>
+        </transition>
+    </main>
+
+    <!-- CALENDAR TAB -->
+    <main class="content cal-page" v-else-if="activeTab === 'calendar'">
+        <section class="transactions-header slide-up">
+            <transition name="month-slide-nav" mode="out-in">
+                <div class="months" :key="viewMonthKey" @touchstart="onMonthTouchStart" @touchend="onMonthTouchEnd">
+                    <span class="month muted" @click="changeMonth(-1)">{{ monthLabel(-1) }}</span>
+                    <span class="month current">{{ monthLabel(0) }}</span>
+                    <span class="month muted" @click="changeMonth(1)">{{ monthLabel(1) }}</span>
+                </div>
+            </transition>
+        </section>
+
+        <transition name="month-slide" mode="out-in">
+            <div class="cal-pane slide-up" :key="viewMonthKey">
+                <div class="cal-grid">
+                    <span v-for="d in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="d" class="cal-dow">{{ d }}</span>
+                    <template v-for="(cell, idx) in calendarCells">
+                        <span v-if="!cell" :key="'blank-' + idx" class="cal-cell blank"></span>
+                        <button
+                            v-else
+                            :key="'day-' + cell.day"
+                            type="button"
+                            class="cal-cell"
+                            :class="{ selected: selectedDay === cell.day, today: cell.isToday }"
+                            @click="selectCalendarDay(cell.day)"
+                        >
+                            <span class="cal-day-num">{{ cell.day }}</span>
+                            <span class="cal-day-dot" v-if="cell.total > 0"></span>
+                            <span class="cal-day-amt" :class="{ zero: cell.total === 0 }">
+                                {{ formatCompact(defaultCurrency, cell.total) }}
+                            </span>
+                        </button>
+                    </template>
+                </div>
+
+                <div class="cal-day-head">
+                    <span class="cal-day-label">{{ selectedDayLabel }}</span>
+                    <span class="cal-day-total">- {{ formatMoney(defaultCurrency, selectedDayTotal) }}</span>
+                </div>
+
+                <section class="transactions-list section" v-if="selectedDayEntries.length > 0">
+                    <transition-group name="list-fade" tag="div">
+                        <div class="tx-entry" v-for="exp in selectedDayEntries" :key="exp.id">
+                            <div
+                                class="item compact-item mt-1 slide-up tx-row"
+                                :class="{ clickable: !exp.planned, expanded: expandedTxnId === exp.id }"
+                                @click="toggleTxnDetail(exp)"
+                            >
+                                <div class="icon-circle"
+                                    :style="{
+                                        background: exp.categoryColor || 'var(--text-primary)',
+                                        color: exp.categoryColor ? '#fff' : '#0f172a'
+                                    }"
+                                >
+                                    <mdicon :name="exp.categoryIcon || 'cash-multiple'" size="20" />
+                                </div>
+                                <div class="item-main">
+                                    <p class="item-title">{{ exp.title }}</p>
+                                </div>
+                                <div class="tx-amount-wrap">
+                                    <div class="item-amount" :class="{ planned: exp.planned }">
+                                        {{ formatMoney(defaultCurrency, exp.amount) }}
+                                    </div>
+                                    <button
+                                        v-if="exp.planned"
+                                        class="pill tiny-pill success"
+                                        @click.stop="handlePayPlanned(exp)"
+                                    >
+                                        <mdicon name="cash-check" size="16" />
+                                        <span>Pay</span>
+                                    </button>
+                                    <mdicon
+                                        v-if="!exp.planned"
+                                        class="tx-chevron"
+                                        :class="{ open: expandedTxnId === exp.id }"
+                                        name="chevron-down"
+                                        size="20"
+                                    />
+                                </div>
+                            </div>
+                            <transition name="tx-expand">
+                                <div
+                                    v-if="!exp.planned && expandedTxnId === exp.id"
+                                    class="tx-detail"
+                                    @click.stop
+                                >
+                                    <label class="field">
+                                        <span>Title</span>
+                                        <input type="text" v-model="inlineForm.title" placeholder="e.g. Groceries" />
+                                    </label>
+                                    <div class="tx-detail-grid">
+                                        <label class="field">
+                                            <span>Amount</span>
+                                            <input type="number" step="0.01" v-model.number="inlineForm.amount" placeholder="0.00" />
+                                        </label>
+                                        <label class="field">
+                                            <span>Date</span>
+                                            <input type="date" v-model="inlineForm.expenseDate" />
+                                        </label>
+                                    </div>
+                                    <label class="field">
+                                        <span>Budget</span>
+                                        <select v-model="inlineForm.budgetId">
+                                            <option value="">Auto-apply to matching budgets</option>
+                                            <option v-for="b in budgets" :key="b.id" :value="b.id">
+                                                {{ b.name }} • {{ formatMoney(b.currency || defaultCurrency, b.amount) }}
+                                            </option>
+                                        </select>
+                                    </label>
+                                    <label class="field">
+                                        <span>Category</span>
+                                        <div class="pill-row inline-cats">
+                                            <button
+                                                v-for="cat in categories"
+                                                :key="cat.id"
+                                                type="button"
+                                                class="pill-option compact"
+                                                :class="{ active: inlineForm.categoryId === cat.id }"
+                                                @click="inlineForm.categoryId = cat.id"
+                                                :style="{ borderColor: cat.color || 'var(--text-primary)', color: '#0f172a' }"
+                                            >
+                                                <mdicon :name="cat.icon || 'label-outline'" size="18" :style="{ color: cat.color || '#4f46e5' }" />
+                                                <span>{{ cat.name }}</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="pill-option compact"
+                                                :class="{ active: !inlineForm.categoryId }"
+                                                @click="inlineForm.categoryId = ''"
+                                            >
+                                                <mdicon name="shape-outline" size="18" />
+                                                <span>Uncategorized</span>
+                                            </button>
+                                        </div>
+                                    </label>
+                                    <p v-if="inlineError" class="error-text">{{ inlineError }}</p>
+                                    <div class="tx-detail-actions">
+                                        <button
+                                            type="button"
+                                            class="pill tiny-pill danger"
+                                            @click="startDeleteExpense(exp)"
+                                        >
+                                            <mdicon name="trash-can-outline" size="16" />
+                                            <span>Delete</span>
+                                        </button>
+                                        <div class="tx-detail-spacer"></div>
+                                        <button type="button" class="text-btn" @click="closeTxnDetail">Cancel</button>
+                                        <button
+                                            type="button"
+                                            class="primary-btn solid"
+                                            :disabled="inlineSaving"
+                                            @click="handleSaveInline(exp)"
+                                        >
+                                            {{ inlineSaving ? 'Saving...' : 'Save' }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </transition>
+                        </div>
+                    </transition-group>
+                </section>
+                <div v-else class="empty-state slide-up">
+                    <div class="icon-circle purple">
+                        <mdicon name="calendar-blank-outline" size="20" />
+                    </div>
+                    <p class="item-title">No entries</p>
+                    <p class="sub">Nothing logged for this day.</p>
+                </div>
+            </div>
         </transition>
     </main>
 
@@ -1068,6 +1314,10 @@
             <mdicon name="swap-horizontal" size="22" />
             <span>Transactions</span>
         </button>
+        <button class="nav-btn" :class="{ active: activeTab === 'calendar' }" @click="setTab('calendar')">
+            <mdicon name="calendar-month-outline" size="22" />
+            <span>Calendar</span>
+        </button>
         <button class="nav-btn" :class="{ active: activeTab === 'schedules' }" @click="setTab('schedules')">
             <mdicon name="calendar-refresh" size="22" />
             <span>Schedules</span>
@@ -1111,7 +1361,7 @@ export default {
             markExpenseSchedulePaid
         } = useExpenseSchedules()
         const initialTab = route.query?.tab ? String(route.query.tab) : 'home'
-        const activeTab = ref(['home', 'transactions', 'schedules', 'profile', 'insights'].includes(initialTab) ? initialTab : 'home')
+        const activeTab = ref(['home', 'transactions', 'calendar', 'schedules', 'profile', 'insights'].includes(initialTab) ? initialTab : 'home')
         const setTab = (tab) => { activeTab.value = tab }
         const barLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
         const showAddCategory = ref(false)
@@ -1224,6 +1474,20 @@ export default {
             budgetId: ''
         })
         const editingExpenseId = ref(null)
+
+        // Inline transaction detail / edit panel (Transactions tab)
+        const expandedTxnId = ref(null)
+        const inlineSaving = ref(false)
+        const inlineError = ref('')
+        const inlineForm = ref({
+            title: '',
+            amount: '',
+            currency: 'PHP',
+            categoryId: '',
+            expenseDate: todayStr(),
+            type: 'DEFAULT',
+            budgetId: ''
+        })
         const schedules = ref([])
         const scheduleForm = ref({
             title: '',
@@ -1438,6 +1702,82 @@ export default {
         }
         const transactionOut = computed(() => {
             return displayedExpenses.value.reduce((sum, e) => sum + Number(e.amount || 0), 0)
+        })
+
+        /* ── Calendar tab ── */
+        const formatCompact = (cur, amt) => {
+            const sym = currencySymbol(cur)
+            const value = Number(amt ?? 0)
+            if (!Number.isFinite(value) || value === 0) return `${sym}0`
+            const abs = Math.abs(value)
+            let out
+            if (abs >= 1_000_000) {
+                out = `${(value / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
+            } else if (abs >= 1_000) {
+                out = `${(value / 1_000).toFixed(1).replace(/\.0$/, '')}k`
+            } else {
+                out = `${Math.round(value)}`
+            }
+            return `${sym}${out}`
+        }
+        const calendarDailyTotals = computed(() => {
+            const map = {}
+            transactionsForMonth.value.forEach(exp => {
+                if (!exp.expenseDate) return
+                const d = new Date(exp.expenseDate)
+                if (isNaN(d.getTime())) return
+                const key = d.getDate()
+                map[key] = (map[key] || 0) + Number(exp.amount || 0)
+            })
+            return map
+        })
+        const calendarCells = computed(() => {
+            const start = viewMonthStart.value
+            const year = start.getFullYear()
+            const month = start.getMonth()
+            const firstWeekday = new Date(year, month, 1).getDay()
+            const daysInMonth = new Date(year, month + 1, 0).getDate()
+            const now = new Date()
+            const isThisMonth = now.getFullYear() === year && now.getMonth() === month
+            const cells = []
+            for (let i = 0; i < firstWeekday; i++) cells.push(null)
+            for (let day = 1; day <= daysInMonth; day++) {
+                cells.push({
+                    day,
+                    total: calendarDailyTotals.value[day] || 0,
+                    isToday: isThisMonth && now.getDate() === day
+                })
+            }
+            return cells
+        })
+        const selectedDay = ref(new Date().getDate())
+        watch(viewMonthKey, () => {
+            const now = new Date()
+            if (now.getFullYear() === viewMonthStart.value.getFullYear() && now.getMonth() === viewMonthStart.value.getMonth()) {
+                selectedDay.value = now.getDate()
+            } else {
+                selectedDay.value = 1
+            }
+        })
+        const selectCalendarDay = (day) => {
+            selectedDay.value = day
+        }
+        const selectedDayEntries = computed(() => {
+            return transactionsForMonth.value.filter(exp => {
+                if (!exp.expenseDate) return false
+                const d = new Date(exp.expenseDate)
+                return !isNaN(d.getTime()) && d.getDate() === selectedDay.value
+            })
+        })
+        const selectedDayTotal = computed(() =>
+            selectedDayEntries.value.reduce((sum, e) => sum + Number(e.amount || 0), 0)
+        )
+        const selectedDayLabel = computed(() => {
+            const d = new Date(viewMonthStart.value.getFullYear(), viewMonthStart.value.getMonth(), selectedDay.value)
+            const now = new Date()
+            const isToday = now.getFullYear() === d.getFullYear() && now.getMonth() === d.getMonth() && now.getDate() === d.getDate()
+            const label = d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
+            return isToday ? `Today, ${label}` : label
         })
         const transactionIn = computed(() => 0)
         const transactionNet = computed(() => transactionIn.value - transactionOut.value)
@@ -2210,6 +2550,68 @@ export default {
             showExpenseSheet.value = true
         }
 
+        const closeTxnDetail = () => {
+            expandedTxnId.value = null
+            inlineError.value = ''
+            inlineSaving.value = false
+        }
+
+        const toggleTxnDetail = (exp) => {
+            if (exp.planned) return
+            if (expandedTxnId.value === exp.id) {
+                closeTxnDetail()
+                return
+            }
+            if (!categoriesLoaded.value) loadCategories()
+            if (!budgetsLoaded.value) loadBudgets()
+            inlineForm.value = {
+                title: exp.title || '',
+                amount: exp.amount ?? '',
+                currency: exp.currency || defaultCurrency.value || 'PHP',
+                categoryId: exp.categoryId || '',
+                expenseDate: exp.expenseDate ? exp.expenseDate.slice(0, 10) : todayStr(),
+                type: exp.isRecurring ? 'SUBSCRIPTION' : 'DEFAULT',
+                budgetId: exp.budgetId || ''
+            }
+            inlineError.value = ''
+            expandedTxnId.value = exp.id
+        }
+
+        const handleSaveInline = async(exp) => {
+            inlineError.value = ''
+            if (!inlineForm.value.title.trim() || !inlineForm.value.amount) {
+                inlineError.value = 'Title and amount are required.'
+                return
+            }
+            const token = localStorage.getItem('token')
+            if (!token) {
+                inlineError.value = 'You are not logged in.'
+                return
+            }
+            inlineSaving.value = true
+            try {
+                await updateExpense(token, exp.id, {
+                    title: inlineForm.value.title.trim(),
+                    amount: Number(inlineForm.value.amount),
+                    currency: inlineForm.value.currency || defaultCurrency.value || 'PHP',
+                    categoryId: inlineForm.value.categoryId || null,
+                    expenseDate: inlineForm.value.expenseDate || new Date().toISOString(),
+                    paymentMethod: 'CASH',
+                    isRecurring: inlineForm.value.type === 'SUBSCRIPTION',
+                    frequency: inlineForm.value.type === 'SUBSCRIPTION' ? 'MONTHLY' : 'ONE_TIME',
+                    budgetId: inlineForm.value.budgetId || null
+                })
+                await loadExpenses()
+                await loadBudgets()
+                closeTxnDetail()
+            } catch (err) {
+                console.error(err)
+                inlineError.value = err?.message || 'Unable to save expense.'
+            } finally {
+                inlineSaving.value = false
+            }
+        }
+
         const removeSchedule = async(item) => {
             const token = localStorage.getItem('token')
             if (!token || !item.id) return
@@ -2298,6 +2700,7 @@ export default {
             try {
                 await deleteExpense(token, exp.id)
                 expenses.value = expenses.value.filter(e => e.id !== exp.id)
+                if (expandedTxnId.value === exp.id) closeTxnDetail()
                 await loadBudgets()
                 closeDeleteConfirm()
             } catch (err) {
@@ -2571,6 +2974,13 @@ export default {
             transactionNet,
             transactionsForMonth,
             groupedTransactions,
+            formatCompact,
+            calendarCells,
+            selectedDay,
+            selectCalendarDay,
+            selectedDayEntries,
+            selectedDayTotal,
+            selectedDayLabel,
             insightsTotal,
             insightsCount,
             insightsAvgPerDay,
@@ -2625,6 +3035,13 @@ export default {
             handleDeleteExpense,
             startEditExpense,
             handlePayPlanned,
+            expandedTxnId,
+            inlineForm,
+            inlineError,
+            inlineSaving,
+            toggleTxnDetail,
+            closeTxnDetail,
+            handleSaveInline,
             showBudgetDeleteConfirm,
             confirmDeleteBudget,
             closeBudgetDeleteConfirm,

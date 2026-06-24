@@ -605,6 +605,180 @@
   padding: 10px;
 }
 
+/* Transactions tab: clickable row + inline detail/edit panel */
+.expense-theme .tx-entry {
+  display: block;
+}
+
+.expense-theme .tx-row.clickable {
+  cursor: pointer;
+}
+
+.expense-theme .tx-amount-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.expense-theme .tx-chevron {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.expense-theme .tx-chevron.open {
+  transform: rotate(180deg);
+}
+
+.expense-theme .tx-row.expanded {
+  background: var(--glass-ghost-bg);
+}
+
+.expense-theme .tx-detail {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  background: var(--glass-card-bg);
+  border-bottom: 1px solid var(--glass-card-border);
+}
+
+.expense-theme .tx-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.expense-theme .tx-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.expense-theme .tx-detail-spacer {
+  flex: 1;
+}
+
+/* expand/collapse transition */
+.tx-expand-enter-active,
+.tx-expand-leave-active {
+  transition: opacity 0.2s ease, max-height 0.25s ease;
+  overflow: hidden;
+  max-height: 600px;
+}
+
+.tx-expand-enter-from,
+.tx-expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
+/* Calendar tab */
+.expense-theme .cal-page {
+  display: grid;
+  gap: 12px;
+}
+
+.expense-theme .cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 0 8px;
+}
+
+.expense-theme .cal-dow {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 6px 0;
+}
+
+.expense-theme .cal-cell {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 2px;
+  padding: 6px 2px;
+  min-height: 52px;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.expense-theme .cal-cell.blank {
+  background: transparent;
+  cursor: default;
+}
+
+.expense-theme .cal-day-num {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.expense-theme .cal-day-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--accent-1);
+}
+
+.expense-theme .cal-day-amt {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ef4444;
+}
+
+.expense-theme .cal-day-amt.zero {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.expense-theme .cal-cell.today .cal-day-num {
+  color: var(--accent-1);
+}
+
+.expense-theme .cal-cell.selected {
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-4));
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+}
+
+.expense-theme .cal-cell.selected .cal-day-num,
+.expense-theme .cal-cell.selected .cal-day-amt {
+  color: #0b1020;
+}
+
+.expense-theme .cal-cell.selected .cal-day-amt.zero {
+  color: #0b1020;
+  opacity: 0.7;
+}
+
+.expense-theme .cal-cell.selected .cal-day-dot {
+  background: #0b1020;
+}
+
+.expense-theme .cal-day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 4px;
+  border-top: 1px solid var(--glass-card-border);
+  margin-top: 4px;
+}
+
+.expense-theme .cal-day-label {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.expense-theme .cal-day-total {
+  font-weight: 800;
+  color: #ef4444;
+}
+
 .expense-theme .transaction-footer {
   text-align: center;
   color: var(--text-muted);
@@ -1122,7 +1296,7 @@
   background: var(--glass-ghost-bg);
   border-top: 1px solid var(--glass-card-border);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   padding: 8px 4px calc(8px + var(--safe-bottom));
   backdrop-filter: blur(10px);
   box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.18);
@@ -1137,8 +1311,16 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
+  min-width: 0;
+}
+
+.expense-theme .nav-btn span {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .expense-theme .nav-btn.active {
