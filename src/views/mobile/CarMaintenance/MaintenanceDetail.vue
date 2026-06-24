@@ -51,9 +51,28 @@
             </div>
         </div>
 
+        <div class="notes car-card" v-if="record?.partsUsed">
+            <p class="label">Parts Used</p>
+            <p class="value">{{ record.partsUsed }}</p>
+        </div>
+
         <div class="notes car-card" v-if="record?.description">
             <p class="label">Notes</p>
             <p class="value">{{ record.description }}</p>
+        </div>
+
+        <div class="notes car-card" v-if="photoUrls.length">
+            <p class="label">Photos</p>
+            <div class="maint-detail-grid">
+                <img
+                    v-for="(u, i) in photoUrls"
+                    :key="i"
+                    :src="u"
+                    alt="Receipt or parts photo"
+                    class="maint-detail-photo"
+                    @click="openLightbox(i)"
+                />
+            </div>
         </div>
 
         <div class="actions">
@@ -74,7 +93,13 @@
             </div>
         </div>
     </transition>
-    <Loading v-if="loadingOverlay"/>
+    <Loading v-if="loadingOverlay" :label="loadingMessage"/>
+    <PhotoLightbox
+        :visible="lightboxOpen"
+        :images="photoUrls"
+        :start-index="lightboxIndex"
+        @close="lightboxOpen = false"
+    />
 </div>
 </template>
 
@@ -85,13 +110,15 @@ import { API_BASE_URL } from '@/constants/config'
 import { useCarMaintenance } from '@/composables/carMaintenance'
 import Loading from '@/components/Loading.vue'
 import CarTopBar from '@/components/CarMaintenance/CarTopBar.vue'
+import PhotoLightbox from '@/components/PhotoLightbox.vue'
 import { useStaggerReady } from '@/composables/staggerReady'
 
 export default {
     name: 'MaintenanceDetailMobile',
     components: {
         Loading,
-        CarTopBar
+        CarTopBar,
+        PhotoLightbox
     },
     setup() {
         const route = useRoute()
@@ -103,14 +130,17 @@ export default {
         const confirmDelete = ref(false)
         const loading = ref(true)
         const loadingOverlay = ref(false)
+        const loadingMessage = ref('')
         const staggerReady = useStaggerReady()
 
-        const withOverlay = async(fn) => {
+        const withOverlay = async(fn, message = 'Loading…') => {
+            loadingMessage.value = message
             loadingOverlay.value = true
             try {
                 return await fn()
             } finally {
                 loadingOverlay.value = false
+                loadingMessage.value = ''
             }
         }
 
@@ -127,6 +157,17 @@ export default {
             if (!vehicle || !vehicle.imageUrl) return ''
             return vehicle.imageUrl.startsWith('http') ? vehicle.imageUrl : `${API_BASE_URL}${vehicle.imageUrl}`
         })
+
+        const photoUrls = computed(() => {
+            const r = record.value
+            if (!r) return []
+            const raw = (r.photos && r.photos.length) ? r.photos : (r.receiptUrl ? [r.receiptUrl] : [])
+            return raw.map(u => (u.startsWith('http') ? u : `${API_BASE_URL}${u}`))
+        })
+
+        const lightboxOpen = ref(false)
+        const lightboxIndex = ref(0)
+        const openLightbox = (i) => { lightboxIndex.value = i; lightboxOpen.value = true }
 
         const formatDate = (value) => {
             if (!value) return ''
@@ -188,7 +229,7 @@ export default {
                 } catch (err) {
                     console.error(err)
                 }
-            })
+            }, 'Deleting…')
         }
 
         onMounted(() => {
@@ -199,11 +240,16 @@ export default {
             record,
             vehicleName,
             vehicleImage,
+            photoUrls,
+            lightboxOpen,
+            lightboxIndex,
+            openLightbox,
             formatDate,
             formatMileage,
             formatCurrency,
             editRecord,
             deleteRecord,
+            loadingMessage,
             confirmDelete,
             loading,
             loadingOverlay,
@@ -214,6 +260,20 @@ export default {
 </script>
 
 <style scoped>
+.maint-detail-grid {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.maint-detail-photo {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+  cursor: pointer;
+}
 .hero {
   display: flex;
   align-items: center;

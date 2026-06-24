@@ -1,64 +1,79 @@
 <template>
-    <div class="root">
-            <teleport to="body">
-                <transition name="fade" appear>
-                <div class="modal" @keyup.esc="close" tabindex="0">
-                    <div class="modal-container text-center" ref="modal" >
-                        <img src="@/assets/loading.gif" width="80"/>
-                    </div>
+    <teleport to="body">
+        <transition name="lm-fade" appear>
+            <div class="lm-overlay" role="status" aria-live="polite" aria-label="Loading">
+                <div class="lm-card">
+                    <div class="lm-spinner"></div>
+                    <p v-if="label" class="lm-label">{{ label }}</p>
                 </div>
-                </transition>
-            </teleport>
-    </div>
+            </div>
+        </transition>
+    </teleport>
 </template>
 
 <script>
-import { onClickOutside } from '@vueuse/core'
-import { ref, defineProps } from 'vue'
-
 export default {
     name: 'Loading',
-    setup(props, { emit }) {
-        const modal = ref(null)
-
-        return {
-            modal
-        }
-
-
-    },
-};
+    props: {
+        label: { type: String, default: '' }
+    }
+}
 </script>
 
-<style lang="scss" scoped>
-.modal {
+<style scoped>
+.lm-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    background-color: rgba(0,0,0,0.2);
-    width: 100%;
-    height: 100%;
+    inset: 0;
+    z-index: 5000;
     display: flex;
-    justify-content: center;
     align-items: center;
-    z-index: 999;
+    justify-content: center;
+    background: rgba(3, 4, 8, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
 }
-
-.modal-container {
-    background-color: transparent;
-    padding: 25px 30px 30px;
-    border-radius: 10px;
-    width: 550px;
+.lm-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 26px 32px;
+    border-radius: 18px;
+    background: var(--glass-card-bg, rgba(255, 255, 255, 0.06));
+    border: 1px solid var(--glass-card-border, rgba(148, 163, 184, 0.2));
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
-
-.fade-enter-active,
-.fade-leave-active {
-    transition: all 0.5s ease;
+/* Gradient ring spinner: a conic gradient masked into a ring. */
+.lm-spinner {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 6%, var(--accent-3, #06b6d4), var(--accent-1, #6366f1));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px));
+    animation: lm-spin 0.85s linear infinite;
 }
-
-.fade-enter-from,
-.fade-leave-to {
+.lm-label {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text-secondary, #94a3b8);
+}
+@keyframes lm-spin {
+    to { transform: rotate(360deg); }
+}
+.lm-fade-enter-active,
+.lm-fade-leave-active {
+    transition: opacity 0.25s ease;
+}
+.lm-fade-enter-from,
+.lm-fade-leave-to {
     opacity: 0;
 }
-
+@media (prefers-reduced-motion: reduce) {
+    .lm-spinner { animation-duration: 1.6s; }
+}
 </style>

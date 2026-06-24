@@ -85,6 +85,23 @@
         </div>
 
         <div class="car-field">
+            <label>Photos (receipts or parts)</label>
+            <input type="file" accept="image/*" multiple class="car-input" :disabled="totalPhotoCount >= 6" @change="onPhotoChange" />
+            <div v-if="totalPhotoCount" class="maint-photo-grid">
+                <div v-for="(url, i) in keptPhotos" :key="'k' + i" class="maint-photo-item">
+                    <img :src="resolvePhoto(url)" alt="Maintenance photo" />
+                    <button type="button" class="maint-photo-x" @click="removeKeptPhoto(i)">×</button>
+                </div>
+                <div v-for="(p, i) in newPhotos" :key="'n' + i" class="maint-photo-item">
+                    <img :src="p.preview" alt="Maintenance photo" />
+                    <button type="button" class="maint-photo-x" @click="removeNewPhoto(i)">×</button>
+                </div>
+            </div>
+            <p class="maint-photo-hint">{{ totalPhotoCount }}/6 photos · max 10MB each</p>
+            <p v-if="photoError" class="maint-photo-error">{{ photoError }}</p>
+        </div>
+
+        <div class="car-field">
             <label>Labor Hours</label>
             <input v-model="form.laborHours" type="number" min="0" step="0.1" placeholder="2.5" class="car-input" />
         </div>
@@ -108,7 +125,7 @@
         <p v-if="errorMessage" class="error-text">{{ errorMessage }}</p>
         <p v-if="successMessage" class="success-text">{{ successMessage }}</p>
     </form>
-    <Loading v-if="loadingOverlay"/>
+    <Loading v-if="loadingOverlay" :label="loadingMessage"/>
 </div>
 </template>
 
@@ -116,6 +133,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useCarMaintenance } from '@/composables/carMaintenance'
+import { API_BASE_URL } from '@/constants/config'
 import Loading from '@/components/Loading.vue'
 import CarTopBar from '@/components/CarMaintenance/CarTopBar.vue'
 import { useStaggerReady } from '@/composables/staggerReady'
@@ -157,6 +175,7 @@ export default {
         const distanceUnit = ref('km')
         const currencyOptions = ref(['USD', 'PHP', 'EUR', 'JPY', 'SGD'])
         const loadingOverlay = ref(false)
+        const loadingMessage = ref('')
         const staggerReady = useStaggerReady()
 
         const form = ref({
@@ -177,6 +196,32 @@ export default {
         const errorMessage = ref('')
         const successMessage = ref('')
 
+        const MAX_PHOTOS = 6
+        const MAX_FILE_BYTES = 10 * 1024 * 1024
+        const newPhotos = ref([])   // [{ file, preview }] picked this session
+        const keptPhotos = ref([])  // raw stored urls retained from an existing record
+        const photoError = ref('')
+        const totalPhotoCount = computed(() => keptPhotos.value.length + newPhotos.value.length)
+        const resolvePhoto = (u) => u ? (u.startsWith('http') ? u : `${API_BASE_URL}${u}`) : ''
+
+        const onPhotoChange = (e) => {
+            const files = Array.from(e.target.files || [])
+            photoError.value = ''
+            const tooBig = files.filter(f => f.size > MAX_FILE_BYTES)
+            const valid = files.filter(f => f.size <= MAX_FILE_BYTES)
+            const room = Math.max(0, MAX_PHOTOS - totalPhotoCount.value)
+            valid.slice(0, room).forEach(file => {
+                newPhotos.value.push({ file, preview: URL.createObjectURL(file) })
+            })
+            const notes = []
+            if (tooBig.length) notes.push(`${tooBig.length} photo${tooBig.length > 1 ? 's were' : ' was'} over 10MB and skipped`)
+            if (valid.length > room) notes.push(`only ${MAX_PHOTOS} photos allowed`)
+            if (notes.length) photoError.value = notes.join(' · ')
+            e.target.value = '' // allow re-picking the same file
+        }
+        const removeNewPhoto = (i) => newPhotos.value.splice(i, 1)
+        const removeKeptPhoto = (i) => keptPhotos.value.splice(i, 1)
+
         const payload = computed(() => ({
             ...form.value,
             title: form.value.maintenanceType || 'Maintenance',
@@ -185,14 +230,32 @@ export default {
             laborHours: form.value.laborHours || undefined
         }))
 
+        // Multipart when photos are involved (new files, or editing where the kept set
+        // must be communicated); otherwise plain JSON.
+        const buildBody = () => {
+            const base = payload.value
+            if (newPhotos.value.length || isEditing.value) {
+                const fd = new FormData()
+                Object.entries(base).forEach(([k, v]) => {
+                    if (v !== undefined && v !== null) fd.append(k, v)
+                })
+                fd.append('keepPhotos', JSON.stringify(keptPhotos.value))
+                newPhotos.value.forEach(p => fd.append('photos', p.file))
+                return fd
+            }
+            return base
+        }
+
         const distanceUnitLabel = computed(() => distanceUnit.value === 'mi' ? 'miles' : 'km')
 
-        const withOverlay = async(fn) => {
+        const withOverlay = async(fn, message = 'Loading…') => {
+            loadingMessage.value = message
             loadingOverlay.value = true
             try {
                 return await fn()
             } finally {
                 loadingOverlay.value = false
+                loadingMessage.value = ''
             }
         }
 
@@ -240,6 +303,10 @@ export default {
                     laborHours: rec.laborHours || '',
                     description: rec.description || ''
                 }
+                keptPhotos.value = (rec.photos && rec.photos.length)
+                    ? [...rec.photos]
+                    : (rec.receiptUrl ? [rec.receiptUrl] : [])
+                newPhotos.value = []
                 selectedVehicleName.value = rec.vehicleId
             } catch (err) {
                 console.error(err)
@@ -251,20 +318,21 @@ export default {
             successMessage.value = ''
             submitting.value = true
             try {
+                const saveMessage = newPhotos.value.length ? 'Uploading photos…' : 'Saving…'
                 await withOverlay(async() => {
                     const token = localStorage.getItem('token')
                     if (!token) throw new Error('You must be logged in.')
                     if (isEditing.value && editingId.value) {
-                        await updateMaintenanceRecord(token, editingId.value, payload.value)
+                        await updateMaintenanceRecord(token, editingId.value, buildBody())
                         successMessage.value = 'Maintenance updated'
                     } else {
-                        await createMaintenanceRecord(token, payload.value)
+                        await createMaintenanceRecord(token, buildBody())
                         successMessage.value = 'Maintenance saved'
                     }
                     setTimeout(() => {
                         router.push('/car-maintenance')
                     }, 600)
-                })
+                }, saveMessage)
             } catch (err) {
                 errorMessage.value = err?.message || 'Unable to save maintenance'
             } finally {
@@ -349,7 +417,16 @@ export default {
             currencyOptions,
             cancelEdit,
             loadingOverlay,
-            staggerReady
+            loadingMessage,
+            staggerReady,
+            newPhotos,
+            keptPhotos,
+            photoError,
+            totalPhotoCount,
+            resolvePhoto,
+            onPhotoChange,
+            removeNewPhoto,
+            removeKeptPhoto
         }
     }
 }
@@ -360,6 +437,52 @@ export default {
 
 /* Form body */
 .car-body { padding: 16px !important; gap: 16px !important; }
+
+/* Maintenance photo gallery */
+.maint-photo-grid {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+.maint-photo-item {
+    position: relative;
+    aspect-ratio: 1 / 1;
+}
+.maint-photo-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid var(--glass-card-border);
+}
+.maint-photo-x {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.maint-photo-hint {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.maint-photo-error {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #f87171;
+}
 
 /* Section card wrapper for field groups */
 .car-form { gap: 14px !important; }

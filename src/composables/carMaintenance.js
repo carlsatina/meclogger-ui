@@ -76,16 +76,26 @@ export const useCarMaintenance = () => {
         return data.vehicles || []
     }
 
+    // Accepts either a plain object (sent as JSON) or a FormData (when a photo is attached —
+    // the browser sets the multipart Content-Type/boundary itself, so we must not set it).
+    const maintenanceRequestInit = (token, payload, method) => {
+        const isForm = typeof FormData !== 'undefined' && payload instanceof FormData
+        return {
+            method,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                ...(isForm ? {} : { 'Content-Type': 'application/json' })
+            },
+            body: isForm ? payload : JSON.stringify(payload)
+        }
+    }
+
     const createMaintenanceRecord = async(token, payload) => {
         if (!token) throw new Error('Missing auth token')
-        const res = await fetch(`${API_BASE_URL}/api/v1/car-maintenance/maintenance-records`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify(payload)
-        })
+        const res = await fetch(
+            `${API_BASE_URL}/api/v1/car-maintenance/maintenance-records`,
+            maintenanceRequestInit(token, payload, 'POST')
+        )
         const data = await res.json()
         if (!res.ok) {
             throw new Error(data.message || 'Unable to create maintenance record')
@@ -95,14 +105,10 @@ export const useCarMaintenance = () => {
 
     const updateMaintenanceRecord = async(token, recordId, payload) => {
         if (!token) throw new Error('Missing auth token')
-        const res = await fetch(`${API_BASE_URL}/api/v1/car-maintenance/maintenance-records/${recordId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify(payload)
-        })
+        const res = await fetch(
+            `${API_BASE_URL}/api/v1/car-maintenance/maintenance-records/${recordId}`,
+            maintenanceRequestInit(token, payload, 'PUT')
+        )
         const data = await res.json()
         if (!res.ok) {
             throw new Error(data.message || 'Unable to update maintenance record')

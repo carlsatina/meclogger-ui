@@ -79,6 +79,19 @@
             </div>
 
             <div class="car-field">
+                <label>Photos (receipts or parts)</label>
+                <input class="car-input" type="file" accept="image/*" multiple :disabled="newPhotos.length >= 6" @change="onPhotoChange" />
+                <div v-if="newPhotos.length" class="maint-photo-grid">
+                    <div v-for="(p, i) in newPhotos" :key="i" class="maint-photo-item">
+                        <img :src="p.preview" alt="Maintenance photo" />
+                        <button type="button" class="maint-photo-x" @click="removeNewPhoto(i)">×</button>
+                    </div>
+                </div>
+                <p class="maint-photo-hint">{{ newPhotos.length }}/6 photos · max 10MB each</p>
+                <p v-if="photoError" class="maint-photo-error">{{ photoError }}</p>
+            </div>
+
+            <div class="car-field">
                 <label>Labor Hours</label>
                 <input class="car-input" v-model="form.laborHours" type="number" min="0" step="0.1" placeholder="2.5" />
             </div>
@@ -147,6 +160,26 @@ export default {
         const submitting = ref(false)
         const errorMessage = ref('')
         const successMessage = ref('')
+        const newPhotos = ref([])   // [{ file, preview }]
+        const photoError = ref('')
+        const MAX_FILE_BYTES = 10 * 1024 * 1024
+
+        const onPhotoChange = (e) => {
+            const files = Array.from(e.target.files || [])
+            photoError.value = ''
+            const tooBig = files.filter(f => f.size > MAX_FILE_BYTES)
+            const valid = files.filter(f => f.size <= MAX_FILE_BYTES)
+            const room = Math.max(0, 6 - newPhotos.value.length)
+            valid.slice(0, room).forEach(file => {
+                newPhotos.value.push({ file, preview: URL.createObjectURL(file) })
+            })
+            const notes = []
+            if (tooBig.length) notes.push(`${tooBig.length} photo${tooBig.length > 1 ? 's were' : ' was'} over 10MB and skipped`)
+            if (valid.length > room) notes.push('only 6 photos allowed')
+            if (notes.length) photoError.value = notes.join(' · ')
+            e.target.value = ''
+        }
+        const removeNewPhoto = (i) => newPhotos.value.splice(i, 1)
 
         const displayName = (vehicle) => {
             if (!vehicle) return 'Vehicle'
@@ -210,7 +243,15 @@ export default {
                     cost: form.value.cost ? Number(form.value.cost) : null,
                     laborHours: form.value.laborHours ? Number(form.value.laborHours) : null
                 }
-                await createMaintenanceRecord(token, payload)
+                let body = payload
+                if (newPhotos.value.length) {
+                    body = new FormData()
+                    Object.entries(payload).forEach(([k, v]) => {
+                        if (v !== undefined && v !== null) body.append(k, v)
+                    })
+                    newPhotos.value.forEach(p => body.append('photos', p.file))
+                }
+                await createMaintenanceRecord(token, body)
                 successMessage.value = 'Maintenance saved'
                 setTimeout(() => router.push('/web/car-maintenance'), 500)
             } catch (err) {
@@ -236,13 +277,47 @@ export default {
             successMessage,
             displayName,
             selectType,
-            submitRecord
+            submitRecord,
+            newPhotos,
+            photoError,
+            onPhotoChange,
+            removeNewPhoto
         }
     }
 }
 </script>
 
 <style scoped>
+.maint-photo-grid {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+.maint-photo-item { position: relative; aspect-ratio: 1 / 1; }
+.maint-photo-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid var(--glass-card-border);
+}
+.maint-photo-x {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+}
+.maint-photo-hint { margin-top: 6px; font-size: 12px; color: var(--text-muted); }
+.maint-photo-error { margin-top: 4px; font-size: 12px; color: #f87171; }
 /* ── Topbar ── */
 .car-hero {
     background: rgba(5, 6, 10, 0.94) !important;

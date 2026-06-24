@@ -128,6 +128,12 @@ export default {
         const handleFileChange = (e) => {
             const file = e.target.files?.[0]
             if (!file) return
+            if (file.size > 10 * 1024 * 1024) {
+                errorMessage.value = 'Image must be 10MB or smaller.'
+                e.target.value = ''
+                return
+            }
+            errorMessage.value = ''
             imageFile.value = file
             imagePreview.value = URL.createObjectURL(file)
         }

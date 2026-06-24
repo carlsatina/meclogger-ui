@@ -58,6 +58,19 @@
                     <span class="car-detail-label">Description</span>
                     <span class="car-detail-value">{{ record.description || '—' }}</span>
                 </div>
+                <div class="car-detail-row" v-if="photoUrls.length">
+                    <span class="car-detail-label">Photos</span>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <img
+                            v-for="(u, i) in photoUrls"
+                            :key="i"
+                            :src="u"
+                            alt="Receipt or parts photo"
+                            style="width: 110px; height: 110px; object-fit: cover; border-radius: 10px; display: block; cursor: pointer;"
+                            @click="openLightbox(i)"
+                        />
+                    </div>
+                </div>
             </div>
 
             <div class="car-detail-actions">
@@ -79,16 +92,25 @@
             </div>
         </div>
     </div>
+    <PhotoLightbox
+        :visible="lightboxOpen"
+        :images="photoUrls"
+        :start-index="lightboxIndex"
+        @close="lightboxOpen = false"
+    />
 </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { API_BASE_URL } from '@/constants/config'
 import { useCarMaintenance } from '@/composables/carMaintenance'
+import PhotoLightbox from '@/components/PhotoLightbox.vue'
 
 export default {
     name: 'CarMaintenanceMaintenanceDetailWeb',
+    components: { PhotoLightbox },
     setup() {
         const route = useRoute()
         const router = useRouter()
@@ -100,6 +122,17 @@ export default {
         const showDelete = ref(false)
         const distanceUnit = ref('km')
         const defaultCurrency = ref('USD')
+
+        const photoUrls = computed(() => {
+            const r = record.value
+            if (!r) return []
+            const raw = (r.photos && r.photos.length) ? r.photos : (r.receiptUrl ? [r.receiptUrl] : [])
+            return raw.map(u => (u.startsWith('http') ? u : `${API_BASE_URL}${u}`))
+        })
+
+        const lightboxOpen = ref(false)
+        const lightboxIndex = ref(0)
+        const openLightbox = (i) => { lightboxIndex.value = i; lightboxOpen.value = true }
 
         const formatDate = (value) => {
             if (!value) return '—'
@@ -188,6 +221,10 @@ export default {
         return {
             router,
             record,
+            photoUrls,
+            lightboxOpen,
+            lightboxIndex,
+            openLightbox,
             loading,
             deleting,
             errorMessage,

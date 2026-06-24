@@ -85,7 +85,7 @@
         <p v-if="errorMessage" class="error-text">{{ errorMessage }}</p>
         <p v-if="successMessage" class="success-text">{{ successMessage }}</p>
     </form>
-    <Loading v-if="loadingOverlay"/>
+    <Loading v-if="loadingOverlay" :label="loadingMessage"/>
 </div>
 </template>
 
@@ -131,15 +131,18 @@ export default {
         const editingId = ref('')
         const existingImageUrl = ref('')
         const loadingOverlay = ref(false)
+        const loadingMessage = ref('')
         const staggerReady = useStaggerReady()
 
 
-        const withOverlay = async(fn) => {
+        const withOverlay = async(fn, message = 'Loading…') => {
+            loadingMessage.value = message
             loadingOverlay.value = true
             try {
                 return await fn()
             } finally {
                 loadingOverlay.value = false
+                loadingMessage.value = ''
             }
         }
 
@@ -151,10 +154,15 @@ export default {
 
         const handleFileChange = (event) => {
             const file = event.target.files?.[0]
-            if (file) {
-                imageFile.value = file
-                imagePreview.value = URL.createObjectURL(file)
+            if (!file) return
+            if (file.size > 10 * 1024 * 1024) {
+                errorMessage.value = 'Image must be 10MB or smaller.'
+                event.target.value = ''
+                return
             }
+            errorMessage.value = ''
+            imageFile.value = file
+            imagePreview.value = URL.createObjectURL(file)
         }
 
         const compressImage = (file, maxSize = 1024 * 1024) => {
@@ -237,6 +245,7 @@ export default {
             successMessage.value = ''
             submitting.value = true
             try {
+                const saveMessage = imageFile.value ? 'Uploading photo…' : 'Saving…'
                 await withOverlay(async() => {
                     const token = localStorage.getItem('token')
                     if (!token) {
@@ -265,7 +274,7 @@ export default {
                     setTimeout(() => {
                         router.push('/car-maintenance/vehicles')
                     }, 600)
-                })
+                }, saveMessage)
             } catch (err) {
                 errorMessage.value = err?.message || 'Something went wrong'
             } finally {
@@ -289,6 +298,7 @@ export default {
             submitVehicle,
             isEditing,
             loadingOverlay,
+            loadingMessage,
             staggerReady
         }
     }
