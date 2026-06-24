@@ -186,10 +186,19 @@
                         <input v-model="budgetForm.amount" type="number" class="form-input" placeholder="0.00"/>
                     </div>
                     <div class="form-field">
-                        <label>Start date</label>
-                        <input v-model="budgetForm.startDate" type="date" class="form-input"/>
+                        <label>Repeats</label>
+                        <select v-model="budgetForm.period" class="form-input">
+                            <option value="MONTHLY">Every month</option>
+                            <option value="WEEKLY">Every week</option>
+                            <option value="YEARLY">Every year</option>
+                            <option value="ONE_TIME">One-time</option>
+                        </select>
                     </div>
                     <div class="form-field">
+                        <label>{{ budgetForm.period === 'ONE_TIME' ? 'Start date' : 'Starts' }}</label>
+                        <input v-model="budgetForm.startDate" type="date" class="form-input"/>
+                    </div>
+                    <div class="form-field" v-if="budgetForm.period === 'ONE_TIME'">
                         <label>End date</label>
                         <input v-model="budgetForm.endDate" type="date" class="form-input"/>
                     </div>
@@ -198,6 +207,9 @@
                         <input v-model="budgetForm.alertThreshold" type="number" class="form-input" placeholder="80"/>
                     </div>
                 </div>
+                <p v-if="budgetForm.period !== 'ONE_TIME'" class="form-hint">
+                    Renews automatically each {{ budgetForm.period === 'WEEKLY' ? 'week' : budgetForm.period === 'YEARLY' ? 'year' : 'month' }} — spending resets at the start of each period.
+                </p>
                 <p v-if="budgetError" class="form-error">{{ budgetError }}</p>
                 <div class="form-actions">
                     <button class="primary-btn" :disabled="budgetSaving" @click="saveBudget">
@@ -211,8 +223,8 @@
                 <div class="budget-card-full" v-for="b in budgets" :key="b.id">
                     <div class="budget-card-top">
                         <div>
-                            <p class="budget-name">{{ b.name }}</p>
-                            <p class="budget-dates">{{ fmtDate(b.startDate) }} — {{ fmtDate(b.endDate) }}</p>
+                            <p class="budget-name">{{ b.name }} <span class="budget-period-tag">{{ budgetPeriodLabel(b) }}</span></p>
+                            <p class="budget-dates">{{ budgetWindowLabel(b) }}</p>
                         </div>
                         <div class="budget-actions">
                             <button class="row-action-btn" @click="startEditBudget(b)"><mdicon name="pencil-outline" :size="14"/></button>
@@ -461,6 +473,22 @@ export default {
             if (!id) return '—'
             return budgets.value.find(b => b.id === id)?.name || '—'
         }
+        const budgetPeriodLabel = (b) => {
+            switch (b?.period) {
+                case 'WEEKLY': return 'Weekly'
+                case 'MONTHLY': return 'Monthly'
+                case 'YEARLY': return 'Yearly'
+                default: return 'One-time'
+            }
+        }
+        // Recurring budgets store a far-future endDate, so show the current period window instead.
+        const budgetWindowLabel = (b) => {
+            if (b?.period && b.period !== 'ONE_TIME') {
+                const start = b.windowStart || b.startDate
+                return b.windowEnd ? `${fmtDate(start)} — ${fmtDate(b.windowEnd)}` : fmtDate(start)
+            }
+            return `${fmtDate(b.startDate)} — ${fmtDate(b.endDate)}`
+        }
 
         // ── Load ──
         const loadAll = async () => {
@@ -558,35 +586,38 @@ export default {
         const budgetError     = ref('')
         const budgetSaving    = ref(false)
         const editingBudgetId = ref(null)
-        const budgetForm      = ref({ name: '', amount: '', startDate: todayStr(), endDate: todayStr(), alertThreshold: '80' })
+        const budgetForm      = ref({ name: '', amount: '', period: 'MONTHLY', startDate: todayStr(), endDate: todayStr(), alertThreshold: '80' })
 
         const startEditBudget = (b) => {
             editingBudgetId.value = b.id
-            budgetForm.value = { name: b.name, amount: b.amount, startDate: b.startDate?.slice(0,10) || todayStr(), endDate: b.endDate?.slice(0,10) || todayStr(), alertThreshold: b.alertThreshold ?? 80 }
+            budgetForm.value = { name: b.name, amount: b.amount, period: b.period || 'ONE_TIME', startDate: b.startDate?.slice(0,10) || todayStr(), endDate: b.endDate?.slice(0,10) || todayStr(), alertThreshold: b.alertThreshold ?? 80 }
             showBudgetForm.value = true
         }
         const cancelBudgetForm = () => {
             showBudgetForm.value = false
             editingBudgetId.value = null
-            budgetForm.value = { name: '', amount: '', startDate: todayStr(), endDate: todayStr(), alertThreshold: '80' }
+            budgetForm.value = { name: '', amount: '', period: 'MONTHLY', startDate: todayStr(), endDate: todayStr(), alertThreshold: '80' }
         }
         const saveBudget = async () => {
             if (!budgetForm.value.name.trim() || !budgetForm.value.amount) {
                 budgetError.value = 'Name and amount are required.'
                 return
             }
+            const isRecurring = budgetForm.value.period && budgetForm.value.period !== 'ONE_TIME'
+            if (!budgetForm.value.startDate || (!isRecurring && !budgetForm.value.endDate)) {
+                budgetError.value = isRecurring ? 'Start date is required.' : 'Start and end dates are required.'
+                return
+            }
             budgetSaving.value = true
             budgetError.value = ''
             try {
-                const payload = { name: budgetForm.value.name.trim(), amount: parseFloat(budgetForm.value.amount), startDate: budgetForm.value.startDate, endDate: budgetForm.value.endDate, alertThreshold: parseFloat(budgetForm.value.alertThreshold) || 80, active: true }
+                const payload = { name: budgetForm.value.name.trim(), amount: parseFloat(budgetForm.value.amount), period: budgetForm.value.period || 'ONE_TIME', startDate: budgetForm.value.startDate, endDate: isRecurring ? null : budgetForm.value.endDate, alertThreshold: parseFloat(budgetForm.value.alertThreshold) || 80, active: true }
                 if (editingBudgetId.value) {
-                    const updated = await updateBudget(token(), editingBudgetId.value, payload)
-                    const idx = budgets.value.findIndex(b => b.id === editingBudgetId.value)
-                    if (idx >= 0) budgets.value[idx] = { ...budgets.value[idx], ...updated }
+                    await updateBudget(token(), editingBudgetId.value, payload)
                 } else {
-                    const created = await createBudget(token(), payload)
-                    budgets.value.push(created)
+                    await createBudget(token(), payload)
                 }
+                await loadAll()
                 cancelBudgetForm()
             } catch (e) {
                 budgetError.value = e.message
@@ -685,7 +716,7 @@ export default {
             budgetFilterId, currentMonthTotal, currentMonthCount,
             recentExpenses, activeBudgetLabel, subscriptionTotal,
             filteredTxns, filteredTxnTotal,
-            fmtMoney, fmtDate, budgetPct, budgetSevClass, budgetName,
+            fmtMoney, fmtDate, budgetPct, budgetSevClass, budgetName, budgetPeriodLabel, budgetWindowLabel,
             showExpenseForm, expenseForm, expenseError, expenseSaving, editingExpenseId,
             openAddExpense, startEditExpense, cancelExpenseForm, saveExpense, confirmDeleteExpense,
             showBudgetForm, budgetForm, budgetError, budgetSaving, editingBudgetId,
@@ -928,6 +959,21 @@ export default {
 .budget-card-top    { display: flex; justify-content: space-between; align-items: flex-start; }
 .budget-card-bottom { display: flex; justify-content: space-between; align-items: center; }
 .budget-name  { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.budget-period-tag {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    vertical-align: middle;
+    color: #a78bfa;
+    background: rgba(167, 139, 250, 0.14);
+    border: 1px solid rgba(167, 139, 250, 0.3);
+}
+.form-hint { font-size: 12px; color: var(--text-muted); margin: 8px 0 0; }
 .budget-dates { font-size: 11px; color: var(--text-muted); margin: 2px 0 0; }
 .budget-spent { font-size: 12px; color: var(--text-muted); }
 .budget-limit { font-size: 12px; color: var(--text-muted); }

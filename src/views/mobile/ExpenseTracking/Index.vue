@@ -812,8 +812,11 @@
                             <div class="budget-manage-card" v-for="b in budgets" :key="b.id">
                                 <div class="bmc-head">
                                     <div class="bmc-titles">
-                                        <p class="bmc-name">{{ b.name }}</p>
-                                        <p class="bmc-dates">{{ formatDate(b.startDate) }} – {{ formatDate(b.endDate) }}</p>
+                                        <p class="bmc-name">
+                                            {{ b.name }}
+                                            <span class="bmc-period">{{ budgetPeriodLabel(b) }}</span>
+                                        </p>
+                                        <p class="bmc-dates">{{ budgetWindowLabel(b) }}</p>
                                     </div>
                                     <div class="bmc-actions">
                                         <button class="icon-btn ghost" aria-label="Edit budget" @click="startEditBudget(b)">
@@ -1119,13 +1122,25 @@
                     <input type="number" step="0.01" v-model.number="budgetForm.amount" placeholder="0.00" />
                 </label>
                 <label class="field inline">
-                    <span>Start date</span>
-                    <input type="date" v-model="budgetForm.startDate" />
+                    <span>Repeats</span>
+                    <select v-model="budgetForm.period">
+                        <option value="MONTHLY">Every month</option>
+                        <option value="WEEKLY">Every week</option>
+                        <option value="YEARLY">Every year</option>
+                        <option value="ONE_TIME">One-time</option>
+                    </select>
                 </label>
                 <label class="field inline">
+                    <span>{{ budgetForm.period === 'ONE_TIME' ? 'Start date' : 'Starts' }}</span>
+                    <input type="date" v-model="budgetForm.startDate" />
+                </label>
+                <label class="field inline" v-if="budgetForm.period === 'ONE_TIME'">
                     <span>End date</span>
                     <input type="date" v-model="budgetForm.endDate" />
                 </label>
+                <p class="micro muted" v-else>
+                    Renews automatically each {{ budgetForm.period === 'WEEKLY' ? 'week' : budgetForm.period === 'YEARLY' ? 'year' : 'month' }} — spending resets at the start of each period.
+                </p>
                 <label class="checkbox">
                     <input type="checkbox" v-model="budgetForm.alertEnabled" />
                     <span>Enable alerts</span>
@@ -1293,7 +1308,7 @@
                 </div>
                 <div>
                     <p class="item-title">{{ deleteTarget?.name || 'Budget' }}</p>
-                    <p class="item-sub">{{ deleteTarget ? formatDate(deleteTarget.startDate) + ' - ' + formatDate(deleteTarget.endDate) : '' }}</p>
+                    <p class="item-sub">{{ deleteTarget ? budgetWindowLabel(deleteTarget) : '' }}</p>
                 </div>
                 <div class="item-amount">{{ formatMoney(deleteTarget?.currency || defaultCurrency, deleteTarget?.amount || 0) }}</div>
             </div>
@@ -1757,6 +1772,7 @@ export default {
         const budgetForm = ref({
             name: '',
             amount: '',
+            period: 'MONTHLY',
             startDate: todayStr(),
             endDate: todayStr(),
             alertEnabled: true,
@@ -2313,6 +2329,7 @@ export default {
                 name: budget.name || '',
                 amount: budget.amount || '',
                 currency: budget.currency || defaultCurrency.value || 'PHP',
+                period: budget.period || 'ONE_TIME',
                 startDate: budget.startDate ? budget.startDate.slice(0, 10) : todayStr(),
                 endDate: budget.endDate ? budget.endDate.slice(0, 10) : todayStr(),
                 categoryId: '',
@@ -2732,6 +2749,26 @@ export default {
             return 'bar-ok'
         }
 
+        const budgetPeriodLabel = (budget) => {
+            switch (budget?.period) {
+                case 'WEEKLY': return 'Weekly'
+                case 'MONTHLY': return 'Monthly'
+                case 'YEARLY': return 'Yearly'
+                default: return 'One-time'
+            }
+        }
+
+        // For recurring budgets show the current period window (endDate is a far-future sentinel);
+        // one-time budgets show their fixed range.
+        const budgetWindowLabel = (budget) => {
+            if (budget?.period && budget.period !== 'ONE_TIME') {
+                const start = budget.windowStart || budget.startDate
+                const end = budget.windowEnd
+                return end ? `${formatDate(start)} – ${formatDate(end)}` : formatDate(start)
+            }
+            return `${formatDate(budget.startDate)} – ${formatDate(budget.endDate)}`
+        }
+
         const currentMonthStart = computed(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
         const currentMonthEnd = computed(() => new Date(currentMonthStart.value.getFullYear(), currentMonthStart.value.getMonth() + 1, 0))
         const previousMonthStart = computed(() => new Date(currentMonthStart.value.getFullYear(), currentMonthStart.value.getMonth() - 1, 1))
@@ -2778,6 +2815,7 @@ export default {
                 name: '',
                 amount: '',
                 currency: defaultCurrency.value || 'PHP',
+                period: 'MONTHLY',
                 startDate: todayStr(),
                 endDate: todayStr(),
                 categoryId: '',
@@ -2794,8 +2832,9 @@ export default {
                 budgetError.value = 'Name and amount are required.'
                 return
             }
-            if (!budgetForm.value.startDate || !budgetForm.value.endDate) {
-                budgetError.value = 'Start and end dates are required.'
+            const isRecurring = budgetForm.value.period && budgetForm.value.period !== 'ONE_TIME'
+            if (!budgetForm.value.startDate || (!isRecurring && !budgetForm.value.endDate)) {
+                budgetError.value = isRecurring ? 'Start date is required.' : 'Start and end dates are required.'
                 return
             }
             const token = localStorage.getItem('token')
@@ -2809,19 +2848,19 @@ export default {
                     name: budgetForm.value.name.trim(),
                     amount: Number(budgetForm.value.amount),
                     currency: defaultCurrency.value || 'PHP',
+                    period: budgetForm.value.period || 'ONE_TIME',
                     startDate: budgetForm.value.startDate,
-                    endDate: budgetForm.value.endDate,
+                    endDate: isRecurring ? null : budgetForm.value.endDate,
                     categoryId: null,
                     alertThreshold: budgetForm.value.alertThreshold ? Number(budgetForm.value.alertThreshold) : null,
                     alertEnabled: budgetForm.value.alertEnabled
                 }
                 if (editingBudgetId.value) {
-                    const updated = await updateBudget(token, editingBudgetId.value, payload)
-                    budgets.value = budgets.value.map(b => b.id === updated.id ? updated : b)
+                    await updateBudget(token, editingBudgetId.value, payload)
                 } else {
-                    const budget = await createBudget(token, payload)
-                    budgets.value = [budget, ...budgets.value]
+                    await createBudget(token, payload)
                 }
+                await loadBudgets()
                 closeBudgetSheet()
             } catch (err) {
                 budgetError.value = err?.message || 'Unable to save budget.'
@@ -3561,6 +3600,8 @@ export default {
             currentMonthName,
             monthChangeCls,
             budgetPctClass,
+            budgetPeriodLabel,
+            budgetWindowLabel,
             formatMoney,
             currencySymbol,
             userName,
