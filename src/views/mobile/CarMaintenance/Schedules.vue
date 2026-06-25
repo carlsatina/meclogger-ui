@@ -52,7 +52,7 @@
             />
         </div>
 
-        <div class="car-search car-card">
+        <div class="car-search">
             <mdicon name="magnify" :size="20"/>
             <input
                 v-model="searchTerm"
@@ -72,7 +72,7 @@
             <div
                 v-for="item in filteredReminders"
                 :key="item.id"
-                class="schedule-card car-card"
+                class="schedule-card"
                 @click="openDetail(item)"
             >
                 <div class="schedule-top">
@@ -147,21 +147,13 @@
         </div>
     </transition>
 
-    <transition name="glass-fade">
-        <div v-if="showOdometerModal" class="glass-confirm-overlay" @click.self="showOdometerModal = false">
-            <div class="glass-confirm-card">
-                <h3 class="glass-confirm-title">Update Odometer</h3>
-                <p class="glass-confirm-text">Current: {{ formattedOdometer }}</p>
-                <input v-model="odometerInput" type="number" min="0" class="modal-input" />
-                <div class="glass-confirm-actions">
-                    <button type="button" @click="showOdometerModal = false">Cancel</button>
-                    <button type="button" class="confirm" :disabled="savingOdometer" @click="saveOdometer">
-                        {{ savingOdometer ? 'Saving...' : 'Save' }}
-                    </button>
-                </div>
-            </div>
-        </div>
-    </transition>
+    <UpdateOdometerModal
+        v-model:show="showOdometerModal"
+        v-model="odometerInput"
+        :current="formattedOdometer"
+        :saving="savingOdometer"
+        @save="saveOdometer"
+    />
 
     <button class="car-fab" @click="addSchedule">
         <mdicon name="plus" :size="20"/>
@@ -201,6 +193,7 @@ import { API_BASE_URL } from '@/constants/config'
 import Loading from '@/components/Loading.vue'
 import CarTopBar from '@/components/CarMaintenance/CarTopBar.vue'
 import VehicleCard from '@/components/CarMaintenance/VehicleCard.vue'
+import UpdateOdometerModal from '@/components/CarMaintenance/UpdateOdometerModal.vue'
 import { useStaggerReady } from '@/composables/staggerReady'
 import { scheduleMaintenanceNotification, cancelReminderNotifications, ensureLocalNotificationPermission } from '@/composables/localNotifications'
 
@@ -209,7 +202,8 @@ export default {
     components: {
         Loading,
         CarTopBar,
-        VehicleCard
+        VehicleCard,
+        UpdateOdometerModal
     },
     setup() {
         const router = useRouter()
@@ -566,41 +560,34 @@ export default {
 </script>
 
 <style scoped>
-/* ── Vehicle card host ── */
-.vehicle-card-host { margin: 0 16px; }
+/* ── Vehicle card host (full width hero) ── */
+.vehicle-card-host { margin: 0; border-bottom: 1px solid var(--glass-card-border); }
 
-/* ── Search bar ── */
+/* ── Search bar (inset input) ── */
 .car-search {
   display: flex !important; align-items: center !important; gap: 10px !important;
   background: var(--glass-card-bg) !important;
   border: 1px solid var(--glass-card-border) !important;
   border-radius: 12px !important;
   padding: 11px 14px !important;
-  box-shadow: var(--glass-card-shadow) !important;
   color: var(--text-muted);
-  margin: 0 16px !important;
+  margin: 12px 16px 4px !important;
 }
 .car-search input { border: none !important; outline: none !important; flex: 1; font-size: 14px; background: transparent; color: var(--text-primary); }
 
-/* ── Body padding ── */
-.car-body { padding: 16px 0 90px !important; display: flex !important; flex-direction: column !important; gap: 8px !important; }
+/* ── Body — full width, no boxed cards ── */
+.car-body { padding: 0 0 150px !important; display: flex !important; flex-direction: column !important; gap: 0 !important; }
 
-/* ── Schedule cards ── */
+/* ── Schedule rows (full width) ── */
 .schedule-card {
-  background: var(--glass-card-bg) !important;
-  border-top: 1px solid var(--glass-card-border) !important;
-  border-bottom: 1px solid var(--glass-card-border) !important;
-  border-right: 1px solid var(--glass-card-border) !important;
-  border-left: 3px solid #f97316 !important;
-  border-radius: 14px !important;
   padding: 14px 16px !important;
-  margin: 0 16px !important;
+  border-bottom: 1px solid var(--glass-card-border);
   cursor: pointer;
   display: flex; flex-direction: column; gap: 10px;
-  box-shadow: var(--glass-card-shadow) !important;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: background 0.15s;
 }
-.schedule-card:active { transform: scale(0.99); }
+.schedule-card:last-of-type { border-bottom: none; }
+.schedule-card:active { background: rgba(249, 115, 22, 0.06); }
 
 .schedule-top { display: flex; align-items: center; justify-content: space-between; }
 .schedule-title { margin: 0; font-size: 15px; font-weight: 700; color: var(--text-primary); }
@@ -636,11 +623,9 @@ export default {
 /* ── Empty state ── */
 .car-empty {
   text-align: center !important; color: var(--text-muted) !important; font-size: 14px !important;
-  padding: 32px 16px !important;
-  background: var(--glass-card-bg) !important;
-  border: 1px solid var(--glass-card-border) !important;
-  border-radius: 14px !important;
-  margin: 0 16px !important;
+  padding: 48px 24px !important;
+  background: transparent !important;
+  border: none !important;
   box-shadow: none !important;
 }
 
@@ -701,31 +686,13 @@ export default {
   box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3) !important;
 }
 
-/* ── Odometer modal (glass-confirm reuse) ── */
-.modal-input {
-  width: 100%;
-  border: 1px solid var(--glass-card-border);
-  border-radius: 12px;
-  padding: 11px 14px;
-  font-size: 16px;
-  margin: 8px 0 16px;
-  background: var(--glass-ghost-bg);
-  color: var(--text-primary);
-  box-sizing: border-box;
-}
-.modal-input:focus { outline: none; border-color: rgba(249, 115, 22, 0.5); }
-
+/* Delete confirm modal — orange accent bar */
 :deep(.glass-confirm-card) { position: relative; overflow: hidden; }
 :deep(.glass-confirm-card)::before {
   content: '';
   position: absolute; top: 0; left: 0; right: 0;
   height: 3px;
   background: linear-gradient(90deg, #f97316, #fb923c);
-}
-:deep(.glass-confirm-actions .confirm) {
-  background: linear-gradient(135deg, #f97316, #fb923c) !important;
-  color: #fff !important;
-  border: none !important;
 }
 
 /* ── Notifications panel ── */

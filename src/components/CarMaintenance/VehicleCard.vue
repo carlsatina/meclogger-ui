@@ -76,29 +76,28 @@ export default {
 
 <style scoped>
 .vehicle-pill {
-    background: var(--glass-card-bg) !important;
-    border: 1px solid var(--glass-card-border) !important;
-    border-radius: 18px !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
     padding: 0 !important;
     display: flex;
     flex-direction: column;
     cursor: pointer;
     position: relative;
     overflow: hidden;
-    box-shadow: var(--glass-card-shadow) !important;
+    box-shadow: none !important;
 }
 .vp-photo {
     width: 100%;
-    height: 150px;
+    height: 160px;
     background: rgba(249, 115, 22, 0.12);
-    border-bottom: 1px solid rgba(249, 115, 22, 0.18);
     display: flex; align-items: center; justify-content: center;
     overflow: hidden;
     color: #fb923c;
 }
 .vp-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-.vp-info { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 7px; }
+.vp-info { padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 7px; }
 .vp-name-row { display: flex; align-items: center; gap: 8px; }
 .vp-name {
     margin: 0; flex: 1; min-width: 0;
@@ -130,12 +129,12 @@ export default {
 
 /* Vehicle picker dropdown */
 .vehicle-picker {
-    background: var(--glass-card-bg) !important;
-    border: 1px solid var(--glass-card-border) !important;
-    border-radius: 12px !important;
-    margin-top: 8px;
+    background: var(--confirm-bg) !important;
+    border: none !important;
+    border-radius: 14px !important;
+    margin: 4px 16px 8px;
     overflow: hidden;
-    box-shadow: var(--glass-card-shadow);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
 .picker-item { width: 100%; border: none; background: transparent; padding: 12px 16px; text-align: left; display: flex; flex-direction: column; gap: 2px; cursor: pointer; transition: background 0.15s; }
 .picker-item:hover { background: rgba(249, 115, 22, 0.06); }

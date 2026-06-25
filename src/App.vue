@@ -32,9 +32,11 @@ export default {
 }
 
 html, body {
-    height: 100dvh;
     width: 100%;
-    overflow-x: hidden;
+    min-height: 100dvh;
+    /* clip (not hidden) avoids turning body into a vertical scroll container,
+       which was creating nested scrollers and the "scroll stops midway" bug */
+    overflow-x: clip;
 }
 
 #app {

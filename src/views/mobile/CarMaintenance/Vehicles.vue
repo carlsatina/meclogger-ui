@@ -5,7 +5,7 @@
     <CarTopBar title="Vehicles" subtitle="Manage your garage" />
 
     <div class="car-body">
-        <div class="car-search car-card">
+        <div class="car-search">
             <mdicon name="magnify" :size="20" />
             <input v-model="search" type="text" placeholder="Search vehicle" />
         </div>
@@ -14,7 +14,7 @@
             <p v-if="errorMessage" class="error-text">{{ errorMessage }}</p>
             <template v-if="filteredVehicles.length">
                 <div
-                    class="vehicle-card car-card"
+                    class="vehicle-card"
                     v-for="vehicle in filteredVehicles"
                     :key="vehicle.id"
                     @click="openDetail(vehicle.id)"
@@ -202,37 +202,32 @@ export default {
 <style scoped>
 /* ── Hero ── */
 
-/* ── Body ── */
-.car-body { padding: 16px 16px 90px !important; display: flex !important; flex-direction: column !important; gap: 8px !important; }
+/* ── Body — full width, no boxed cards ── */
+.car-body { padding: 8px 0 90px !important; display: flex !important; flex-direction: column !important; gap: 0 !important; }
 
-/* ── Search bar ── */
+/* ── Search bar (inset input) ── */
 .car-search {
   display: flex !important; align-items: center !important; gap: 10px !important;
   background: var(--glass-card-bg) !important;
   border: 1px solid var(--glass-card-border) !important;
   border-radius: 12px !important;
   padding: 11px 14px !important;
-  box-shadow: var(--glass-card-shadow) !important;
+  margin: 4px 16px 8px !important;
   color: var(--text-muted);
 }
 .car-search input { border: none !important; outline: none !important; flex: 1; font-size: 14px; background: transparent; color: var(--text-primary); }
 
-/* ── Vehicle cards ── */
+/* ── Vehicle rows (full width) ── */
 .vehicle-card {
-  background: var(--glass-card-bg) !important;
-  border-top: 1px solid var(--glass-card-border) !important;
-  border-bottom: 1px solid var(--glass-card-border) !important;
-  border-right: 1px solid var(--glass-card-border) !important;
-  border-left: 3px solid #f97316 !important;
-  border-radius: 14px !important;
   padding: 14px 16px !important;
-  box-shadow: var(--glass-card-shadow) !important;
+  border-bottom: 1px solid var(--glass-card-border);
   display: flex;
   gap: 14px;
   cursor: pointer;
-  transition: transform 0.15s;
+  transition: background 0.15s;
 }
-.vehicle-card:active { transform: scale(0.99); }
+.vehicle-card:last-of-type { border-bottom: none; }
+.vehicle-card:active { background: rgba(249, 115, 22, 0.06); }
 
 .vehicle-thumb {
   width: 60px; height: 60px;
@@ -257,10 +252,9 @@ export default {
   text-align: center !important;
   color: var(--text-muted) !important;
   font-size: 14px !important;
-  padding: 40px 16px !important;
-  background: var(--glass-card-bg) !important;
-  border: 1px solid var(--glass-card-border) !important;
-  border-radius: 18px !important;
+  padding: 56px 16px !important;
+  background: transparent !important;
+  border: none !important;
   box-shadow: none !important;
   display: flex !important;
   flex-direction: column !important;
@@ -313,5 +307,5 @@ export default {
 .theme-light .car-bottom-nav { background: rgba(238, 242, 255, 0.94) !important; }
 .car-nav-item.active { color: #fb923c !important; font-weight: 700; }
 
-.error-text { color: #f87171; margin: 0; font-size: 13px; }
+.error-text { color: #f87171; margin: 0; padding: 8px 16px; font-size: 13px; }
 </style>

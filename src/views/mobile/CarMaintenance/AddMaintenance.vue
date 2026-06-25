@@ -23,23 +23,24 @@
 
         <div class="car-field">
             <label>Maintenance Type</label>
-            <div class="car-type-input car-input" style="display:flex; align-items:center; gap:8px; border:1px solid var(--glass-card-border);">
-                <input
-                    class="car-input"
-                    v-model="form.maintenanceType"
-                    type="text"
-                    placeholder="Select or type"
-                    @focus="showTypeList = true"
-                    style="border:none; background:transparent; padding:0; box-shadow:none;"
-                />
-                <button type="button" class="type-icon" @click="showTypeList = !showTypeList">
-                    <mdicon name="menu-down" :size="20"/>
-                </button>
-            </div>
-            <div v-if="showTypeList" class="car-type-list">
-                <button type="button" class="car-type-option" v-for="option in typeOptions" :key="option" @click="selectType(option)">
-                    {{ option }}
-                </button>
+            <div class="car-type-wrap" ref="typeWrapRef">
+                <div class="car-type-input">
+                    <input
+                        class="car-type-field"
+                        v-model="form.maintenanceType"
+                        type="text"
+                        placeholder="Select or type"
+                        @focus="showTypeList = true"
+                    />
+                    <button type="button" class="type-icon" @click="showTypeList = !showTypeList">
+                        <mdicon name="menu-down" :size="20"/>
+                    </button>
+                </div>
+                <div v-if="showTypeList" class="car-type-list">
+                    <button type="button" class="car-type-option" v-for="option in typeOptions" :key="option" @mousedown.prevent @click="selectType(option)">
+                        {{ option }}
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -48,16 +49,9 @@
                 <label>Service Date</label>
                 <input v-model="form.serviceDate" type="date" required class="car-input" />
             </div>
-        </div>
-
-        <div class="car-grid-2">
             <div class="car-field">
                 <label>Mileage at Service ({{ distanceUnitLabel }})</label>
                 <input v-model="form.mileageAtService" type="number" min="0" :placeholder="distanceUnit === 'mi' ? '50000' : '80456'" class="car-input" />
-            </div>
-            <div class="car-field">
-                <label>Cost</label>
-                <input v-model="form.cost" type="number" min="0" step="0.01" placeholder="4000" class="car-input" />
             </div>
         </div>
 
@@ -69,14 +63,20 @@
                 </select>
             </div>
             <div class="car-field">
-                <label>Serviced By</label>
-                <input v-model="form.servicedBy" type="text" placeholder="Service Center" class="car-input" />
+                <label>Cost</label>
+                <input v-model="form.cost" type="number" min="0" step="0.01" placeholder="4000" class="car-input" />
             </div>
         </div>
 
-        <div class="car-field">
-            <label>Location</label>
-            <input v-model="form.location" type="text" placeholder="City / Garage" class="car-input" />
+        <div class="car-grid-2">
+            <div class="car-field">
+                <label>Serviced By</label>
+                <input v-model="form.servicedBy" type="text" placeholder="Service Center" class="car-input" />
+            </div>
+            <div class="car-field">
+                <label>Location</label>
+                <input v-model="form.location" type="text" placeholder="City / Garage" class="car-input" />
+            </div>
         </div>
 
         <div class="car-field">
@@ -86,7 +86,14 @@
 
         <div class="car-field">
             <label>Photos (receipts or parts)</label>
-            <input type="file" accept="image/*" multiple class="car-input" :disabled="totalPhotoCount >= 6" @change="onPhotoChange" />
+            <label class="photo-dropzone" :class="{ disabled: totalPhotoCount >= 6 }">
+                <input type="file" accept="image/*" multiple :disabled="totalPhotoCount >= 6" @change="onPhotoChange" />
+                <mdicon name="tray-arrow-up" :size="24" class="photo-dropzone-icon" />
+                <span class="photo-dropzone-title">
+                    {{ totalPhotoCount >= 6 ? 'Maximum photos added' : 'Tap to add photos' }}
+                </span>
+                <span class="photo-dropzone-sub">{{ totalPhotoCount }}/6 · max 10MB each</span>
+            </label>
             <div v-if="totalPhotoCount" class="maint-photo-grid">
                 <div v-for="(url, i) in keptPhotos" :key="'k' + i" class="maint-photo-item">
                     <img :src="resolvePhoto(url)" alt="Maintenance photo" />
@@ -97,7 +104,6 @@
                     <button type="button" class="maint-photo-x" @click="removeNewPhoto(i)">×</button>
                 </div>
             </div>
-            <p class="maint-photo-hint">{{ totalPhotoCount }}/6 photos · max 10MB each</p>
             <p v-if="photoError" class="maint-photo-error">{{ photoError }}</p>
         </div>
 
@@ -130,7 +136,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useCarMaintenance } from '@/composables/carMaintenance'
 import { API_BASE_URL } from '@/constants/config'
@@ -177,6 +183,12 @@ export default {
         const loadingOverlay = ref(false)
         const loadingMessage = ref('')
         const staggerReady = useStaggerReady()
+
+        const todayLocal = () => {
+            const now = new Date()
+            const offsetMs = now.getTimezoneOffset() * 60000
+            return new Date(now.getTime() - offsetMs).toISOString().split('T')[0]
+        }
 
         const form = ref({
             vehicleId: '',
@@ -345,6 +357,16 @@ export default {
             showTypeList.value = false
         }
 
+        const typeWrapRef = ref(null)
+        const handleClickOutside = (e) => {
+            if (!showTypeList.value) return
+            if (typeWrapRef.value && !typeWrapRef.value.contains(e.target)) {
+                showTypeList.value = false
+            }
+        }
+        onMounted(() => document.addEventListener('pointerdown', handleClickOutside))
+        onBeforeUnmount(() => document.removeEventListener('pointerdown', handleClickOutside))
+
         const cancelEdit = () => {
             if (isEditing.value && editingId.value) {
                 router.push(`/car-maintenance/maintenance/${editingId.value}`)
@@ -395,6 +417,16 @@ export default {
                 if (isEditing.value) {
                     const veh = vehicles.value.find(v => v.id === form.value.vehicleId)
                     selectedVehicleName.value = veh ? displayName(veh) : ''
+                } else {
+                    if (!form.value.serviceDate) {
+                        form.value.serviceDate = todayLocal()
+                    }
+                    if (!form.value.mileageAtService) {
+                        const veh = vehicles.value.find(v => v.id === form.value.vehicleId)
+                        if (veh?.currentMileage != null) {
+                            form.value.mileageAtService = veh.currentMileage
+                        }
+                    }
                 }
             })
         })
@@ -410,6 +442,7 @@ export default {
             isEditing,
             selectedVehicleName,
             showTypeList,
+            typeWrapRef,
             typeOptions,
             selectType,
             distanceUnit,
@@ -473,11 +506,34 @@ export default {
     align-items: center;
     justify-content: center;
 }
-.maint-photo-hint {
-    margin-top: 6px;
-    font-size: 11px;
-    color: var(--text-muted);
+/* Styled photo upload dropzone (replaces native file input) */
+.photo-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 18px 14px;
+    border: 1.5px dashed var(--glass-card-border);
+    border-radius: 14px;
+    background: var(--glass-ghost-bg);
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
 }
+.photo-dropzone:hover { border-color: rgba(249, 115, 22, 0.55); background: rgba(249, 115, 22, 0.06); }
+.photo-dropzone:active { transform: scale(0.99); }
+.photo-dropzone input { display: none; }
+.photo-dropzone-icon { color: #fb923c; }
+.photo-dropzone-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.photo-dropzone-sub { font-size: 11px; color: var(--text-muted); }
+.photo-dropzone.disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    border-style: solid;
+}
+.photo-dropzone.disabled:hover { border-color: var(--glass-card-border); background: var(--glass-ghost-bg); }
+.photo-dropzone.disabled:active { transform: none; }
 .maint-photo-error {
     margin-top: 4px;
     font-size: 12px;
@@ -538,6 +594,7 @@ export default {
 .car-textarea:focus { outline: none !important; border-color: rgba(249, 115, 22, 0.5) !important; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1) !important; }
 
 /* Maintenance type combo input */
+.car-type-wrap { position: relative; }
 .car-type-input {
     background: var(--glass-card-bg) !important;
     border: 1px solid var(--glass-card-border) !important;
@@ -546,21 +603,34 @@ export default {
     display: flex !important;
     align-items: center !important;
     gap: 0 !important;
+    transition: border-color 0.15s, box-shadow 0.15s !important;
 }
-.car-type-input :deep(input) { border: none !important; outline: none !important; padding: 12px 14px !important; background: transparent !important; font-size: 15px !important; color: var(--text-primary) !important; flex: 1 !important; }
+.car-type-input:focus-within {
+    border-color: rgba(249, 115, 22, 0.5) !important;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1) !important;
+}
+.car-type-field { border: none !important; outline: none !important; padding: 12px 14px !important; background: transparent !important; font-size: 15px !important; color: var(--text-primary) !important; flex: 1 !important; width: 100% !important; box-sizing: border-box !important; }
 .type-icon { border: none !important; background: transparent !important; color: var(--text-muted) !important; padding: 0 12px !important; display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; }
 
-/* Type dropdown list */
+/* Type dropdown list — floats over the fields below */
 .car-type-list {
-    margin-top: 4px !important;
+    position: absolute !important;
+    top: calc(100% + 4px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 50 !important;
+    max-height: 50vh !important;
+    overflow-y: auto !important;
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 4px !important;
-    background: var(--glass-card-bg) !important;
+    background: var(--confirm-bg) !important;
     border: 1px solid var(--glass-card-border) !important;
     border-radius: 12px !important;
     padding: 8px !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
 }
 .car-type-option {
     border: none !important;
@@ -576,11 +646,8 @@ export default {
 }
 .car-type-option:hover { background: rgba(249, 115, 22, 0.1) !important; color: #fb923c !important; }
 
-/* 2-col grid — single column on narrow screens */
-.car-grid-2 { gap: 12px !important; }
-@media (max-width: 400px) {
-    .car-grid-2 { grid-template-columns: 1fr !important; }
-}
+/* 2-col grid — always two columns to save vertical space */
+.car-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
 
 /* Submit button */
 .car-btn {

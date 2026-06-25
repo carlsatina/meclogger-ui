@@ -5,7 +5,7 @@
     <CarTopBar title="Settings" subtitle="Personalize your maintenance" />
 
     <div class="car-body settings-body">
-        <div class="profile-card car-card">
+        <div class="profile-row">
             <div class="avatar">
                 <mdicon name="account-circle" :size="42"/>
             </div>
@@ -15,9 +15,9 @@
             </div>
         </div>
 
-        <div class="settings-group car-card">
-            <p class="group-title">Preferences</p>
-            <div class="settings-item static">
+        <p class="group-title">Preferences</p>
+        <div class="settings-list">
+            <div class="settings-item">
                 <div class="item-left">
                     <mdicon name="map-marker-distance" :size="20"/>
                     <span>Distance Unit</span>
@@ -27,7 +27,7 @@
                     <option value="mi">Miles</option>
                 </select>
             </div>
-            <div class="settings-item static">
+            <div class="settings-item">
                 <div class="item-left">
                     <mdicon name="currency-usd" :size="20"/>
                     <span>Currency</span>
@@ -40,7 +40,7 @@
                     <option value="SGD">SGD</option>
                 </select>
             </div>
-            <div class="settings-item static column">
+            <div class="settings-item column">
                 <div class="item-left">
                     <mdicon name="wrench-outline" :size="20"/>
                     <span>Maintenance Types</span>
@@ -229,29 +229,17 @@ export default {
 <style scoped>
 /* ── Hero ── */
 
-/* ── Body ── */
-.car-body { padding: 16px 16px 90px !important; display: flex !important; flex-direction: column !important; gap: 12px !important; }
+/* ── Body — full width, no boxed cards ── */
+.car-body { padding: 8px 0 90px !important; display: flex !important; flex-direction: column !important; gap: 0 !important; }
 .settings-body { padding-bottom: 90px !important; }
 
-/* ── Profile card ── */
-.profile-card {
-  background: var(--glass-card-bg) !important;
-  border: 1px solid var(--glass-card-border) !important;
-  border-radius: 18px !important;
-  box-shadow: var(--glass-card-shadow) !important;
-  padding: 16px !important;
-  position: relative;
-  overflow: hidden;
+/* ── Profile row (full width) ── */
+.profile-row {
   display: flex;
   align-items: center;
   gap: 14px;
-}
-.profile-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #f97316, #fb923c);
+  padding: 8px 16px 16px;
+  border-bottom: 1px solid var(--glass-card-border);
 }
 
 .avatar {
@@ -269,28 +257,21 @@ export default {
 .name { font-weight: 800; font-size: 15px; color: var(--text-primary); }
 .email { font-size: 13px; color: var(--text-muted); margin-top: 2px !important; }
 
-/* ── Settings group card ── */
-.settings-group {
-  background: var(--glass-card-bg) !important;
-  border-top: 1px solid var(--glass-card-border) !important;
-  border-bottom: 1px solid var(--glass-card-border) !important;
-  border-right: 1px solid var(--glass-card-border) !important;
-  border-left: 3px solid #f97316 !important;
-  border-radius: 14px !important;
-  box-shadow: var(--glass-card-shadow) !important;
-  padding: 16px !important;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
+/* ── Section header ── */
 .group-title {
-  margin: 0 0 12px;
+  margin: 0;
+  padding: 18px 16px 6px;
   font-weight: 800;
-  font-size: 13px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: #fb923c;
+}
+
+/* ── Full-width settings list ── */
+.settings-list {
+  display: flex;
+  flex-direction: column;
 }
 
 .settings-item {
@@ -298,11 +279,11 @@ export default {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 0;
+  padding: 14px 16px;
   color: var(--text-primary);
   border-bottom: 1px solid var(--glass-card-border);
 }
-.settings-item:last-of-type { border-bottom: none; padding-bottom: 0; }
+.settings-item:last-of-type { border-bottom: none; }
 .settings-item.column { flex-direction: column; align-items: flex-start; gap: 10px; }
 
 .item-left {

@@ -2,7 +2,9 @@
   min-height: 100dvh;
   background: var(--bg-main);
   position: relative;
-  overflow-x: hidden;
+  /* clip (not hidden) so this doesn't become an implicit vertical scroll
+     container and create a nested scroller */
+  overflow-x: clip;
   color: var(--text-primary);
 }
 
@@ -624,6 +626,7 @@
   filter: blur(60px);
   opacity: 0.28;
   z-index: 0;
+  pointer-events: none;
 }
 
 .car-orb.one {
@@ -697,6 +700,7 @@
   height: 46px;
   border-radius: 14px;
   border: none;
+  z-index: 90;
   background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   color: #0b1020;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);

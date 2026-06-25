@@ -21,7 +21,7 @@
             <h3>Maintenance History</h3>
         </div>
 
-        <div class="search-bar car-card">
+        <div class="search-bar">
             <mdicon name="magnify" :size="20"/>
             <input
                 v-model="searchTerm"
@@ -37,7 +37,7 @@
         </div>
         <div 
             v-else
-            class="history-card car-card"
+            class="history-card"
             v-for="item in maintenanceRecords"
             :key="item.id || item._id"
             @click="openRecordDetail(item)"
@@ -56,19 +56,13 @@
         </button>
     </div>
 
-    <div v-if="showOdometerModal" class="modal-backdrop" @click.self="showOdometerModal = false">
-        <div class="modal">
-            <p class="modal-title">Update Odometer</p>
-            <p class="modal-text">Current: {{ formattedOdometer }}</p>
-            <input v-model="odometerInput" type="number" min="0" class="modal-input" />
-            <div class="modal-actions">
-                <button class="cancel" @click="showOdometerModal = false">Cancel</button>
-                <button class="confirm" :disabled="savingOdometer" @click="saveOdometer">
-                    {{ savingOdometer ? 'Saving...' : 'Save' }}
-                </button>
-            </div>
-        </div>
-    </div>
+    <UpdateOdometerModal
+        v-model:show="showOdometerModal"
+        v-model="odometerInput"
+        :current="formattedOdometer"
+        :saving="savingOdometer"
+        @save="saveOdometer"
+    />
 
     <nav class="bottom-nav glass-nav-orb">
         <button class="nav-item active" @click="goHome">
@@ -104,6 +98,7 @@ import { API_BASE_URL } from '@/constants/config'
 import Loading from '@/components/Loading.vue'
 import CarTopBar from '@/components/CarMaintenance/CarTopBar.vue'
 import VehicleCard from '@/components/CarMaintenance/VehicleCard.vue'
+import UpdateOdometerModal from '@/components/CarMaintenance/UpdateOdometerModal.vue'
 import { useStaggerReady } from '@/composables/staggerReady'
 
 export default {
@@ -111,7 +106,8 @@ export default {
     components: {
         Loading,
         CarTopBar,
-        VehicleCard
+        VehicleCard,
+        UpdateOdometerModal
     },
     setup() {
         const router = useRouter()
@@ -355,42 +351,40 @@ export default {
 
 <style scoped>
 /* Vehicle card host — spacing around the shared VehicleCard component */
-.vehicle-card-host { margin: 16px 16px 0; }
+.vehicle-card-host { margin: 0; border-bottom: 1px solid var(--glass-card-border); }
 
-/* History section */
-.history-section { padding: 16px 16px 90px !important; display: flex !important; flex-direction: column !important; gap: 8px !important; }
-.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; padding: 0; }
+/* History section — full width, no boxed cards */
+.history-section { padding: 0 0 150px !important; display: flex !important; flex-direction: column !important; gap: 0 !important; }
+.section-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 8px; }
 .section-header h3 { margin: 0; font-size: 15px; font-weight: 700; color: var(--text-primary); }
 
-/* Search bar */
+/* Search bar (inset input) */
 .search-bar {
     display: flex !important; align-items: center !important; gap: 10px !important;
     background: var(--glass-card-bg) !important;
     border: 1px solid var(--glass-card-border) !important;
     border-radius: 12px !important;
     padding: 11px 14px !important;
-    box-shadow: var(--glass-card-shadow) !important;
+    margin: 0 16px 4px !important;
     color: var(--text-muted);
-    margin-bottom: 0 !important;
 }
 .search-bar input { border: none !important; outline: none !important; flex: 1; font-size: 14px; background: transparent; color: var(--text-primary); }
 
-/* History cards */
+/* History rows (full width) — reset the global .history-card box styling
+   that leaks from medical/forms.css */
 .history-card {
-    background: var(--glass-card-bg) !important;
-    border-top: 1px solid var(--glass-card-border) !important;
-    border-bottom: 1px solid var(--glass-card-border) !important;
-    border-right: 1px solid var(--glass-card-border) !important;
-    border-left: 3px solid #f97316 !important;
-    border-radius: 12px !important;
-    padding: 10px 14px !important;
-    margin-top: 0 !important;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--glass-card-border);
+    border-radius: 0;
+    box-shadow: none;
+    padding: 12px 16px !important;
     cursor: pointer;
-    box-shadow: var(--glass-card-shadow) !important;
     display: flex; flex-direction: column; gap: 2px;
-    transition: transform 0.15s, box-shadow 0.15s;
+    transition: background 0.15s;
 }
-.history-card:active { transform: scale(0.99); }
+.history-card:last-of-type { border-bottom: none; }
+.history-card:active { background: rgba(249, 115, 22, 0.06); }
 .history-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .history-title { margin: 0; font-size: 15px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .history-cost { margin: 0; flex-shrink: 0; font-size: 14px; font-weight: 700; color: var(--text-primary); }
@@ -399,15 +393,14 @@ export default {
 /* Empty state */
 .empty-state {
     text-align: center !important; color: var(--text-muted) !important; font-size: 14px !important;
-    padding: 32px 16px !important;
-    background: var(--glass-card-bg) !important;
-    border: 1px solid var(--glass-card-border) !important;
-    border-radius: 14px !important;
+    padding: 48px 16px !important;
+    background: transparent !important;
+    border: none !important;
     box-shadow: none !important;
 }
 
 /* FAB */
-.fab-wrapper { position: fixed; bottom: 84px; right: 16px; }
+.fab-wrapper { position: fixed; bottom: 84px; right: 16px; z-index: 90; }
 .fab {
     width: 46px; height: 46px; border-radius: 14px; border: none;
     background: linear-gradient(135deg, #f97316, #fb923c);
@@ -431,24 +424,4 @@ export default {
 .theme-light .bottom-nav { background: rgba(238, 242, 255, 0.94); }
 .nav-item { border: none; background: transparent; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; padding: 4px 0; cursor: pointer; transition: color 0.15s; }
 .nav-item.active { color: #fb923c; font-weight: 700; }
-
-/* Odometer modal */
-.modal-backdrop { position: fixed; inset: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 3000; }
-.modal {
-    display: block; position: relative;
-    background: var(--glass-card-bg); border: 1px solid var(--glass-card-border);
-    border-radius: 20px; padding: 20px;
-    width: 90%; max-width: 340px; height: auto;
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
-    overflow: hidden;
-}
-.modal::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #f97316, #fb923c); }
-.modal-title { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: var(--text-primary); }
-.modal-text { margin: 0 0 14px; font-size: 13px; color: var(--text-muted); }
-.modal-input { width: 100%; border: 1px solid var(--glass-card-border); border-radius: 12px; padding: 11px 14px; font-size: 16px; margin-bottom: 16px; background: var(--glass-ghost-bg); color: var(--text-primary); box-sizing: border-box; }
-.modal-input:focus { outline: none; border-color: rgba(249, 115, 22, 0.5); }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
-.modal-actions .cancel { background: var(--glass-ghost-bg); border: 1px solid var(--glass-card-border); color: var(--text-muted); padding: 9px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
-.modal-actions .confirm { background: linear-gradient(135deg, #f97316, #fb923c); border: none; color: #fff; padding: 9px 16px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
-.modal-actions .confirm:disabled { opacity: 0.6; cursor: not-allowed; }
 </style>

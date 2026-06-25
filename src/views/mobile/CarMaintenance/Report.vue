@@ -5,7 +5,7 @@
     <CarTopBar title="Report" subtitle="Service cost breakdown" />
 
     <div class="car-body">
-        <div class="report-card car-card" v-if="chartData.length">
+        <div class="report-card" v-if="chartData.length">
             <div class="chart-placeholder">
                 <div class="donut">
                     <div 
@@ -30,7 +30,7 @@
             <p class="sub">Log maintenance for your vehicles to see reports here.</p>
         </div>
 
-        <div class="legend car-card" v-if="legendData.length">
+        <div class="legend" v-if="legendData.length">
             <div class="legend-row" v-for="item in legendData" :key="item.label">
                 <span class="dot" :style="{ background: item.color }">{{ item.percent }}%</span>
                 <span class="legend-text">{{ item.label }}</span>
@@ -219,29 +219,17 @@ export default {
 <style scoped>
 /* ── Hero ── */
 
-/* ── Body ── */
-.car-body { padding: 16px 16px 90px !important; display: flex !important; flex-direction: column !important; gap: 12px !important; }
+/* ── Body — full width, no boxed cards ── */
+.car-body { padding: 8px 0 90px !important; display: flex !important; flex-direction: column !important; gap: 0 !important; }
 
-/* ── Chart card ── */
+/* ── Chart section (full width) ── */
 .report-card {
-  background: var(--glass-card-bg) !important;
-  border: 1px solid var(--glass-card-border) !important;
-  border-radius: 18px !important;
-  box-shadow: var(--glass-card-shadow) !important;
-  padding: 20px 16px 16px !important;
-  position: relative;
-  overflow: hidden;
+  padding: 20px 16px 24px !important;
   display: flex;
   flex-direction: column;
   gap: 16px;
   align-items: center;
-}
-.report-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #f97316, #fb923c);
+  border-bottom: 1px solid var(--glass-card-border);
 }
 
 .chart-placeholder {
@@ -268,19 +256,10 @@ export default {
 .total-label { margin: 0; font-size: 16px; font-weight: 800; color: var(--text-primary); }
 .total-range { margin: 4px 0 0; font-size: 12px; color: var(--text-muted); }
 
-/* ── Legend card ── */
+/* ── Legend (full-width list) ── */
 .legend {
-  background: var(--glass-card-bg) !important;
-  border-top: 1px solid var(--glass-card-border) !important;
-  border-bottom: 1px solid var(--glass-card-border) !important;
-  border-right: 1px solid var(--glass-card-border) !important;
-  border-left: 3px solid #f97316 !important;
-  border-radius: 14px !important;
-  box-shadow: var(--glass-card-shadow) !important;
-  padding: 14px 16px !important;
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
 .legend-row {
@@ -289,9 +268,10 @@ export default {
   align-items: center;
   gap: 10px;
   color: var(--text-primary);
-  padding: 4px 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--glass-card-border);
 }
-.legend-row + .legend-row { border-top: 1px solid var(--glass-card-border); padding-top: 10px; }
+.legend-row:last-of-type { border-bottom: none; }
 
 .dot {
   display: inline-flex;
@@ -312,10 +292,9 @@ export default {
   text-align: center !important;
   color: var(--text-muted) !important;
   font-size: 14px !important;
-  padding: 40px 16px !important;
-  background: var(--glass-card-bg) !important;
-  border: 1px solid var(--glass-card-border) !important;
-  border-radius: 18px !important;
+  padding: 56px 16px !important;
+  background: transparent !important;
+  border: none !important;
   box-shadow: none !important;
   display: flex !important;
   flex-direction: column !important;
