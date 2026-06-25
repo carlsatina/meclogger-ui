@@ -408,6 +408,10 @@
                     </div>
                     <p class="item-title">No transactions yet</p>
                     <p class="sub">Log an expense to see it here.</p>
+                    <button class="primary-btn solid" @click="openExpenseSheet">
+                        <mdicon name="plus" size="18" />
+                        <span>Add expense</span>
+                    </button>
                 </div>
            </div>
         </transition>
@@ -1667,10 +1671,15 @@
     >
         <div class="tx-summary-head">
             <span class="tx-summary-month">{{ monthLabel(0) }}</span>
-            <span class="tx-summary-count">
-                {{ transactionsForMonth.length }}
-                {{ transactionsForMonth.length === 1 ? 'transaction' : 'transactions' }}
-            </span>
+            <div class="tx-summary-head-right">
+                <span class="tx-summary-count">
+                    {{ transactionsForMonth.length }}
+                    {{ transactionsForMonth.length === 1 ? 'transaction' : 'transactions' }}
+                </span>
+                <button class="tx-summary-add" @click="openExpenseSheet" aria-label="Add expense">
+                    <mdicon name="plus" :size="18"/>
+                </button>
+            </div>
         </div>
         <div class="tx-summary-stats" :class="{ split: transactionPlannedOut > 0 }">
             <div class="tx-summary-stat">
