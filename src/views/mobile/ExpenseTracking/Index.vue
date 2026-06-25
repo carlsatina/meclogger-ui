@@ -1117,6 +1117,33 @@
                     <span>Name</span>
                     <input type="text" placeholder="e.g. August Groceries" v-model="budgetForm.name" />
                 </label>
+                <label class="field">
+                    <span>Category</span>
+                    <div class="pill-row inline-cats">
+                        <button
+                            v-for="cat in categories"
+                            :key="cat.id"
+                            type="button"
+                            class="pill-option compact"
+                            :class="{ active: budgetForm.categoryId === cat.id }"
+                            @click="budgetForm.categoryId = cat.id"
+                            :style="{ borderColor: cat.color || 'var(--text-primary)', color: '#0f172a' }"
+                        >
+                            <mdicon :name="cat.icon || 'label-outline'" size="18" :style="{ color: cat.color || '#4f46e5' }" />
+                            <span>{{ cat.name }}</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="pill-option compact"
+                            :class="{ active: !budgetForm.categoryId }"
+                            @click="budgetForm.categoryId = ''"
+                        >
+                            <mdicon name="shape-outline" size="18" />
+                            <span>All spending</span>
+                        </button>
+                    </div>
+                    <p class="micro muted">A category budget tracks every expense in that category. "All spending" only counts expenses you assign to it directly.</p>
+                </label>
                 <label class="field inline">
                     <span>Amount</span>
                     <input type="number" step="0.01" v-model.number="budgetForm.amount" placeholder="0.00" />
@@ -1771,6 +1798,7 @@ export default {
         const expensesLoading = ref(false)
         const budgetForm = ref({
             name: '',
+            categoryId: '',
             amount: '',
             period: 'MONTHLY',
             startDate: todayStr(),
@@ -2332,7 +2360,7 @@ export default {
                 period: budget.period || 'ONE_TIME',
                 startDate: budget.startDate ? budget.startDate.slice(0, 10) : todayStr(),
                 endDate: budget.endDate ? budget.endDate.slice(0, 10) : todayStr(),
-                categoryId: '',
+                categoryId: budget.categoryId || '',
                 alertEnabled: budget.alertEnabled ?? true,
                 alertThreshold: budget.alertThreshold ?? ''
             }
@@ -2851,7 +2879,7 @@ export default {
                     period: budgetForm.value.period || 'ONE_TIME',
                     startDate: budgetForm.value.startDate,
                     endDate: isRecurring ? null : budgetForm.value.endDate,
-                    categoryId: null,
+                    categoryId: budgetForm.value.categoryId || null,
                     alertThreshold: budgetForm.value.alertThreshold ? Number(budgetForm.value.alertThreshold) : null,
                     alertEnabled: budgetForm.value.alertEnabled
                 }

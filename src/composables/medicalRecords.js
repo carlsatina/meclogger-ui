@@ -158,6 +158,29 @@ export const useMedicalRecords = () => {
         return data.labResult
     }
 
+    const fetchLabExplanation = async (token, testName) => {
+        const res = await fetch(`${API_BASE_URL}/api/v1/lab-results/explain?testName=${encodeURIComponent(testName)}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.message || 'Unable to load explanation')
+        return data.explanation
+    }
+
+    const updateLabResult = async (token, id, payload) => {
+        const res = await fetch(`${API_BASE_URL}/api/v1/lab-results/${id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.message || 'Unable to update lab result')
+        return data.labResult
+    }
+
     return {
         records,
         loading,
@@ -170,6 +193,8 @@ export const useMedicalRecords = () => {
         extractPrescription,
         saveMedication,
         extractLabReport,
-        saveLabResult
+        saveLabResult,
+        updateLabResult,
+        fetchLabExplanation
     }
 }

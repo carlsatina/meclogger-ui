@@ -36,6 +36,8 @@ import HealthInsightsWeb from '@/views/web/MedicalRecords/HealthInsights.vue'
 import HealthInsightsMobile from '@/views/mobile/MedicalRecords/HealthInsights.vue'
 import MedicationsMobile from '@/views/mobile/MedicalRecords/Medications.vue'
 import LabResultsMobile from '@/views/mobile/MedicalRecords/LabResults.vue'
+import LabResultExplainMobile from '@/views/mobile/MedicalRecords/LabResultExplain.vue'
+import LabResultExplainWeb from '@/views/web/MedicalRecords/LabResultExplain.vue'
 import MedicationsWeb from '@/views/web/MedicalRecords/MedicationsDetail.vue'
 import LabResultsWeb from '@/views/web/MedicalRecords/LabResultsDetail.vue'
 // Mobile Car Maintenance
@@ -194,6 +196,18 @@ const routes: Array<RouteRecordRaw> = [
     path: '/medical-records/lab-results',
     name: 'lab-results',
     component: LabResultsMobile,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/medical-records/lab-results/explain',
+    name: 'lab-result-explain',
+    component: LabResultExplainMobile,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/medical-records/web/lab-results/explain',
+    name: 'lab-result-explain-web',
+    component: LabResultExplainWeb,
     meta: { requiresAuth: true }
   },
   {

@@ -158,12 +158,15 @@ export default {
 .title-wrapper {
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    flex: 1;
 }
 
 .right-section {
     display: flex;
     align-items: center;
     gap: 6px;
+    flex-shrink: 0;
 }
 
 .profile-chip {

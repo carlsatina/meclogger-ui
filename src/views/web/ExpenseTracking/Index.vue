@@ -186,6 +186,13 @@
                         <input v-model="budgetForm.amount" type="number" class="form-input" placeholder="0.00"/>
                     </div>
                     <div class="form-field">
+                        <label>Category</label>
+                        <select v-model="budgetForm.categoryId" class="form-input">
+                            <option value="">All spending (assign expenses manually)</option>
+                            <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
                         <label>Repeats</label>
                         <select v-model="budgetForm.period" class="form-input">
                             <option value="MONTHLY">Every month</option>
@@ -586,17 +593,17 @@ export default {
         const budgetError     = ref('')
         const budgetSaving    = ref(false)
         const editingBudgetId = ref(null)
-        const budgetForm      = ref({ name: '', amount: '', period: 'MONTHLY', startDate: todayStr(), endDate: todayStr(), alertThreshold: '80' })
+        const budgetForm      = ref({ name: '', categoryId: '', amount: '', period: 'MONTHLY', startDate: todayStr(), endDate: todayStr(), alertThreshold: '80' })
 
         const startEditBudget = (b) => {
             editingBudgetId.value = b.id
-            budgetForm.value = { name: b.name, amount: b.amount, period: b.period || 'ONE_TIME', startDate: b.startDate?.slice(0,10) || todayStr(), endDate: b.endDate?.slice(0,10) || todayStr(), alertThreshold: b.alertThreshold ?? 80 }
+            budgetForm.value = { name: b.name, categoryId: b.categoryId || '', amount: b.amount, period: b.period || 'ONE_TIME', startDate: b.startDate?.slice(0,10) || todayStr(), endDate: b.endDate?.slice(0,10) || todayStr(), alertThreshold: b.alertThreshold ?? 80 }
             showBudgetForm.value = true
         }
         const cancelBudgetForm = () => {
             showBudgetForm.value = false
             editingBudgetId.value = null
-            budgetForm.value = { name: '', amount: '', period: 'MONTHLY', startDate: todayStr(), endDate: todayStr(), alertThreshold: '80' }
+            budgetForm.value = { name: '', categoryId: '', amount: '', period: 'MONTHLY', startDate: todayStr(), endDate: todayStr(), alertThreshold: '80' }
         }
         const saveBudget = async () => {
             if (!budgetForm.value.name.trim() || !budgetForm.value.amount) {
@@ -611,7 +618,7 @@ export default {
             budgetSaving.value = true
             budgetError.value = ''
             try {
-                const payload = { name: budgetForm.value.name.trim(), amount: parseFloat(budgetForm.value.amount), period: budgetForm.value.period || 'ONE_TIME', startDate: budgetForm.value.startDate, endDate: isRecurring ? null : budgetForm.value.endDate, alertThreshold: parseFloat(budgetForm.value.alertThreshold) || 80, active: true }
+                const payload = { name: budgetForm.value.name.trim(), categoryId: budgetForm.value.categoryId || null, amount: parseFloat(budgetForm.value.amount), period: budgetForm.value.period || 'ONE_TIME', startDate: budgetForm.value.startDate, endDate: isRecurring ? null : budgetForm.value.endDate, alertThreshold: parseFloat(budgetForm.value.alertThreshold) || 80, active: true }
                 if (editingBudgetId.value) {
                     await updateBudget(token(), editingBudgetId.value, payload)
                 } else {

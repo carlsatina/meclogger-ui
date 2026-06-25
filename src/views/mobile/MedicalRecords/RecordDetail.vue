@@ -1,7 +1,7 @@
 <template>
 <div class="record-detail-page">
     <TopBar
-        :title="record?.title || 'Record Detail'"
+        :title="record ? recordTypeLabel : 'Record Detail'"
         :show-back="true"
         :back-route="backRoute"
     >
@@ -34,54 +34,57 @@
         </div>
 
         <div v-else-if="record" class="detail-stack">
-            <section class="summary-card">
-                <div class="summary-header">
-                    <div>
-                        <p class="summary-label">Type</p>
-                        <p class="summary-value">{{ recordTypeLabel }}</p>
+            <section class="hero-card">
+                <div class="hero-top">
+                    <div class="hero-icon" :style="{ background: recordAccent }">
+                        <mdicon :name="recordTypeIcon" :size="26"/>
                     </div>
-                    <span class="record-date">{{ formattedDate }}</span>
+                    <div class="hero-heading">
+                        <p class="hero-type">{{ recordTypeLabel }}</p>
+                        <p class="hero-date">
+                            <mdicon name="calendar-blank-outline" :size="14"/>
+                            <span>{{ formattedDate }}</span>
+                        </p>
+                    </div>
                 </div>
-                <div class="summary-grid">
-                    <div class="summary-item">
-                        <mdicon name="account-outline" :size="22"/>
-                        <div>
-                            <p class="summary-label">Profile</p>
-                            <p class="summary-value">{{ resolvedProfileName }}</p>
+                <div class="hero-meta">
+                    <div class="meta-row">
+                        <mdicon name="account-outline" :size="18"/>
+                        <div class="meta-text">
+                            <span class="meta-label">Profile</span>
+                            <span class="meta-value">{{ resolvedProfileName }}</span>
                         </div>
                     </div>
-                    <div class="summary-item">
-                        <mdicon name="hospital-building" :size="22"/>
-                        <div>
-                            <p class="summary-label">Provider</p>
-                            <p class="summary-value">{{ record.providerName || 'Not specified' }}</p>
+                    <div class="meta-row">
+                        <mdicon name="hospital-building" :size="18"/>
+                        <div class="meta-text">
+                            <span class="meta-label">Provider</span>
+                            <span class="meta-value">{{ record.providerName || 'Not specified' }}</span>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section class="notes-card">
-                <h3>Notes</h3>
-                <p v-if="record.notes">{{ record.notes }}</p>
-                <p v-else class="empty-hint">No notes for this record.</p>
+            <section class="info-card" v-if="record.notes">
+                <p class="section-label">Notes</p>
+                <p class="notes-text">{{ record.notes }}</p>
             </section>
 
-            <section class="tags-card">
-                <h3>Tags</h3>
-                <div v-if="recordTags.length" class="tag-chips">
-                    <span 
-                        class="tag-chip" 
-                        v-for="tag in recordTags" 
+            <section class="info-card" v-if="recordTags.length">
+                <p class="section-label">Tags</p>
+                <div class="tag-chips">
+                    <span
+                        class="tag-chip"
+                        v-for="tag in recordTags"
                         :key="tag"
                     >
                         {{ tag }}
                     </span>
                 </div>
-                <p v-else class="empty-hint">No tags added.</p>
             </section>
 
-            <section class="attachments-card" v-if="imageFiles.length || otherFiles.length">
-                <h3>Attachments</h3>
+            <section class="info-card" v-if="imageFiles.length || otherFiles.length">
+                <p class="section-label">Attachments</p>
                 <div v-if="imageFiles.length" class="image-grid">
                     <div 
                         v-for="(image, index) in imageFiles"
@@ -199,6 +202,26 @@ const recordTypeLabels = {
     OTHER: 'Other'
 }
 
+const recordTypeIcons = {
+    PRESCRIPTION: 'pill',
+    DIAGNOSIS: 'stethoscope',
+    LAB_RESULT: 'flask-outline',
+    IMAGING: 'radiology-box-outline',
+    VACCINATION: 'needle',
+    DISCHARGE_SUMMARY: 'file-document-outline',
+    OTHER: 'medical-bag'
+}
+
+const recordTypeAccents = {
+    PRESCRIPTION: 'linear-gradient(135deg, var(--accent-1), var(--accent-4))',
+    DIAGNOSIS: 'linear-gradient(135deg, var(--accent-1), var(--accent-2))',
+    LAB_RESULT: 'linear-gradient(135deg, var(--accent-2), var(--accent-3))',
+    IMAGING: 'linear-gradient(135deg, var(--accent-2), var(--accent-1))',
+    VACCINATION: 'linear-gradient(135deg, var(--accent-3), var(--accent-2))',
+    DISCHARGE_SUMMARY: 'linear-gradient(135deg, var(--accent-4), var(--accent-1))',
+    OTHER: 'linear-gradient(135deg, var(--accent-1), var(--accent-3))'
+}
+
 export default {
     name: 'MedicalRecordDetailMobile',
     components: {
@@ -288,6 +311,16 @@ export default {
         const recordTypeLabel = computed(() => {
             if (!record.value) return 'Record'
             return recordTypeLabels[record.value.recordType] || recordTypeLabels.OTHER
+        })
+
+        const recordTypeIcon = computed(() => {
+            if (!record.value) return recordTypeIcons.OTHER
+            return recordTypeIcons[record.value.recordType] || recordTypeIcons.OTHER
+        })
+
+        const recordAccent = computed(() => {
+            if (!record.value) return recordTypeAccents.OTHER
+            return recordTypeAccents[record.value.recordType] || recordTypeAccents.OTHER
         })
 
         const formattedDate = computed(() => {
@@ -523,6 +556,8 @@ export default {
             loading,
             errorMessage,
             recordTypeLabel,
+            recordTypeIcon,
+            recordAccent,
             formattedDate,
             imageFiles,
             otherFiles,
@@ -589,75 +624,114 @@ export default {
 .detail-stack {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
 }
 
-.summary-card,
-.notes-card,
-.attachments-card,
-.tags-card {
+.hero-card,
+.info-card {
     background: var(--glass-card-bg);
-    border-radius: 16px;
+    border-radius: 18px;
     padding: 20px;
     box-shadow: var(--glass-card-shadow);
     border: 1px solid var(--glass-card-border);
 }
 
-.summary-header {
+/* Hero */
+.hero-top {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
+    gap: 14px;
 }
 
-.summary-label {
+.hero-icon {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.45);
+}
+
+.hero-heading {
+    min-width: 0;
+}
+
+.hero-type {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+}
+
+.hero-date {
+    margin: 4px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
     font-size: 13px;
     color: var(--text-muted);
-    margin: 0;
 }
 
-.summary-value {
-    margin: 2px 0 0 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
+.hero-meta {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--glass-card-border);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-.record-date {
-    font-size: 14px;
+.meta-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
     color: var(--text-muted);
 }
 
-.summary-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+.meta-row > :first-child {
+    margin-top: 2px;
+    flex-shrink: 0;
 }
 
-.summary-item {
+.meta-text {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    border: 1px solid var(--glass-card-border);
-    border-radius: 12px;
-    background: var(--glass-ghost-bg);
-    color: var(--text-secondary);
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
 }
 
-.notes-card h3,
-.attachments-card h3,
-.tags-card h3 {
-    margin: 0 0 12px 0;
-    font-size: 16px;
+.meta-label {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.meta-value {
+    font-size: 15px;
     font-weight: 600;
     color: var(--text-primary);
+    line-height: 1.35;
+    word-break: break-word;
 }
 
-.notes-card p {
+/* Sections */
+.section-label {
+    margin: 0 0 12px 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.notes-text {
     margin: 0;
     color: var(--text-secondary);
-    line-height: 1.5;
+    line-height: 1.6;
+    font-size: 14px;
 }
 
 .tag-chips {

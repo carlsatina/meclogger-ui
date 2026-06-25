@@ -7,6 +7,9 @@
             <button class="back-btn" @click="goBack">
                 <mdicon name="arrow-left" :size="22"/>
             </button>
+            <div class="header-icon" v-if="record" :style="{ background: recordAccent }">
+                <mdicon :name="recordTypeIcon" :size="28"/>
+            </div>
             <div class="header-text">
                 <p class="record-type-label">{{ recordTypeLabel }}</p>
                 <h2 class="record-title">{{ record?.title || 'Record Detail' }}</h2>
@@ -215,6 +218,28 @@ const recordTypeMeta = {
     OTHER: 'Other'
 }
 
+const recordTypeIcons = {
+    LAB_RESULT: 'flask-outline',
+    PRESCRIPTION: 'pill',
+    INVOICE: 'receipt-text-outline',
+    VACCINATION: 'needle',
+    DIAGNOSIS: 'stethoscope',
+    IMAGING: 'radiology-box-outline',
+    DISCHARGE_SUMMARY: 'file-document-outline',
+    OTHER: 'medical-bag'
+}
+
+const recordTypeAccents = {
+    LAB_RESULT: 'linear-gradient(135deg, var(--accent-2), var(--accent-3))',
+    PRESCRIPTION: 'linear-gradient(135deg, var(--accent-1), var(--accent-4))',
+    INVOICE: 'linear-gradient(135deg, var(--accent-4), var(--accent-2))',
+    VACCINATION: 'linear-gradient(135deg, var(--accent-3), var(--accent-2))',
+    DIAGNOSIS: 'linear-gradient(135deg, var(--accent-1), var(--accent-2))',
+    IMAGING: 'linear-gradient(135deg, var(--accent-2), var(--accent-1))',
+    DISCHARGE_SUMMARY: 'linear-gradient(135deg, var(--accent-4), var(--accent-1))',
+    OTHER: 'linear-gradient(135deg, var(--accent-1), var(--accent-3))'
+}
+
 export default {
     name: 'WebMedicalRecordDetail',
     setup() {
@@ -253,6 +278,16 @@ export default {
         const recordTypeLabel = computed(() => {
             if (!record.value) return ''
             return recordTypeMeta[record.value.recordType] || recordTypeMeta.OTHER
+        })
+
+        const recordTypeIcon = computed(() => {
+            if (!record.value) return recordTypeIcons.OTHER
+            return recordTypeIcons[record.value.recordType] || recordTypeIcons.OTHER
+        })
+
+        const recordAccent = computed(() => {
+            if (!record.value) return recordTypeAccents.OTHER
+            return recordTypeAccents[record.value.recordType] || recordTypeAccents.OTHER
         })
 
         const formattedDate = computed(() => {
@@ -519,6 +554,8 @@ export default {
             loading,
             errorMessage,
             recordTypeLabel,
+            recordTypeIcon,
+            recordAccent,
             formattedDate,
             imageFiles,
             otherFiles,
@@ -630,7 +667,23 @@ export default {
     color: var(--text-primary);
 }
 
-.header-text { flex: 1; }
+.header-icon {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.45);
+}
+
+.header-text { flex: 1; min-width: 0; }
+
+.record-title {
+    overflow-wrap: anywhere;
+}
 
 .record-type-label {
     text-transform: uppercase;

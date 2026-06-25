@@ -126,17 +126,37 @@
                         <span class="section-hint">Select which results to save to this profile</span>
                     </div>
                     <div class="extracted-grid">
-                        <label v-for="(result, i) in extractedLabResults" :key="i" class="extracted-item">
+                        <div v-for="(result, i) in extractedLabResults" :key="i" class="extracted-item">
                             <input type="checkbox" v-model="result.selected" class="extr-check"/>
                             <div class="extr-body">
-                                <div class="extr-name-row">
-                                    <span class="extr-name">{{ result.testName }}</span>
-                                    <span class="lab-badge" :class="`lab-${result.status?.toLowerCase()}`">{{ result.status }}</span>
+                                <template v-if="!result.editing">
+                                    <div class="extr-name-row">
+                                        <span class="extr-name">{{ result.testName }}</span>
+                                        <span class="lab-badge" :class="`lab-${result.status?.toLowerCase()}`">{{ result.status }}</span>
+                                    </div>
+                                    <span class="extr-detail">{{ result.value }}{{ result.unit ? ' ' + result.unit : '' }}</span>
+                                    <span v-if="result.referenceRange" class="extr-sub">Ref: {{ result.referenceRange }}</span>
+                                </template>
+                                <div v-else class="lab-edit-grid">
+                                    <input class="lab-edit-input" v-model="result.testName" placeholder="Test name"/>
+                                    <div class="lab-edit-row">
+                                        <input class="lab-edit-input" v-model="result.value" placeholder="Value"/>
+                                        <input class="lab-edit-input" v-model="result.unit" placeholder="Unit"/>
+                                    </div>
+                                    <input class="lab-edit-input" v-model="result.referenceRange" placeholder="Reference range"/>
+                                    <select class="lab-edit-input" v-model="result.status">
+                                        <option value="NORMAL">Normal</option>
+                                        <option value="HIGH">High</option>
+                                        <option value="LOW">Low</option>
+                                        <option value="CRITICAL">Critical</option>
+                                        <option value="UNKNOWN">Unknown</option>
+                                    </select>
                                 </div>
-                                <span class="extr-detail">{{ result.value }}{{ result.unit ? ' ' + result.unit : '' }}</span>
-                                <span v-if="result.referenceRange" class="extr-sub">Ref: {{ result.referenceRange }}</span>
                             </div>
-                        </label>
+                            <button type="button" class="lab-edit-toggle" @click="result.editing = !result.editing">
+                                <mdicon :name="result.editing ? 'check' : 'pencil'" :size="16"/>
+                            </button>
+                        </div>
                     </div>
                     <button type="button" class="save-extracted-btn" @click="saveExtractedLabResults" :disabled="savingLab || labSaved">
                         <mdicon v-if="savingLab" name="loading" :size="16" class="spin"/>
@@ -574,7 +594,7 @@ export default {
                 if (result.collectedAt) recordDate.value = result.collectedAt
                 if (result.notes) notes.value = result.notes
                 if (!fileName.value && result.labName) fileName.value = `Lab Report - ${result.labName}`
-                extractedLabResults.value = (result.results || []).map(r => ({ ...r, selected: true }))
+                extractedLabResults.value = (result.results || []).map(r => ({ ...r, selected: true, editing: false }))
             } catch (err) {
                 extractError.value = err.message || 'Extraction failed. Make sure your AI provider is configured in Settings.'
             } finally {
@@ -891,7 +911,6 @@ export default {
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 12px;
     padding: 14px;
-    cursor: pointer;
     transition: border-color 0.2s;
 }
 
@@ -911,7 +930,39 @@ export default {
     display: flex;
     flex-direction: column;
     gap: 3px;
+    flex: 1;
+    min-width: 0;
 }
+
+.lab-edit-toggle {
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-secondary);
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.lab-edit-toggle:hover { color: #a855f7; border-color: rgba(168,85,247,0.4); }
+.lab-edit-grid { display: flex; flex-direction: column; gap: 7px; width: 100%; }
+.lab-edit-row { display: flex; gap: 7px; }
+.lab-edit-input {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 10px;
+    font-size: 13px;
+    color: var(--text-primary);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 9px;
+}
+.lab-edit-input:focus { outline: none; border-color: rgba(168,85,247,0.55); }
+select.lab-edit-input { appearance: none; }
 
 .extr-name-row {
     display: flex;

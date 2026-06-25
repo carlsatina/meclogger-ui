@@ -86,7 +86,7 @@
                 <div v-for="group in groupedResults" :key="group.date" class="date-group">
                     <h4 class="group-label">{{ group.date }}</h4>
                     <div class="results-grid">
-                        <div class="result-card glass-card" v-for="r in group.items" :key="r.id">
+                        <div class="result-card glass-card clickable" v-for="r in group.items" :key="r.id" @click="openExplain(r)">
                             <div class="result-header">
                                 <div class="result-icon">
                                     <mdicon name="test-tube" :size="20"/>
@@ -98,7 +98,10 @@
                                     </div>
                                     <p v-if="r.labName" class="result-lab">{{ r.labName }}</p>
                                 </div>
-                                <button class="del-btn" :disabled="deletingId === r.id" @click="confirmDelete(r)" title="Delete">
+                                <button class="edit-btn" @click.stop="openEdit(r)" title="Edit">
+                                    <mdicon name="pencil-outline" :size="16"/>
+                                </button>
+                                <button class="del-btn" :disabled="deletingId === r.id" @click.stop="confirmDelete(r)" title="Delete">
                                     <mdicon name="trash-can-outline" :size="16"/>
                                 </button>
                             </div>
@@ -127,11 +130,52 @@
             <p v-if="error" class="error-text">{{ error }}</p>
         </template>
     </div>
+
+    <div v-if="editing" class="edit-overlay" @click.self="closeEdit">
+        <div class="edit-modal glass-card">
+            <h3 class="edit-title">Edit result</h3>
+            <label class="edit-field">
+                <span>Test name</span>
+                <input v-model="editForm.testName" class="edit-input" placeholder="e.g. Hemoglobin"/>
+            </label>
+            <div class="edit-grid">
+                <label class="edit-field">
+                    <span>Value</span>
+                    <input v-model="editForm.value" class="edit-input" placeholder="e.g. 13.5"/>
+                </label>
+                <label class="edit-field">
+                    <span>Unit</span>
+                    <input v-model="editForm.unit" class="edit-input" placeholder="e.g. g/dL"/>
+                </label>
+            </div>
+            <label class="edit-field">
+                <span>Reference range</span>
+                <input v-model="editForm.referenceRange" class="edit-input" placeholder="e.g. 12.0-16.0"/>
+            </label>
+            <label class="edit-field">
+                <span>Status</span>
+                <select v-model="editForm.status" class="edit-input">
+                    <option value="NORMAL">Normal</option>
+                    <option value="HIGH">High</option>
+                    <option value="LOW">Low</option>
+                    <option value="CRITICAL">Critical</option>
+                    <option value="UNKNOWN">Unknown</option>
+                </select>
+            </label>
+            <p v-if="editError" class="error-text">{{ editError }}</p>
+            <div class="edit-actions">
+                <button class="edit-cancel" type="button" @click="closeEdit">Cancel</button>
+                <button class="edit-save" type="button" :disabled="savingEdit" @click="saveEdit">
+                    {{ savingEdit ? 'Saving…' : 'Save changes' }}
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { API_BASE_URL } from '@/constants/config'
 
@@ -148,6 +192,16 @@ export default {
         const deletingId = ref(null)
         const filterStatus = ref('all')
         const searchQuery = ref('')
+        const editing = ref(null)
+        const savingEdit = ref(false)
+        const editError = ref('')
+        const editForm = reactive({
+            testName: '',
+            value: '',
+            unit: '',
+            referenceRange: '',
+            status: 'UNKNOWN'
+        })
 
         const formatDate = (d) => {
             if (!d) return 'Date unknown'
@@ -281,11 +335,75 @@ export default {
             }
         }
 
+        const openExplain = (result) => {
+            router.push({
+                path: '/medical-records/web/lab-results/explain',
+                query: {
+                    testName: result.testName,
+                    value: result.value,
+                    unit: result.unit || '',
+                    status: result.status || '',
+                    referenceRange: result.referenceRange || ''
+                }
+            })
+        }
+
+        const openEdit = (result) => {
+            editing.value = result
+            editError.value = ''
+            editForm.testName = result.testName || ''
+            editForm.value = result.value || ''
+            editForm.unit = result.unit || ''
+            editForm.referenceRange = result.referenceRange || ''
+            editForm.status = result.status || 'UNKNOWN'
+        }
+
+        const closeEdit = () => {
+            editing.value = null
+        }
+
+        const saveEdit = async () => {
+            if (!editing.value) return
+            if (!editForm.testName.trim()) { editError.value = 'Test name is required.'; return }
+            if (!String(editForm.value).trim()) { editError.value = 'Value is required.'; return }
+            const token = localStorage.getItem('token')
+            if (!token) { editError.value = 'Please log in again.'; return }
+            savingEdit.value = true
+            editError.value = ''
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/v1/lab-results/${editing.value.id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        testName: editForm.testName.trim(),
+                        value: String(editForm.value).trim(),
+                        unit: editForm.unit.trim() || null,
+                        referenceRange: editForm.referenceRange.trim() || null,
+                        status: editForm.status
+                    })
+                })
+                const data = await res.json()
+                if (!res.ok) { editError.value = data.message || 'Unable to update result.'; return }
+                const idx = labResults.value.findIndex(r => r.id === editing.value.id)
+                if (idx !== -1) labResults.value[idx] = { ...labResults.value[idx], ...data.labResult }
+                editing.value = null
+            } catch (err) {
+                editError.value = err.message || 'Network error'
+            } finally {
+                savingEdit.value = false
+            }
+        }
+
         onMounted(load)
 
         return {
             router, trends, groupedResults, chips, loading, error, profileName,
-            deletingId, filterStatus, searchQuery, labResults, confirmDelete
+            deletingId, filterStatus, searchQuery, labResults, confirmDelete,
+            editing, editForm, savingEdit, editError, openEdit, closeEdit, saveEdit,
+            openExplain
         }
     }
 }
@@ -486,6 +604,8 @@ export default {
     flex-direction: column;
     gap: 12px;
 }
+.result-card.clickable { cursor: pointer; transition: border-color 0.15s, transform 0.1s; }
+.result-card.clickable:hover { border-color: rgba(34,211,238,0.35); transform: translateY(-1px); }
 
 .result-header { display: flex; gap: 12px; align-items: flex-start; }
 
@@ -522,8 +642,22 @@ export default {
 .status-critical { background: rgba(248,113,113,0.15);color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
 .status-unknown  { background: rgba(148,163,184,0.1); color: var(--text-muted); border: 1px solid rgba(148,163,184,0.2); }
 
-.del-btn {
+.edit-btn {
     margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+}
+.edit-btn:hover { color: #a855f7; background: rgba(168,85,247,0.1); }
+
+.del-btn {
     background: none;
     border: none;
     color: rgba(248,113,113,0.4);
@@ -537,6 +671,62 @@ export default {
 }
 .del-btn:hover { color: #f87171; background: rgba(248,113,113,0.1); }
 .del-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.edit-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+    backdrop-filter: blur(6px);
+}
+.edit-modal {
+    width: 100%;
+    max-width: 420px;
+    padding: 24px;
+    border-radius: 18px;
+    background: var(--confirm-bg);
+    border: 1px solid var(--confirm-border);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.edit-title { margin: 0 0 4px; font-size: 18px; font-weight: 700; color: var(--text-primary); }
+.edit-field { display: flex; flex-direction: column; gap: 6px; }
+.edit-field > span { font-size: 12px; color: var(--text-muted); }
+.edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.edit-input {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--text-primary);
+    background: var(--glass-ghost-bg);
+    border: 1px solid var(--glass-card-border);
+    border-radius: 10px;
+}
+.edit-input:focus { outline: none; border-color: rgba(168,85,247,0.55); }
+select.edit-input { appearance: none; }
+.edit-actions { display: flex; gap: 12px; margin-top: 6px; }
+.edit-cancel, .edit-save {
+    flex: 1;
+    padding: 11px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--glass-card-border);
+}
+.edit-cancel { background: var(--glass-ghost-bg); color: var(--text-secondary); }
+.edit-save {
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-4));
+    color: #fff;
+    border: none;
+}
+.edit-save:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .result-values { display: flex; gap: 20px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.06); }
 
