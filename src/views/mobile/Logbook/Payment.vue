@@ -131,10 +131,22 @@
                         <mdicon name="calendar-month-outline" size="15" />
                         Month paid
                     </span>
-                    <select class="pmt-input" v-model="form.monthPaid">
+                    <select class="pmt-input" v-model="form.monthPaid" @change="userOverrodeMonth = true">
                         <option value="" disabled>Select month</option>
                         <option v-for="month in monthOptions" :key="month" :value="month">{{ month }}</option>
                     </select>
+                    <div v-if="renterMonthStatus && form.renterId" class="renter-status-hint">
+                        <mdicon name="information-outline" size="14" />
+                        <span v-if="renterMonthStatus.isPartial">
+                            {{ renterMonthStatus.selectedMonth }} has <strong>{{ formatMoney(renterMonthStatus.remainingBalance) }}</strong> remaining balance ({{ formatMoney(renterMonthStatus.totalPaidForMonth) }} paid so far of {{ formatMoney(renterMonthStatus.expectedRent) }}).
+                        </span>
+                        <span v-else-if="renterMonthStatus.isFullyPaid">
+                            {{ renterMonthStatus.selectedMonth }} is <strong>fully paid</strong> ({{ formatMoney(renterMonthStatus.totalPaidForMonth) }} paid).
+                        </span>
+                        <span v-else-if="renterMonthStatus.expectedRent">
+                            Agreed rent for {{ renterMonthStatus.selectedMonth || 'month' }}: <strong>{{ formatMoney(renterMonthStatus.expectedRent) }}</strong>.
+                        </span>
+                    </div>
                 </label>
             </div>
 
@@ -310,6 +322,135 @@ export default {
             return renters.value
         })
 
+        const allPayments = ref([])
+        const userOverrodeMonth = ref(false)
+
+        const getMonthFromDateStr = (dateStr) => {
+            if (!dateStr) return ''
+            const parts = dateStr.split('-')
+            if (parts.length === 3) {
+                const monthIndex = parseInt(parts[1], 10) - 1
+                if (monthIndex >= 0 && monthIndex < 12) {
+                    return monthOptions[monthIndex]
+                }
+            }
+            const d = new Date(dateStr)
+            if (!isNaN(d.getTime())) {
+                return monthOptions[d.getMonth()]
+            }
+            return ''
+        }
+
+        const getRenterMonthStatus = (renterId, targetMonth) => {
+            if (!renterId || !renters.value.length) return null
+            const renter = renters.value.find(r => r.id === renterId)
+            if (!renter) return null
+
+            const expectedRent = Number(renter.rentalAmount || 0)
+            const rName = renterLabel(renter).toLowerCase()
+            const selectedM = targetMonth || form.value.monthPaid
+
+            if (!allPayments.value || !allPayments.value.length) {
+                return {
+                    renter,
+                    expectedRent,
+                    selectedMonth: selectedM,
+                    totalPaidForMonth: 0,
+                    isPartial: false,
+                    isFullyPaid: false,
+                    remainingBalance: expectedRent
+                }
+            }
+
+            const renterPmts = allPayments.value.filter(p => {
+                const desc = (p.description || '').toLowerCase()
+                return desc.includes(rName)
+            })
+
+            let totalPaidForMonth = 0
+            if (selectedM) {
+                const smLower = selectedM.toLowerCase()
+                for (const pmt of renterPmts) {
+                    const desc = (pmt.description || '').toLowerCase()
+                    if (desc.includes(smLower)) {
+                        totalPaidForMonth += Math.abs(Number(pmt.amount || 0))
+                    }
+                }
+            }
+
+            const isPartial = expectedRent > 0 && totalPaidForMonth > 0 && totalPaidForMonth < expectedRent
+            const isFullyPaid = expectedRent > 0 && totalPaidForMonth >= expectedRent
+            const remainingBalance = expectedRent > 0 ? Math.max(0, expectedRent - totalPaidForMonth) : 0
+
+            return {
+                renter,
+                expectedRent,
+                selectedMonth: selectedM,
+                totalPaidForMonth,
+                isPartial,
+                isFullyPaid,
+                remainingBalance
+            }
+        }
+
+        const renterMonthStatus = computed(() => getRenterMonthStatus(form.value.renterId, form.value.monthPaid))
+
+        const detectRenterNextMonth = (renterId, dateStr) => {
+            const defaultMonth = getMonthFromDateStr(dateStr) || monthOptions[new Date().getMonth()]
+            if (!renterId || !renters.value.length) return defaultMonth
+
+            const renter = renters.value.find(r => r.id === renterId)
+            if (!renter) return defaultMonth
+
+            const rName = renterLabel(renter).toLowerCase()
+            const expectedRent = Number(renter.rentalAmount || 0)
+            if (!allPayments.value || !allPayments.value.length) return defaultMonth
+
+            const renterPmts = allPayments.value.filter(p => {
+                const desc = (p.description || '').toLowerCase()
+                return desc.includes(rName)
+            })
+
+            if (!renterPmts.length) return defaultMonth
+
+            const monthTotals = {}
+            for (const pmt of renterPmts) {
+                const desc = (pmt.description || '').toLowerCase()
+                const amount = Math.abs(Number(pmt.amount || 0))
+                for (let i = 0; i < monthOptions.length; i++) {
+                    const m = monthOptions[i].toLowerCase()
+                    if (desc.includes(m)) {
+                        monthTotals[monthOptions[i]] = (monthTotals[monthOptions[i]] || 0) + amount
+                    }
+                }
+            }
+
+            // 1. First check if any month has a partial payment balance
+            for (let i = 0; i < monthOptions.length; i++) {
+                const m = monthOptions[i]
+                const paid = monthTotals[m] || 0
+                if (paid > 0 && expectedRent > 0 && paid < expectedRent) {
+                    return m
+                }
+            }
+
+            // 2. Otherwise find the latest paid month and suggest next month
+            for (let i = 11; i >= 0; i--) {
+                const m = monthOptions[i]
+                if (monthTotals[m] !== undefined && monthTotals[m] > 0) {
+                    return monthOptions[(i + 1) % 12]
+                }
+            }
+
+            return defaultMonth
+        }
+
+        const autoDetectMonth = () => {
+            if (!userOverrodeMonth.value && (renterVisible.value || form.value.subCategory === 'Rental')) {
+                form.value.monthPaid = detectRenterNextMonth(form.value.renterId, form.value.date)
+            }
+        }
+
         watch(
             () => form.value.mainCategory,
             () => {
@@ -324,8 +465,21 @@ export default {
 
         watch(
             () => renterVisible.value,
-            (visible) => { if (!visible) form.value.monthPaid = '' }
+            (visible) => {
+                if (!visible) {
+                    form.value.monthPaid = ''
+                    userOverrodeMonth.value = false
+                } else {
+                    autoDetectMonth()
+                }
+            }
         )
+
+        watch([() => form.value.renterId, () => form.value.date], () => {
+            if (renterVisible.value) {
+                autoDetectMonth()
+            }
+        })
 
         const amountValid = computed(() => {
             if (form.value.amount === '' || form.value.amount === null || form.value.amount === undefined) return false
@@ -396,6 +550,8 @@ export default {
                 const data = await res.json()
                 if (!res.ok) throw new Error(data?.message || 'Unable to load balances')
                 const items = Array.isArray(data.payments) ? data.payments : []
+                allPayments.value = items
+                autoDetectMonth()
                 const sum = (list) => list.reduce((total, item) => {
                     const amount = Number(item.amount || 0)
                     return total + (isExpense(item) ? -Math.abs(amount) : Math.abs(amount))
@@ -441,6 +597,7 @@ export default {
                 const data = await res.json()
                 if (!res.ok) throw new Error(data?.message || 'Unable to save payment')
                 paymentId.value = ''
+                userOverrodeMonth.value = false
                 form.value = defaultForm()
                 saveError.value = ''
                 toastMessage.value = 'Payment has been saved.'
@@ -471,7 +628,20 @@ export default {
             const isRental = form.value.subCategory === 'Rental'
             const isParking = form.value.mainCategory === 'Parking'
             if ((isRental || isParking) && renter) {
-                const monthSuffix = form.value.monthPaid ? ` - ${form.value.monthPaid}` : ''
+                const status = getRenterMonthStatus(renter.id, form.value.monthPaid)
+                let monthSuffix = ''
+                if (form.value.monthPaid) {
+                    if (status && status.isPartial) {
+                        const paidStr = formatMoney(status.totalPaidForMonth)
+                        const reqStr = formatMoney(status.expectedRent)
+                        const balStr = formatMoney(status.remainingBalance)
+                        monthSuffix = ` - ${form.value.monthPaid} (Partial advance: ₱${paidStr} paid so far of ₱${reqStr} rent, ₱${balStr} remaining)`
+                    } else if (status && status.expectedRent > 0) {
+                        monthSuffix = ` - ${form.value.monthPaid} (Agreed rent: ₱${formatMoney(status.expectedRent)})`
+                    } else {
+                        monthSuffix = ` - ${form.value.monthPaid}`
+                    }
+                }
                 const autoText = isParking
                     ? `Parking payment - ${renterLabel(renter)}${monthSuffix}`
                     : `Rental payment - ${renterLabel(renter)}${monthSuffix}`
@@ -528,7 +698,9 @@ export default {
             renterVisible,
             filteredRenters,
             renterLoading,
-            renterLabel
+            renterLabel,
+            renterMonthStatus,
+            userOverrodeMonth
         }
     }
 }

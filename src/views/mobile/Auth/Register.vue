@@ -13,9 +13,6 @@
       <mdicon name="arrow-left" size="18" />
       <span>Overview</span>
     </button>
-    <button class="m-header-btn" @click="toggleTheme" :title="isDark ? 'Light mode' : 'Dark mode'">
-      <mdicon :name="isDark ? 'white-balance-sunny' : 'moon-waning-crescent'" size="18" />
-    </button>
   </header>
 
   <!-- Mobile Form Content -->

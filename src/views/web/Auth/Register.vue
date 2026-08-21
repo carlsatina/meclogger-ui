@@ -14,10 +14,6 @@
       <mdicon name="arrow-left" size="18" />
       <span>Back to Landing Overview</span>
     </button>
-    <button class="topbar-btn theme-toggle" @click="toggleTheme" :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
-      <mdicon :name="isDark ? 'white-balance-sunny' : 'moon-waning-crescent'" size="18" />
-      <span>{{ isDark ? 'Light' : 'Dark' }}</span>
-    </button>
   </div>
 
   <!-- Auth Card Container -->

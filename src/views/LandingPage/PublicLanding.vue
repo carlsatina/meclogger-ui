@@ -30,10 +30,6 @@
       </nav>
 
       <div class="landing-nav-actions">
-        <button class="landing-theme-toggle" @click="toggleTheme" :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
-          <mdicon :name="isDark ? 'white-balance-sunny' : 'moon-waning-crescent'" size="18" />
-          <span class="theme-text">{{ isDark ? 'Light' : 'Dark' }}</span>
-        </button>
         <button class="landing-btn-ghost" @click="navigateTo('/login')">
           <mdicon name="login" size="16" />
           <span>Sign In</span>
@@ -907,6 +903,9 @@ export default {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
   overflow: hidden;
   transition: all 0.3s ease;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .frame-header {
   display: flex;
@@ -915,10 +914,12 @@ export default {
   padding: 12px 18px;
   background: rgba(0, 0, 0, 0.2);
   border-bottom: 1px solid var(--glass-card-border);
+  gap: 10px;
 }
 .frame-dots {
   display: flex;
   gap: 6px;
+  flex-shrink: 0;
 }
 .dot {
   width: 10px; height: 10px;
@@ -931,21 +932,32 @@ export default {
   font-size: 12px;
   color: var(--text-muted);
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .frame-tabs {
   display: flex;
   gap: 6px;
-  padding: 12px;
+  padding: 10px 12px;
   background: rgba(0, 0, 0, 0.1);
   border-bottom: 1px solid var(--glass-card-border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex-wrap: nowrap;
+}
+.frame-tabs::-webkit-scrollbar {
+  display: none;
 }
 .frame-tab {
-  flex: 1;
+  flex: 1 0 auto;
+  min-width: max-content;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px;
+  padding: 8px 14px;
   border-radius: 10px;
   border: 1px solid transparent;
   background: transparent;
@@ -953,6 +965,7 @@ export default {
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.2s;
 }
 .frame-tab.active {
@@ -1532,11 +1545,36 @@ export default {
 
 @media (max-width: 768px) {
   .landing-menu { display: none; }
-  .hero-title { font-size: 36px; }
-  .section-title { font-size: 28px; }
+  .hero-title { font-size: 34px; }
+  .section-title { font-size: 26px; }
   .capabilities-grid { grid-template-columns: 1fr; }
   .landing-nav-container { padding: 0 16px; }
   .landing-main { padding: 20px 16px 60px; }
-  .dark-accent-box { padding: 24px; }
+  .dark-accent-box { padding: 20px 16px; }
+  .frame-body { padding: 18px; gap: 14px; }
+  .preview-header { flex-wrap: wrap; gap: 8px; }
+  .preview-name { font-size: 20px; }
+}
+
+@media (max-width: 480px) {
+  .hero-card-frame { border-radius: 18px; }
+  .frame-header { padding: 10px 14px; }
+  .frame-title { font-size: 11px; max-width: 160px; }
+  .frame-tabs { padding: 8px 10px; gap: 4px; }
+  .frame-tab { padding: 6px 10px; font-size: 11px; }
+  .frame-body { padding: 14px; gap: 12px; }
+  .preview-name { font-size: 17px; }
+  .preview-desc { font-size: 13px; }
+  .preview-badge { font-size: 10px; padding: 3px 8px; }
+  .mock-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mock-stat-card { padding: 10px; }
+  .mock-value { font-size: 15px; }
+  .mock-item-row { padding: 8px 10px; gap: 8px; }
+  .mock-item-info strong { font-size: 12px; }
+}
+
+@media (max-width: 360px) {
+  .mock-row { grid-template-columns: 1fr; }
+  .frame-title { max-width: 120px; }
 }
 </style>
