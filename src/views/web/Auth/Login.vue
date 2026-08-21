@@ -70,6 +70,8 @@
         </form>
     </div>
 
+    <p class="app-version">v{{ appVersion }}</p>
+
     <Loading v-if="loadingModal"/>
 </div>
 </template>
@@ -82,6 +84,7 @@ import store from '@/store'
 import getProfile from '@/composables/getProfile'
 import Loading from '@/components/Loading.vue'
 import { Role } from '@/constants/enums'
+import appMeta from '../../../../package.json'
 
 export default {
     name: "LoginWeb",
@@ -89,6 +92,7 @@ export default {
         Loading,
     },
     setup() {
+        const appVersion = appMeta.version || '1.0.0'
         const router = useRouter()
         const route = useRoute()
         const email = ref('')
@@ -140,7 +144,8 @@ export default {
             handleLogin,
             hasError,
             errorMsg,
-            loadingModal
+            loadingModal,
+            appVersion
         }
     }
 }
@@ -151,9 +156,17 @@ export default {
     min-height: 100vh;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 40px 24px;
+}
+
+.app-version {
+    margin: 20px 0 0 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    letter-spacing: 0.5px;
 }
 
 .login-grid {

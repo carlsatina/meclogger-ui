@@ -127,6 +127,9 @@
 
   </div>
 
+  <!-- App version -->
+  <p class="hm-version">Version {{ appVersion }}</p>
+
 </div>
 </template>
 
@@ -492,6 +495,17 @@ export default {
   color: var(--text-muted);
   padding-right: 4px;
   opacity: 0.5;
+}
+
+/* ── App version ─────────────────────────── */
+.hm-version {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  margin: 24px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
 }
 
 /* ── Smaller screens ─────────────────────── */

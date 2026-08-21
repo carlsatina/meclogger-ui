@@ -67,6 +67,8 @@
                 Sign Up
             </button>
         </div>
+
+        <p class="app-version">v{{ appVersion }}</p>
     </div>
 
     <Loading v-if="loadingModal"/>
@@ -81,6 +83,7 @@ import store from '@/store'
 import getProfile from '@/composables/getProfile'
 import Loading from '@/components/Loading.vue'
 import { Role } from '@/constants/enums'
+import appMeta from '../../../../package.json'
 
 export default {
     name: "LoginMobile",
@@ -88,6 +91,7 @@ export default {
         Loading,
     },
     setup() {
+        const appVersion = appMeta.version || '1.0.0'
         const router = useRouter()
         const route = useRoute()
         const email = ref('')
@@ -139,7 +143,8 @@ export default {
             handleLogin,
             hasError,
             errorMsg,
-            loadingModal
+            loadingModal,
+            appVersion
         }
     }
 }
@@ -354,5 +359,13 @@ export default {
 
 .signup-link:active {
     opacity: 0.8;
+}
+
+.app-version {
+    text-align: center;
+    margin: 24px 0 0 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    letter-spacing: 0.5px;
 }
 </style>
