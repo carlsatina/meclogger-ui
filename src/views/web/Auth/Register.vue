@@ -1,421 +1,604 @@
 <template>
-<div class="register-page">
-    <div class="register-grid">
-        <div class="brand-panel">
-            <div class="brand-icon">
-                <mdicon name="file-document-multiple" :size="72"/>
-            </div>
-            <h1 class="brand-title">MEC Logger</h1>
-            <p class="brand-subtitle">Organize and safeguard your records effortlessly</p>
+<div class="auth-page">
+
+  <!-- Ambient Background Orbs -->
+  <div class="auth-bg" aria-hidden="true">
+    <div class="auth-orb orb-1"></div>
+    <div class="auth-orb orb-2"></div>
+    <div class="auth-orb orb-3"></div>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="auth-topbar">
+    <button class="topbar-btn" @click="router.push('/landing')">
+      <mdicon name="arrow-left" size="18" />
+      <span>Back to Landing Overview</span>
+    </button>
+    <button class="topbar-btn theme-toggle" @click="toggleTheme" :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+      <mdicon :name="isDark ? 'white-balance-sunny' : 'moon-waning-crescent'" size="18" />
+      <span>{{ isDark ? 'Light' : 'Dark' }}</span>
+    </button>
+  </div>
+
+  <!-- Auth Card Container -->
+  <div class="auth-card">
+    
+    <!-- Left Brand Panel -->
+    <div class="brand-side">
+      <div class="brand-header">
+        <div class="brand-logo-wrap">
+          <img src="@/assets/MECLogger.png" alt="MECLogger Logo" />
+        </div>
+        <div>
+          <h1 class="brand-title">MECLogger</h1>
+          <span class="brand-version">v{{ appVersion }}</span>
+        </div>
+      </div>
+
+      <p class="brand-tagline">
+        Create your free account today and start tracking your medical records, vehicle service history, daily expenses, and ledgers in one secure hub.
+      </p>
+
+      <ul class="value-bullets">
+        <li>
+          <mdicon name="check-circle-outline" size="18" class="val-icon teal" />
+          <span>Full access to all 4 color-coded features</span>
+        </li>
+        <li>
+          <mdicon name="check-circle-outline" size="18" class="val-icon orange" />
+          <span>Mobile app & desktop web sync</span>
+        </li>
+        <li>
+          <mdicon name="check-circle-outline" size="18" class="val-icon green" />
+          <span>Encrypted storage & private audit trails</span>
+        </li>
+      </ul>
+
+      <div class="brand-footer-note">
+        <mdicon name="shield-check-outline" size="18" class="sec-icon" />
+        <span>Free Plan &bull; No Credit Card Required</span>
+      </div>
+    </div>
+
+    <!-- Right Form Panel -->
+    <form class="form-side" @submit.prevent="handleRegister">
+      <div class="form-header">
+        <h2 class="form-title">Create Account</h2>
+        <p class="form-sub">Join MECLogger in just a few simple steps</p>
+      </div>
+
+      <!-- Full Name -->
+      <div class="field-group">
+        <label class="field-label">Full Name</label>
+        <div class="input-box">
+          <mdicon name="account-outline" size="20" class="input-icon" />
+          <input
+            type="text"
+            class="field-input"
+            placeholder="John Doe"
+            v-model="userInfo.fullName"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- Contact Phone & Email Row -->
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">Contact Number</label>
+          <div class="input-box">
+            <mdicon name="phone-outline" size="20" class="input-icon" />
+            <input
+              type="tel"
+              class="field-input"
+              placeholder="+1 (555) 000-0000"
+              v-model="userInfo.phone"
+              required
+            />
+          </div>
+          <p v-if="hasError && errorMsg.phone" class="field-error">{{ errorMsg.phone }}</p>
         </div>
 
-        <form class="register-panel" @submit.prevent="handleRegister">
-            <div class="panel-header">
-                <h2 class="panel-title">Create an account</h2>
-                <p class="panel-subtitle">Join MEC Logger in a few quick steps</p>
-            </div>
+        <div class="field-group">
+          <label class="field-label">Email Address</label>
+          <div class="input-box">
+            <mdicon name="email-outline" size="20" class="input-icon" />
+            <input
+              type="email"
+              class="field-input"
+              :class="{ 'invalid-input': userInfo.email && !isValidEmailFormat }"
+              placeholder="name@example.com"
+              v-model="userInfo.email"
+              required
+            />
+          </div>
+          <p v-if="hasError && errorMsg.email" class="field-error">{{ errorMsg.email }}</p>
+        </div>
+      </div>
 
-            <div class="form-group">
-                <label class="form-label">Full Name</label>
-                <div class="input-wrapper">
-                    <mdicon name="account-outline" :size="20" class="input-icon"/>
-                    <input
-                        type="text"
-                        class="form-input"
-                        placeholder="Enter your full name"
-                        v-model="userInfo.fullName"
-                        required
-                    />
-                </div>
-            </div>
+      <!-- Password & Confirm Password Row -->
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">Password</label>
+          <div class="input-box">
+            <mdicon name="lock-outline" size="20" class="input-icon" />
+            <input
+              type="password"
+              class="field-input"
+              placeholder="Create password"
+              v-model="userInfo.password"
+              required
+            />
+          </div>
+        </div>
 
-            <div class="form-group">
-                <label class="form-label">Contact Number</label>
-                <div class="input-wrapper">
-                    <mdicon name="phone-outline" :size="20" class="input-icon"/>
-                    <input
-                        type="tel"
-                        class="form-input"
-                        placeholder="Enter your contact number"
-                        v-model="userInfo.phone"
-                        required
-                    />
-                </div>
-                <p v-if="hasError && errorMsg.phone" class="field-error">{{ errorMsg.phone }}</p>
-            </div>
+        <div class="field-group">
+          <label class="field-label">Confirm Password</label>
+          <div class="input-box">
+            <mdicon name="lock-check-outline" size="20" class="input-icon" />
+            <input
+              type="password"
+              class="field-input"
+              placeholder="Re-enter password"
+              v-model="userInfo.verifyPassword"
+              required
+            />
+          </div>
+          <p v-if="hasError && errorMsg.password" class="field-error">{{ errorMsg.password }}</p>
+        </div>
+      </div>
 
-            <div class="form-group">
-                <label class="form-label">Email</label>
-                <div class="input-wrapper">
-                    <mdicon name="email-outline" :size="20" class="input-icon"/>
-                    <input
-                        type="email"
-                        class="form-input"
-                        :class="{ 'invalid-input': userInfo.email && !isValidEmailFormat }"
-                        placeholder="Enter your email"
-                        v-model="userInfo.email"
-                        required
-                    />
-                </div>
-                <p v-if="hasError && errorMsg.email" class="field-error">{{ errorMsg.email }}</p>
-            </div>
+      <!-- Password Hints Box -->
+      <div class="hints-box">
+        <div class="hint-item" :class="{ ok: hasMinimumChar }">
+          <mdicon :name="hasMinimumChar ? 'check-circle' : 'circle-outline'" size="14" />
+          <span>8 to 20 characters long</span>
+        </div>
+        <div class="hint-item" :class="{ ok: isStrongPassword }">
+          <mdicon :name="isStrongPassword ? 'check-circle' : 'circle-outline'" size="14" />
+          <span>Includes uppercase, lowercase, numbers & symbols</span>
+        </div>
+      </div>
 
-            <div class="form-group">
-                <label class="form-label">Password</label>
-                <div class="input-wrapper">
-                    <mdicon name="lock-outline" :size="20" class="input-icon"/>
-                    <input
-                        type="password"
-                        class="form-input"
-                        placeholder="Enter your password"
-                        v-model="userInfo.password"
-                        required
-                    />
-                </div>
-            </div>
+      <!-- Submit Button -->
+      <button class="submit-btn" type="submit" :disabled="submitting">
+        <span v-if="!submitting">Get Started</span>
+        <span v-else class="btn-spinner"></span>
+      </button>
 
-            <div class="form-group">
-                <label class="form-label">Confirm Password</label>
-                <div class="input-wrapper">
-                    <mdicon name="lock-check-outline" :size="20" class="input-icon"/>
-                    <input
-                        type="password"
-                        class="form-input"
-                        placeholder="Re-enter your password"
-                        v-model="userInfo.verifyPassword"
-                        required
-                    />
-                </div>
-                <p v-if="hasError && errorMsg.password" class="field-error">{{ errorMsg.password }}</p>
-            </div>
+      <!-- Switch to Sign In -->
+      <div class="switch-row">
+        <span>Already registered?</span>
+        <button type="button" class="switch-link" @click="router.push('/login')">
+          Sign In
+        </button>
+      </div>
+    </form>
 
-            <div class="password-hints">
-                <div class="password-hint" :class="{ accepted: hasMinimumChar }">
-                    <mdicon name="check" size="14"/>
-                    <span>8 to 20 characters long</span>
-                </div>
-                <div class="password-hint" :class="{ accepted: isStrongPassword }">
-                    <mdicon name="check" size="14"/>
-                    <span>Use upper & lowercase letters, numbers, and symbols</span>
-                </div>
-            </div>
+  </div>
 
-            <button type="submit" class="register-btn">
-                Create Account
-            </button>
-
-            <div class="login-redirect">
-                <span>Already have an account?</span>
-                <button class="login-link" type="button" @click="router.push('/login')">
-                    Log In
-                </button>
-            </div>
-        </form>
-    </div>
 </div>
 </template>
-    
- <script>
+
+<script>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import register from '@/composables/auth/register'
 import store from '@/store'
+import { useTheme } from '@/composables/theme'
+import appMeta from '../../../../package.json'
 
 export default {
-    name: "RegisterWeb",
-    setup() {
-        const router = useRouter()
-        const validated = ref(null)
-        const userInfo = ref({
-            fullName: '',
-            phone: '',
-            email: '',
-            password: '',
-            verifyPassword: ''
-        })
-        const errorMsg = ref({email: '', password: '', phone: ''})
-        const hasError = ref(false)
+  name: "RegisterWeb",
+  setup() {
+    const appVersion = appMeta.version || '1.0.0'
+    const router = useRouter()
+    const { isDark, toggleTheme } = useTheme()
+    
+    const validated = ref(null)
+    const submitting = ref(false)
+    const userInfo = ref({
+      fullName: '',
+      phone: '',
+      email: '',
+      password: '',
+      verifyPassword: ''
+    })
+    const errorMsg = ref({ email: '', password: '', phone: '' })
+    const hasError = ref(false)
 
-        const handleRegister = async() => {
-            hasError.value = false
-            errorMsg.value.email = ''
-            errorMsg.value.password = ''
-            errorMsg.value.phone = ''
+    const handleRegister = async () => {
+      hasError.value = false
+      errorMsg.value.email = ''
+      errorMsg.value.password = ''
+      errorMsg.value.phone = ''
 
-            if (!validated.value) {
-                hasError.value = true
-                errorMsg.value.email = "Invalid Email Format!"
-                return
-            }
+      if (!validated.value) {
+        hasError.value = true
+        errorMsg.value.email = "Please enter a valid email address format."
+        return
+      }
 
-            if (!userInfo.value.phone) {
-                hasError.value = true
-                errorMsg.value.phone = "Contact number is required."
-                return
-            }
+      if (!userInfo.value.phone) {
+        hasError.value = true
+        errorMsg.value.phone = "Contact phone number is required."
+        return
+      }
 
-            const payload = {
-                fullName: userInfo.value.fullName.trim(),
-                phone: userInfo.value.phone.trim(),
-                email: userInfo.value.email.trim(),
-                password: userInfo.value.password,
-                verifyPassword: userInfo.value.verifyPassword
-            }
+      if (userInfo.value.password !== userInfo.value.verifyPassword) {
+        hasError.value = true
+        errorMsg.value.password = "Passwords do not match."
+        return
+      }
 
-            const { response, error } = await register(payload)
-            if (error.value === null) {
-                if (response.value.status > 201) {
-                    hasError.value = true
-                    errorMsg.value.password = response.value.message
-                } else {
-                    router.push('/login')
-                }
-            }
+      submitting.value = true
+      const payload = {
+        fullName: userInfo.value.fullName.trim(),
+        phone: userInfo.value.phone.trim(),
+        email: userInfo.value.email.trim(),
+        password: userInfo.value.password,
+        verifyPassword: userInfo.value.verifyPassword
+      }
+
+      const { response, error } = await register(payload)
+      submitting.value = false
+
+      if (error.value === null) {
+        if (response.value.status > 201) {
+          hasError.value = true
+          errorMsg.value.password = response.value.message || 'Registration failed. Please try again.'
+        } else {
+          router.push('/login')
         }
-        
-        const isStrongPassword = computed(() => {
-            return store.methods.isStrongPassword(userInfo.value.password)
-        })
-
-        const hasMinimumChar = computed(() => {
-            return store.methods.hasMinimumChar(userInfo.value.password)
-        })
-        const isValidEmailFormat = computed(() => {
-            hasError.value = false
-            validated.value = store.methods.isValidEmailFormat(userInfo.value.email)
-            return validated.value
-        })
-        return {
-            router,
-            userInfo,
-            handleRegister,
-            isStrongPassword,
-            hasMinimumChar,
-            isValidEmailFormat,
-            errorMsg,
-            hasError
-        }
+      } else {
+        hasError.value = true
+        errorMsg.value.password = 'Server connection error. Please try again.'
+      }
     }
+
+    const isStrongPassword = computed(() => store.methods.isStrongPassword(userInfo.value.password))
+    const hasMinimumChar = computed(() => store.methods.hasMinimumChar(userInfo.value.password))
+    const isValidEmailFormat = computed(() => {
+      validated.value = store.methods.isValidEmailFormat(userInfo.value.email)
+      return validated.value
+    })
+
+    return {
+      router,
+      userInfo,
+      handleRegister,
+      isStrongPassword,
+      hasMinimumChar,
+      isValidEmailFormat,
+      errorMsg,
+      hasError,
+      submitting,
+      appVersion,
+      isDark,
+      toggleTheme
+    }
+  }
 }
 </script>
-    
+
 <style scoped>
-.register-page {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 24px;
+/* ── Page Shell ───────────────────────────── */
+.auth-page {
+  min-height: 100vh;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px 40px;
+  position: relative;
+  overflow: hidden;
 }
 
-.register-grid {
-    width: 100%;
-    max-width: 1100px;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 32px;
-    padding: 32px;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 32px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(12px);
+/* ── Ambient Orbs ─────────────────────────── */
+.auth-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.auth-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.18;
+}
+.orb-1 {
+  width: 550px; height: 550px;
+  top: -180px; right: -100px;
+  background: radial-gradient(circle, #06b6d4, #4f46e5);
+}
+.orb-2 {
+  width: 450px; height: 450px;
+  bottom: -120px; left: -100px;
+  background: radial-gradient(circle, #10b981, #8b5cf6);
+}
+.orb-3 {
+  width: 350px; height: 350px;
+  top: 30%; left: 10%;
+  background: radial-gradient(circle, #f97316, transparent 70%);
 }
 
-.brand-panel {
-    color: white;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: left;
+/* ── Topbar Navigation ────────────────────── */
+.auth-topbar {
+  position: absolute;
+  top: 24px;
+  left: 28px; right: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+}
+.topbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-card-border);
+  background: var(--glass-ghost-bg);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s;
+}
+.topbar-btn:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
 }
 
-.brand-icon {
-    width: 96px;
-    height: 96px;
-    border-radius: 24px;
-    background: rgba(255, 255, 255, 0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 24px;
+/* ── Split Auth Card ──────────────────────── */
+.auth-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1020px;
+  background: var(--glass-card-bg);
+  border: 1px solid var(--glass-card-border);
+  border-radius: 28px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  overflow: hidden;
+  backdrop-filter: blur(16px);
 }
 
+/* ── Left Brand Side ──────────────────────── */
+.brand-side {
+  padding: 40px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(79, 70, 229, 0.15));
+  border-right: 1px solid var(--glass-card-border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+}
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.brand-logo-wrap {
+  width: 46px; height: 46px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--glass-card-border);
+}
+.brand-logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
 .brand-title {
-    font-size: 42px;
-    font-weight: 700;
-    margin: 0 0 12px 0;
-    letter-spacing: -0.5px;
+  font-size: 24px;
+  font-weight: 900;
+  margin: 0;
+  letter-spacing: -0.4px;
+}
+.brand-version {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.brand-tagline {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
 }
 
-.brand-subtitle {
-    font-size: 17px;
-    color: rgba(255, 255, 255, 0.85);
-    margin: 0;
+.value-bullets {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.value-bullets li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.val-icon.teal { color: #06b6d4; }
+.val-icon.orange { color: #f97316; }
+.val-icon.green { color: #10b981; }
+
+.brand-footer-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.sec-icon { color: #22c55e; }
+
+/* ── Right Form Side ──────────────────────── */
+.form-side {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.form-header {
+  margin-bottom: 2px;
+}
+.form-title {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+.form-sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 4px 0 0;
 }
 
-.register-panel {
-    background: white;
-    border-radius: 28px;
-    padding: 36px;
-    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.15);
-    display: flex;
-    flex-direction: column;
+/* Fields & Grid */
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.field-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
-.panel-header {
-    margin-bottom: 32px;
+.input-box {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
-
-.panel-title {
-    margin: 0;
-    font-size: 28px;
-    font-weight: 700;
-    color: #111827;
-}
-
-.panel-subtitle {
-    margin: 8px 0 0 0;
-    color: #6b7280;
-    font-size: 16px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-label {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 8px;
-}
-
-.input-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
 .input-icon {
-    position: absolute;
-    left: 16px;
-    color: #9ca3af;
-    pointer-events: none;
+  position: absolute;
+  left: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
 }
-
-.form-input {
-    width: 100%;
-    padding: 14px 16px 14px 48px;
-    border: 2px solid #e5e7eb;
-    border-radius: 12px;
-    font-size: 15px;
-    color: #1a1a1a;
-    transition: all 0.2s ease;
-    background: #f9fafb;
+.field-input {
+  width: 100%;
+  padding: 10px 14px 10px 42px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-card-border);
+  background: var(--glass-ghost-bg);
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.2s ease;
 }
-
-.form-input:focus {
-    outline: none;
-    border-color: #667eea;
-    background: white;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+.field-input:focus {
+  outline: none;
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
 }
-
-.form-input::placeholder {
-    color: #9ca3af;
+.field-input.invalid-input {
+  border-color: #ef4444;
 }
-
-.invalid-input {
-    border-color: #f87171;
-}
+.field-input::placeholder { color: var(--text-muted); }
 
 .field-error {
-    margin-top: 6px;
-    font-size: 13px;
-    color: #dc2626;
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: #ef4444;
+  font-weight: 600;
 }
 
-.password-hints {
-    background: #f9fafb;
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 16px;
+/* Hints Box */
+.hints-box {
+  background: var(--glass-ghost-bg);
+  border: 1px solid var(--glass-card-border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hint-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.hint-item.ok {
+  color: #22c55e;
+  font-weight: 600;
 }
 
-.password-hint {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #6b7280;
-    font-size: 13px;
+/* Submit Button */
+.submit-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  color: white;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(6, 182, 212, 0.35);
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(6, 182, 212, 0.45);
+}
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.password-hint + .password-hint {
-    margin-top: 8px;
+.btn-spinner {
+  display: inline-block;
+  width: 20px; height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.password-hint svg {
-    color: #d1d5db;
+/* Switch Row */
+.switch-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
 }
-
-.password-hint.accepted {
-    color: #166534;
+.switch-link {
+  background: none;
+  border: none;
+  color: #06b6d4;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0;
 }
+.switch-link:hover { text-decoration: underline; }
 
-.password-hint.accepted svg {
-    color: #16a34a;
-}
-
-.register-btn {
-    width: 100%;
-    padding: 16px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    border-radius: 12px;
-    color: white;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-}
-
-.register-btn:active {
-    transform: scale(0.98);
-}
-
-.login-redirect {
-    text-align: center;
-    margin-top: 24px;
-    color: #6b7280;
-}
-
-.login-link {
-    background: none;
-    border: none;
-    color: #667eea;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    margin-left: 8px;
-    text-decoration: underline;
-}
-
-@media (max-width: 768px) {
-    .register-page {
-        padding: 24px 16px;
-    }
-
-    .register-panel {
-        padding: 28px 24px;
-    }
-
-    .brand-panel {
-        text-align: center;
-        align-items: center;
-    }
+/* ── Responsive ───────────────────────────── */
+@media (max-width: 880px) {
+  .auth-card { grid-template-columns: 1fr; }
+  .brand-side { display: none; }
+  .field-row { grid-template-columns: 1fr; }
+  .form-side { padding: 32px 24px; }
+  .auth-topbar { left: 16px; right: 16px; }
 }
 </style>

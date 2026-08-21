@@ -85,7 +85,14 @@ import PendingApproval from '@/views/LandingPage/PendingApproval.vue'
 import AdminUsers from '@/views/LandingPage/AdminUsers.vue'
 
 
+import Landing from '@/views/LandingPage/Landing.vue'
+
 const routes: Array<RouteRecordRaw> = [
+  {
+    path: '/landing',
+    name: 'landing',
+    component: Landing
+  },
   {
     path: '/',
     name: 'home',
@@ -619,7 +626,11 @@ router.beforeEach((to, from, next) => {
   const logbookOnly = Boolean((to.meta as any).logbookOnly)
 
   if (requiresAuth && !token) {
-    next({ name: 'login', query: { redirect: to.fullPath } })
+    if (to.path === '/') {
+      next({ name: 'landing' })
+    } else {
+      next({ name: 'login', query: { redirect: to.fullPath } })
+    }
     return
   }
 
